@@ -4,8 +4,9 @@ import React, { useState, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './ChangePasswordModal.css';
+import config from '../config';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = config.apiUrl;
 
 const ChangePasswordModal = ({ onClose, forceChange }) => {
   const { auth, updateUser } = useContext(AuthContext);

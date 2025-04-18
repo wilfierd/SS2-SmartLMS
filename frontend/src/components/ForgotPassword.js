@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './ForgotPassword.css';
+import config from '../config';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
 
   // Get API URL from environment variables
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+  const API_URL = config.apiUrl;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

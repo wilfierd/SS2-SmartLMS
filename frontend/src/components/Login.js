@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
 import './Login.css';
+import config from '../config';
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -14,8 +15,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Get API URL and Google Client ID from environment variables
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '312655720270-prcea14eek4i0abj09acomparvsipsq6.apps.googleusercontent.com';
+  const API_URL = config.apiUrl;
+  const googleClientId = config.googleClientId;;
 
   // Regular login
   const handleLogin = async (e) => {

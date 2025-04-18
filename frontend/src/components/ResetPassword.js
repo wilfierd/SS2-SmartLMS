@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './ResetPassword.css';
+import config from '../config';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -18,7 +19,7 @@ const ResetPassword = () => {
   const [userEmail, setUserEmail] = useState('');
 
   // Get API URL from environment variables
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+  const API_URL = config.apiUrl;
 
   // Verify token when component mounts
   useEffect(() => {

@@ -10,6 +10,7 @@ import ChangePasswordModal from './components/ChangePasswordModal';
 import AuthContext from './context/AuthContext';
 import axios from 'axios';
 import './App.css';
+import config from './config';
 
 function App() {
   const [auth, setAuth] = useState({
@@ -21,8 +22,8 @@ function App() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Get API URL and Google Client ID from environment variables
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
+  const API_URL = config.apiUrl;
+  const googleClientId = config.googleClientId;
 
   // Set up axios defaults
   useEffect(() => {
