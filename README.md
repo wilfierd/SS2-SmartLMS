@@ -13,8 +13,8 @@ A comprehensive Learning Management System with support for students, instructor
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/SS2-LMSHub.git
-cd SS2-LMSHub
+git clone https://github.com/yourusername/SS2-SmartLMS.git
+cd SS2-SmartLMS
 ```
 
 ### 2. Set Up Backend
