@@ -1,4 +1,4 @@
-# SS2-LMSHub - Learning Management System
+# SS2-SmartLMS - Learning Management System
 
 A comprehensive Learning Management System with support for students, instructors, and administrators.
 
