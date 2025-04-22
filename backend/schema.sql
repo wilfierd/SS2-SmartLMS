@@ -396,38 +396,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -- SAMPLE DATA INSERTS
 -- ============================================
 
--- Clear existing data (if needed)
--- Uncomment these if you want to clear data before inserting
-/*
-DELETE FROM audit_logs;
-DELETE FROM system_settings;
-DELETE FROM grades;
-DELETE FROM user_progress;
-DELETE FROM ai_generated_content;
-DELETE FROM ai_interactions;
-DELETE FROM session_attendance;
-DELETE FROM live_sessions;
-DELETE FROM messages;
-DELETE FROM discussion_posts;
-DELETE FROM discussions;
-DELETE FROM announcements;
-DELETE FROM quiz_responses;
-DELETE FROM quiz_attempts;
-DELETE FROM quiz_options;
-DELETE FROM quiz_questions;
-DELETE FROM quizzes;
-DELETE FROM submissions;
-DELETE FROM assignments;
-DELETE FROM lesson_materials;
-DELETE FROM lessons;
-DELETE FROM course_modules;
-DELETE FROM enrollments;
-DELETE FROM courses;
-DELETE FROM password_reset_tokens;
-DELETE FROM user_sessions;
-DELETE FROM users;
-*/
-
 -- Insert Admin users (password hashes would be properly generated with bcrypt in production)
 INSERT INTO users (email, password, first_name, last_name, role, is_password_changed, bio) 
 VALUES 
