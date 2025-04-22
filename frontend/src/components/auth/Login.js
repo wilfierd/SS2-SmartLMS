@@ -2,10 +2,10 @@
 import React, { useState, useContext } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { Link } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 import './Login.css';
-import config from '../config';
+import config from '../../config';
 
 const Login = () => {
   const { login } = useContext(AuthContext);

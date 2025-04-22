@@ -2,9 +2,9 @@
 import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
-import AdminDashboard from '../admin/AdminDashboard';
-import InstructorDashboard from '../instructor/InstructorDashboard';
-import StudentDashboard from '../student/StudentDashboard';
+import AdminDashboard from '../1.admin/AdminDashboard';
+import InstructorDashboard from '../2.instructor/InstructorDashboard';
+import StudentDashboard from '../3.student/StudentDashboard';
 
 /**
  * A component that routes users to different dashboards based on their role

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './ForgotPassword.css';
-import config from '../config';
+import config from '../../config';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

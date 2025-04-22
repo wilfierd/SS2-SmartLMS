@@ -1,7 +1,7 @@
 // src/components/UnauthorizedPage.js
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 import './UnauthorizedPage.css';
 
 const UnauthorizedPage = () => {

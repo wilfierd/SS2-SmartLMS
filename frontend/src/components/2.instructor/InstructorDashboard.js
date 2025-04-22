@@ -1,8 +1,8 @@
 // src/components/instructor/InstructorDashboard.js
 import React, { useState, useEffect, useContext } from 'react';
 import './InstructorDashboard.css';
-import Sidebar from '../admin/Sidebar'; // Reusing admin sidebar or create a new one
-import Header from '../admin/Header'; // Reusing admin header or create a new one
+import Sidebar from  '../common/Sidebar';
+import Header from  '../common/Header';
 import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 

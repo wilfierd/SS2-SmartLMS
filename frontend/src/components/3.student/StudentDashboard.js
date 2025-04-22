@@ -1,8 +1,8 @@
 // src/components/student/StudentDashboard.js
 import React, { useState, useEffect, useContext } from 'react';
 import './StudentDashboard.css';
-import Sidebar from '../admin/Sidebar'; // Reusing sidebar with different active items
-import Header from '../admin/Header'; // Reusing header
+import Sidebar from '../common/Sidebar';
+import Header from  '../common/Header';
 import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 

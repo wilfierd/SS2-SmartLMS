@@ -3,7 +3,6 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
-import './Dashboard.css';
 import './AdminDashboard.css';
 
 // User Activity Chart Component (Simplified without actual chart rendering)
