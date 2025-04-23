@@ -172,9 +172,15 @@ function App() {
               <Route path="/reset-password/:token" element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
               
-              {/* Dashboard route - uses RoleBasedRoute to direct to appropriate dashboard */}
-              <Route path="/dashboard" element={<RoleBasedRoute />} />
+              {/* Role-based routes */}
+              <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
+              <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
+              <Route path="/users" element={<RoleBasedRoute component="users" />} />
+              <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
+              <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
+              <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
               
+                                      
               {/* Default routes */}
               <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
               <Route path="*" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />

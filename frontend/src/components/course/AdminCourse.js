@@ -3,7 +3,6 @@ import AuthContext from '../../context/AuthContext';
 import './AdminCourse.css';
 import Sidebar from '../common/Sidebar';
 import Header from '../common/Header';
-import config from '../../config';
 
 const AdminCourse = () => {
   const { auth } = useContext(AuthContext);
