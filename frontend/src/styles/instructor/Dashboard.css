@@ -1,0 +1,692 @@
+/* src/components/dashboard/AdminDashboard.css */
+
+/* Admin Dashboard Layout */
+.admin-dashboard {
+    background-color: #f8f9fa;
+  }
+  
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 1200px) {
+    .admin-grid {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
+  
+  .admin-main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .admin-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  /* Admin Stats */
+  .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .admin-stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  .admin-stat-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .admin-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+    color: white;
+  }
+  
+  .users-icon {
+    background-color: #3498db;
+  }
+  
+  .courses-icon {
+    background-color: #2ecc71;
+  }
+  
+  .enrollments-icon {
+    background-color: #f39c12;
+  }
+  
+  .activity-icon {
+    background-color: #9b59b6;
+  }
+  
+  .stat-content {
+    flex: 1;
+  }
+  
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    line-height: 1.2;
+  }
+  
+  .stat-label {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin: 0;
+  }
+  
+  .stat-breakdown {
+    display: flex;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #7f8c8d;
+  }
+  
+  .stat-item {
+    margin-right: 1rem;
+  }
+  
+  .stat-count {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  /* Admin Quick Actions */
+  .admin-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .admin-actions {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  .admin-action-button {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: #2c3e50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .admin-action-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    color: #3498db;
+    text-decoration: none;
+  }
+  
+  .admin-action-button i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Admin Panels */
+  .admin-panel {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    height: 100%;
+  }
+  
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f1f1;
+  }
+  
+  .panel-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #2c3e50;
+  }
+  
+  .view-all-link {
+    font-size: 0.85rem;
+    color: #3498db;
+    text-decoration: none;
+  }
+  
+  .view-all-link:hover {
+    text-decoration: underline;
+  }
+  
+  /* Users List */
+  .users-list {
+    padding: 1rem;
+  }
+  
+  .user-card {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: background-color 0.2s;
+  }
+  
+  .user-card:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 1rem;
+  }
+  
+  .user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #3498db;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  .user-details {
+    flex: 1;
+  }
+  
+  .user-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #2c3e50;
+  }
+  
+  .user-email {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin: 0.25rem 0;
+  }
+  
+  .user-meta {
+    display: flex;
+    align-items: center;
+    margin-top: 0.25rem;
+  }
+  
+  .user-role {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 50px;
+    margin-right: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .user-role.admin {
+    background-color: #fdebd0;
+    color: #f39c12;
+  }
+  
+  .user-role.instructor {
+    background-color: #d1f2eb;
+    color: #16a085;
+  }
+  
+  .user-role.student {
+    background-color: #ebf5fb;
+    color: #3498db;
+  }
+  
+  .user-joined {
+    font-size: 0.75rem;
+    color: #95a5a6;
+  }
+  
+  .user-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .user-action-btn {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  
+  .view-btn {
+    background-color: #e1f0ff;
+    color: #3498db;
+  }
+  
+  .view-btn:hover {
+    background-color: #d0e6ff;
+  }
+  
+  .edit-btn {
+    background-color: #f1f1f1;
+    color: #7f8c8d;
+  }
+  
+  .edit-btn:hover {
+    background-color: #e6e6e6;
+  }
+  
+  /* Courses Table */
+  .courses-table-container {
+    padding: 0 1rem 1rem;
+    overflow-x: auto;
+  }
+  
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .admin-table th {
+    text-align: left;
+    padding: 0.75rem;
+    font-weight: 600;
+    color: #7f8c8d;
+    font-size: 0.85rem;
+    border-bottom: 2px solid #f1f1f1;
+  }
+  
+  .admin-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 0.9rem;
+  }
+  
+  .course-id {
+    color: #95a5a6;
+    font-size: 0.85rem;
+  }
+  
+  .course-title {
+    font-weight: 500;
+    color: #2c3e50;
+  }
+  
+  .course-instructor {
+    color: #7f8c8d;
+  }
+  
+  .course-enrollment {
+    font-weight: 500;
+    color: #3498db;
+  }
+  
+  .course-status {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50px;
+    font-weight: 500;
+    text-align: center;
+    display: inline-block;
+  }
+  
+  .course-status.published {
+    background-color: #d1f2eb;
+    color: #16a085;
+  }
+  
+  .course-status.draft {
+    background-color: #f1f1f1;
+    color: #7f8c8d;
+  }
+  
+  .course-status.archived {
+    background-color: #f8d7da;
+    color: #e74c3c;
+  }
+  
+  .course-actions {
+    white-space: nowrap;
+  }
+  
+  .table-action-btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.25rem;
+    text-decoration: none;
+  }
+  
+  /* Chart Component */
+  .chart-container {
+    padding: 1rem;
+  }
+  
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #2c3e50;
+  }
+  
+  .chart-legend {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #7f8c8d;
+  }
+  
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+  }
+  
+  .legend-color.students {
+    background-color: #3498db;
+  }
+  
+  .legend-color.instructors {
+    background-color: #2ecc71;
+  }
+  
+  .chart-placeholder {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #dfe6e9;
+  }
+  
+  .chart-message {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  /* System Status */
+  .system-status {
+    padding: 1rem;
+  }
+  
+  .status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f1f1;
+  }
+  
+  .status-item:last-child {
+    border-bottom: none;
+  }
+  
+  .status-label {
+    font-weight: 500;
+    color: #2c3e50;
+  }
+  
+  .status-value {
+    color: #7f8c8d;
+  }
+  
+  .status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+  
+  .status-indicator.online {
+    background-color: #2ecc71;
+  }
+  
+  .status-indicator.offline {
+    background-color: #e74c3c;
+  }
+  
+  .status-indicator.warning {
+    background-color: #f39c12;
+  }
+  
+  /* Activity Logs */
+  .activity-logs {
+    padding: 0.5rem 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .activity-log-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f1f1;
+  }
+  
+  .activity-log-item:last-child {
+    border-bottom: none;
+  }
+  
+  .log-time {
+    font-size: 0.75rem;
+    color: #95a5a6;
+    margin-bottom: 0.25rem;
+  }
+  
+  .log-content {
+    font-size: 0.85rem;
+    color: #2c3e50;
+  }
+  
+  .log-action {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-right: 0.5rem;
+  }
+  
+  .log-action.create {
+    background-color: #d1f2eb;
+    color: #16a085;
+  }
+  
+  .log-action.update {
+    background-color: #e1f0ff;
+    color: #3498db;
+  }
+  
+  .log-action.delete {
+    background-color: #f8d7da;
+    color: #e74c3c;
+  }
+  
+  .log-entity {
+    font-weight: 500;
+  }
+  
+  .log-user {
+    color: #7f8c8d;
+    margin-left: 0.5rem;
+  }
+  
+  /* Admin Tools */
+  .admin-tools {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .tool-button {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    color: #2c3e50;
+    text-decoration: none;
+    transition: background-color 0.2s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .tool-button:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+    color: #3498db;
+    text-decoration: none;
+  }
+  
+  .tool-button i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f1f1f1;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: #2c3e50;
+  }
+  
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #95a5a6;
+    cursor: pointer;
+  }
+  
+  .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f1f1f1;
+    gap: 0.75rem;
+  }
+  
+  .modal-button {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: none;
+    text-align: center;
+  }
+  
+  .modal-button.secondary {
+    background-color: #f1f1f1;
+    color: #7f8c8d;
+  }
+  
+  .modal-button.secondary:hover {
+    background-color: #e6e6e6;
+  }
+  
+  .modal-button.primary {
+    background-color: #3498db;
+    color: white;
+  }
+  
+  .modal-button.primary:hover {
+    background-color: #2980b9;
+  }
