@@ -524,6 +524,314 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   }
 });
 
+//=======COURSES ENDPOINTS=========//
+
+// Get all courses with instructor and department information
+app.get('/api/courses', authenticateToken, async (req, res) => {
+  try {
+    const [courses] = await pool.query(`
+      SELECT c.*, 
+             u.first_name, u.last_name, 
+             d.name as department_name
+      FROM courses c
+      JOIN users u ON c.instructor_id = u.id
+      LEFT JOIN departments d ON c.department_id = d.id
+      ORDER BY c.created_at DESC
+    `);
+    
+    // Format the response
+    const formattedCourses = courses.map(course => ({
+      id: course.id,
+      code: course.code,
+      title: course.title,
+      instructor: `${course.first_name} ${course.last_name}`,
+      instructorId: course.instructor_id,
+      department: course.department_name,
+      departmentId: course.department_id,
+      description: course.description,
+      startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
+      endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
+      status: course.status.charAt(0).toUpperCase() + course.status.slice(1), // Capitalize status
+      thumbnail: course.thumbnail_url,
+      isFeatured: course.is_featured === 1 // Convert to boolean
+    }));
+    
+    res.json(formattedCourses);
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get a single course by ID
+app.get('/api/courses/:id', authenticateToken, async (req, res) => {
+  try {
+    const [courses] = await pool.query(`
+      SELECT c.*, 
+             u.first_name, u.last_name, 
+             d.name as department_name
+      FROM courses c
+      JOIN users u ON c.instructor_id = u.id
+      LEFT JOIN departments d ON c.department_id = d.id
+      WHERE c.id = ?
+    `, [req.params.id]);
+    
+    if (courses.length === 0) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    
+    const course = courses[0];
+    
+    res.json({
+      id: course.id,
+      code: course.code,
+      title: course.title,
+      instructor: `${course.first_name} ${course.last_name}`,
+      instructorId: course.instructor_id,
+      department: course.department_name,
+      departmentId: course.department_id,
+      description: course.description,
+      startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
+      endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
+      status: course.status.charAt(0).toUpperCase() + course.status.slice(1), // Capitalize status
+      thumbnail: course.thumbnail_url,
+      isFeatured: course.is_featured === 1 // Convert to boolean
+    });
+  } catch (error) {
+    console.error('Error fetching course:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create a new course
+app.post('/api/courses', authenticateToken, authorize(['admin']), async (req, res) => {
+  try {
+    const { 
+      title, 
+      code, 
+      instructorId, 
+      departmentId, 
+      description, 
+      startDate, 
+      endDate, 
+      status, 
+      thumbnailUrl,
+      isFeatured
+    } = req.body;
+    
+    // Validate required fields
+    if (!title || !instructorId || !description || !code) {
+      return res.status(400).json({ message: 'Title, code, instructor, and description are required' });
+    }
+    
+    // Normalize status
+    const normalizedStatus = status ? status.toLowerCase() : 'draft';
+    
+    const [result] = await pool.query(
+      `INSERT INTO courses (
+        title, 
+        code,
+        instructor_id, 
+        department_id,
+        description, 
+        start_date, 
+        end_date, 
+        status, 
+        thumbnail_url,
+        is_featured
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        title, 
+        code,
+        instructorId, 
+        departmentId || null,
+        description, 
+        startDate || null, 
+        endDate || null, 
+        normalizedStatus, 
+        thumbnailUrl || null,
+        isFeatured ? 1 : 0
+      ]
+    );
+    
+    res.status(201).json({ 
+      message: 'Course created successfully', 
+      courseId: result.insertId 
+    });
+  } catch (error) {
+    console.error('Error creating course:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update a course
+app.put('/api/courses/:id', authenticateToken, authorize(['admin']), async (req, res) => {
+  try {
+    const {
+      title, 
+      code, 
+      instructorId, 
+      departmentId, 
+      description, 
+      startDate, 
+      endDate, 
+      status, 
+      thumbnailUrl,
+      isFeatured
+    } = req.body;
+    
+    // Validate required fields
+    if (!title || !instructorId || !description || !code) {
+      return res.status(400).json({ message: 'Title, code, instructor, and description are required' });
+    }
+    
+    // Normalize status
+    const normalizedStatus = status ? status.toLowerCase() : 'draft';
+    
+    await pool.query(
+      `UPDATE courses 
+       SET title = ?, 
+           code = ?,
+           instructor_id = ?, 
+           department_id = ?,
+           description = ?, 
+           start_date = ?, 
+           end_date = ?, 
+           status = ?, 
+           thumbnail_url = ?,
+           is_featured = ?,
+           updated_at = NOW() 
+       WHERE id = ?`,
+      [
+        title, 
+        code,
+        instructorId, 
+        departmentId || null,
+        description, 
+        startDate || null, 
+        endDate || null, 
+        normalizedStatus, 
+        thumbnailUrl || null,
+        isFeatured ? 1 : 0,
+        req.params.id
+      ]
+    );
+    
+    res.json({ message: 'Course updated successfully' });
+  } catch (error) {
+    console.error('Error updating course:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete a course
+app.delete('/api/courses/:id', authenticateToken, authorize(['admin']), async (req, res) => {
+  try {
+    await pool.query('DELETE FROM courses WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Course deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    res.status(500).json({ message: 'Server error', details: error.message });
+  }
+});
+
+// Archive a course (update status to 'archived')
+app.put('/api/courses/:id/archive', authenticateToken, authorize(['admin']), async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE courses SET status = "archived", updated_at = NOW() WHERE id = ?',
+      [req.params.id]
+    );
+    res.json({ message: 'Course archived successfully' });
+  } catch (error) {
+    console.error('Error archiving course:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all instructors (for dropdown)
+app.get('/api/instructors', authenticateToken, async (req, res) => {
+  try {
+    const [instructors] = await pool.query(`
+      SELECT id, first_name, last_name, email 
+      FROM users 
+      WHERE role = 'instructor'
+      ORDER BY first_name, last_name
+    `);
+    
+    const formattedInstructors = instructors.map(instructor => ({
+      id: instructor.id,
+      name: `${instructor.first_name} ${instructor.last_name}`,
+      email: instructor.email
+    }));
+    
+    res.json(formattedInstructors);
+  } catch (error) {
+    console.error('Error fetching instructors:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all departments (for dropdown)
+app.get('/api/departments', authenticateToken, async (req, res) => {
+  try {
+    const [departments] = await pool.query(`
+      SELECT id, name, description 
+      FROM departments 
+      ORDER BY name
+    `);
+    
+    res.json(departments);
+  } catch (error) {
+    console.error('Error fetching departments:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Batch delete courses
+app.post('/api/courses/batch-delete', authenticateToken, authorize(['admin']), async (req, res) => {
+  const { courseIds } = req.body;
+  
+  if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
+    return res.status(400).json({ message: 'No course IDs provided' });
+  }
+  
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    // Delete related data first (this depends on your foreign key constraints)
+    // If your database is set up with ON DELETE CASCADE, you may not need these
+    /*
+    for (const courseId of courseIds) {
+      // Delete enrollments
+      await connection.query('DELETE FROM enrollments WHERE course_id = ?', [courseId]);
+      // Delete modules and related data
+      const [modules] = await connection.query('SELECT id FROM course_modules WHERE course_id = ?', [courseId]);
+      for (const module of modules) {
+        await connection.query('DELETE FROM lessons WHERE module_id = ?', [module.id]);
+      }
+      await connection.query('DELETE FROM course_modules WHERE course_id = ?', [courseId]);
+    }
+    */
+    
+    // Delete the courses
+    const placeholders = courseIds.map(() => '?').join(',');
+    await connection.query(`DELETE FROM courses WHERE id IN (${placeholders})`, courseIds);
+    
+    await connection.commit();
+    
+    res.json({ message: `${courseIds.length} courses deleted successfully` });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error batch deleting courses:', error);
+    res.status(500).json({ message: 'Server error', details: error.message });
+  } finally {
+    connection.release();
+  }
+});
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

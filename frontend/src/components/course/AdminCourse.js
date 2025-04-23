@@ -3,6 +3,8 @@ import AuthContext from '../../context/AuthContext';
 import './AdminCourse.css';
 import Sidebar from '../common/Sidebar';
 import Header from '../common/Header';
+import axios from 'axios';
+import config from '../../config';
 
 const AdminCourse = () => {
   const { auth } = useContext(AuthContext);
@@ -16,141 +18,106 @@ const AdminCourse = () => {
   const [editingCourse, setEditingCourse] = useState(null);
   const [showContextMenu, setShowContextMenu] = useState({ visible: false, x: 0, y: 0, courseId: null });
 
+  // State for dropdowns
+  const [instructors, setInstructors] = useState([]);
+  const [departments, setDepartments] = useState([]);
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
     code: '',
-    instructor: '',
-    department: '',
+    instructorId: '',
+    departmentId: '',
     description: '',
     startDate: '',
     endDate: '',
     thumbnailImage: null,
-    status: 'Draft'
+    status: 'Draft',
+    isFeatured: false
   });
 
-  // Sample data for instructors and departments
-  const instructors = [
-    { id: 1, name: 'John Smith' },
-    { id: 2, name: 'Sarah Johnson' },
-    { id: 3, name: 'Michael Brown' },
-    { id: 4, name: 'Lisa Wong' }
-  ];
+  // API URL from config
+  const API_URL = config.apiUrl;
 
-  const departments = [
-    'Computer Science',
-    'Mathematics',
-    'Physics',
-    'Business',
-    'Arts'
-  ];
+  // Dynamic filter options based on departments
+  const [filterOptions, setFilterOptions] = useState(['All']);
 
-  // Filter options
-  const filterOptions = ['All', 'Programming', 'System Design', 'Graphic Design'];
-
-  // Mock courses data for initial display
-  const mockCourses = [
-    {
-      id: 1,
-      title: 'Web Programming',
-      code: 'WP101',
-      instructor: 'Shams Tabrez',
-      department: 'Computer Science',
-      description: 'Learn web development fundamentals with HTML, CSS, and JavaScript',
-      startDate: '2025-01-15',
-      endDate: '2025-04-15',
-      status: 'Published',
-      thumbnail: '/thumbnails/web-programming.jpg',
-      lessons: 12,
-      quizzes: 7
-    },
-    {
-      id: 2,
-      title: 'Graphic Designing',
-      code: 'GD101',
-      instructor: 'Shams Tabrez',
-      department: 'Arts',
-      description: 'Master graphic design principles and tools like Photoshop and Illustrator',
-      startDate: '2025-02-01',
-      endDate: '2025-05-01',
-      status: 'Published',
-      thumbnail: '/thumbnails/graphic-design.jpg',
-      lessons: 12,
-      quizzes: 7
-    },
-    {
-      id: 3,
-      title: 'System Analysis & Design',
-      code: 'SAD101',
-      instructor: 'Shams Tabrez',
-      department: 'Computer Science',
-      description: 'Learn to analyze and design complex software systems',
-      startDate: '2025-01-10',
-      endDate: '2025-04-10',
-      status: 'Published',
-      thumbnail: '/thumbnails/system-design.jpg',
-      lessons: 12,
-      quizzes: 7
-    },
-    {
-      id: 4,
-      title: 'Mobile Programming',
-      code: 'MP101',
-      instructor: 'Shams Tabrez',
-      department: 'Computer Science',
-      description: 'Develop mobile applications for iOS and Android platforms',
-      startDate: '2025-03-01',
-      endDate: '2025-06-01',
-      status: 'Upcoming',
-      thumbnail: '/thumbnails/mobile-dev.jpg',
-      lessons: 12,
-      quizzes: 7
-    }
-  ];
-
-  // Load courses data
+  // Load all data on component mount
   useEffect(() => {
-    const fetchCourses = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        // In a real implementation, you would fetch from your API
-        // Example:
-        // const response = await fetch(`${config.apiUrl}/courses`, {
-        //   headers: { Authorization: `Bearer ${auth.token}` }
-        // });
-        // const data = await response.json();
-        // setCourses(data);
-        
-        // Using mock data for now
-        setTimeout(() => {
-          setCourses(mockCourses);
-          setIsLoading(false);
-        }, 500);
-        
-      } catch (err) {
-        console.error("Error fetching courses:", err);
-        setError("Failed to load courses. Please try again.");
-        setIsLoading(false);
-      }
-    };
-    
     fetchCourses();
+    fetchInstructors();
+    fetchDepartments();
   }, [auth.token]);
+
+  // Update filter options when departments are loaded
+  useEffect(() => {
+    if (departments.length > 0) {
+      setFilterOptions([
+        'All',
+        ...departments.map(dept => dept.name)
+      ]);
+    }
+  }, [departments]);
+
+  // Fetch courses from the API
+  const fetchCourses = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get(`${API_URL}/courses`, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+      
+      setCourses(response.data);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      setError("Failed to load courses. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch instructors for the dropdown
+  const fetchInstructors = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/instructors`, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+      
+      setInstructors(response.data);
+    } catch (err) {
+      console.error("Error fetching instructors:", err);
+      // Don't set error here to avoid overriding course errors
+    }
+  };
+
+  // Fetch departments for the dropdown
+  const fetchDepartments = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/departments`, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
+      
+      setDepartments(response.data);
+    } catch (err) {
+      console.error("Error fetching departments:", err);
+    }
+  };
 
   // Reset form data
   const resetFormData = () => {
     setFormData({
       title: '',
       code: '',
-      instructor: '',
-      department: '',
+      instructorId: '',
+      departmentId: '',
       description: '',
       startDate: '',
       endDate: '',
       thumbnailImage: null,
-      status: 'Draft'
+      status: 'Draft',
+      isFeatured: false
     });
   };
 
@@ -169,10 +136,10 @@ const AdminCourse = () => {
 
   // Handle form input changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     });
   };
 
@@ -187,60 +154,61 @@ const AdminCourse = () => {
     }
   };
 
-  // Handle form submission
+  // Handle form submission with real API
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      if (editingCourse) {
-        // Update existing course
-        // In a real implementation, you would send a PUT request
-        // Example:
-        // const response = await fetch(`${config.apiUrl}/courses/${editingCourse.id}`, {
-        //   method: 'PUT',
-        //   headers: { 
-        //     'Authorization': `Bearer ${auth.token}`,
-        //     'Content-Type': 'application/json'
-        //   },
-        //   body: JSON.stringify(formData)
-        // });
+      // Handle file upload first if we have a file
+      let thumbnailUrl = null;
+      if (formData.thumbnailImage) {
+        const fileFormData = new FormData();
+        fileFormData.append('thumbnail', formData.thumbnailImage);
         
-        // Update in our local state
-        const updatedCourses = courses.map(course => 
-          course.id === editingCourse.id ? { ...course, ...formData } : course
-        );
-        setCourses(updatedCourses);
+        const uploadResponse = await axios.post(`${API_URL}/upload/thumbnail`, fileFormData, {
+          headers: { 
+            'Authorization': `Bearer ${auth.token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
         
-      } else {
-        // Create new course
-        // In a real implementation, you would send a POST request
-        // Example:
-        // const response = await fetch(`${config.apiUrl}/courses`, {
-        //   method: 'POST',
-        //   headers: { 
-        //     'Authorization': `Bearer ${auth.token}`,
-        //     'Content-Type': 'application/json'
-        //   },
-        //   body: JSON.stringify(formData)
-        // });
-        // const data = await response.json();
-        
-        // Add to our local state
-        const newCourse = {
-          id: courses.length + 1,
-          ...formData,
-          lessons: 0,
-          quizzes: 0
-        };
-        setCourses([...courses, newCourse]);
+        thumbnailUrl = uploadResponse.data.thumbnailUrl;
       }
       
+      // Prepare the course data
+      const courseData = {
+        title: formData.title,
+        code: formData.code,
+        instructorId: formData.instructorId,
+        departmentId: formData.departmentId || null,
+        description: formData.description,
+        startDate: formData.startDate || null,
+        endDate: formData.endDate || null,
+        status: formData.status,
+        thumbnailUrl: thumbnailUrl || (editingCourse ? editingCourse.thumbnail : null),
+        isFeatured: formData.isFeatured
+      };
+      
+      if (editingCourse) {
+        // Update existing course
+        await axios.put(`${API_URL}/courses/${editingCourse.id}`, courseData, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+      } else {
+        // Create new course
+        await axios.post(`${API_URL}/courses`, courseData, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+      }
+      
+      // Refresh the courses list
+      fetchCourses();
       handleCloseModal();
       
     } catch (err) {
       console.error("Error saving course:", err);
-      setError("Failed to save course. Please try again.");
+      setError(err.response?.data?.message || "Failed to save course. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -255,7 +223,7 @@ const AdminCourse = () => {
     }
   };
 
-  // Handle course removal (archive or delete)
+  // Handle course removal with real API
   const handleRemoveCourses = () => {
     if (selectedCourses.length === 0) {
       setError("Please select at least one course to delete.");
@@ -264,7 +232,7 @@ const AdminCourse = () => {
     
     // Check if any selected course is published
     const hasPublishedCourse = courses.some(
-      course => selectedCourses.includes(course.id) && course.status === 'Published'
+      course => selectedCourses.includes(course.id) && course.status.toLowerCase() === 'published'
     );
     
     if (hasPublishedCourse) {
@@ -274,29 +242,25 @@ const AdminCourse = () => {
     }
   };
 
-  // Perform the actual course deletion
+  // Perform the actual course deletion with batch API
   const performDeleteCourses = async () => {
     setIsLoading(true);
     
     try {
-      // In a real implementation, you would send DELETE requests
-      // Example:
-      // await Promise.all(selectedCourses.map(courseId => 
-      //   fetch(`${config.apiUrl}/courses/${courseId}`, {
-      //     method: 'DELETE',
-      //     headers: { Authorization: `Bearer ${auth.token}` }
-      //   })
-      // ));
+      // Use batch delete endpoint
+      await axios.post(`${API_URL}/courses/batch-delete`, 
+        { courseIds: selectedCourses },
+        { headers: { Authorization: `Bearer ${auth.token}` }}
+      );
       
-      // Update our local state
-      const remainingCourses = courses.filter(course => !selectedCourses.includes(course.id));
-      setCourses(remainingCourses);
+      // Refresh the courses list
+      fetchCourses();
       setSelectedCourses([]);
       setShowDeleteConfirm(false);
       
     } catch (err) {
       console.error("Error deleting courses:", err);
-      setError("Failed to delete courses. Please try again.");
+      setError(err.response?.data?.message || "Failed to delete courses. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -308,15 +272,9 @@ const AdminCourse = () => {
       return courses;
     }
     
-    // Map filter options to potential category/department names in your data
-    const filterMap = {
-      'Programming': ['Web Programming', 'Mobile Programming'],
-      'System Design': ['System Analysis & Design'],
-      'Graphic Design': ['Graphic Designing']
-    };
-    
+    // Filter by department name
     return courses.filter(course => 
-      filterMap[activeFilter]?.some(category => course.title.includes(category))
+      course.department === activeFilter
     );
   };
 
@@ -336,20 +294,21 @@ const AdminCourse = () => {
     setShowContextMenu({ visible: false, x: 0, y: 0, courseId: null });
   };
 
-  // Edit course
+  // Edit course with real data
   const handleEditCourse = (courseId) => {
     const course = courses.find(c => c.id === courseId);
     if (course) {
       setFormData({
         title: course.title,
-        code: course.code,
-        instructor: course.instructor,
-        department: course.department,
-        description: course.description,
-        startDate: course.startDate,
-        endDate: course.endDate,
+        code: course.code || '',
+        instructorId: course.instructorId || '',
+        departmentId: course.departmentId || '',
+        description: course.description || '',
+        startDate: course.startDate || '',
+        endDate: course.endDate || '',
         thumbnailImage: null, // Can't prefill the file input
-        status: course.status
+        status: course.status || 'Draft',
+        isFeatured: course.isFeatured || false
       });
       setEditingCourse(course);
       setShowAddModal(true);
@@ -357,31 +316,22 @@ const AdminCourse = () => {
     handleCloseContextMenu();
   };
 
-  // Archive course
+  // Archive course with real API
   const handleArchiveCourse = async (courseId) => {
     setIsLoading(true);
     
     try {
-      // In a real implementation, you would send a PATCH request
-      // Example:
-      // await fetch(`${config.apiUrl}/courses/${courseId}`, {
-      //   method: 'PATCH',
-      //   headers: { 
-      //     'Authorization': `Bearer ${auth.token}`,
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: JSON.stringify({ status: 'Archive' })
-      // });
+      // Use the archive endpoint
+      await axios.put(`${API_URL}/courses/${courseId}/archive`, {}, {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      });
       
-      // Update our local state
-      const updatedCourses = courses.map(course => 
-        course.id === courseId ? { ...course, status: 'Archive' } : course
-      );
-      setCourses(updatedCourses);
+      // Refresh the courses list
+      fetchCourses();
       
     } catch (err) {
       console.error("Error archiving course:", err);
-      setError("Failed to archive course. Please try again.");
+      setError(err.response?.data?.message || "Failed to archive course. Please try again.");
     } finally {
       setIsLoading(false);
       handleCloseContextMenu();
@@ -391,6 +341,18 @@ const AdminCourse = () => {
   // Close error alert
   const handleCloseError = () => {
     setError(null);
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not set';
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   // Listen for clicks outside the context menu
@@ -462,20 +424,24 @@ const AdminCourse = () => {
                   </div>
                   
                   <div className="course-thumbnail">
-                    {/* Replace the placeholder div with an icon */}
-                    {/* Assuming Font Awesome is available */}
-                    <i className="fas fa-book minimalist-icon"></i> 
-                    {/* Or use an SVG or another icon library */}
+                    {course.thumbnail ? (
+                      <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div className="placeholder-thumbnail"></div>
+                    )}
                   </div>
                   
                   <div className="course-info">
                     <h3>{course.title}</h3>
                     <div className="instructor-info">
-                      {/* Removed instructor icon span */}
                       {course.instructor}
                     </div>
                     <div className="course-meta">
-                      {course.lessons} lessons • {course.quizzes} quiz
+                      <span className={`status-badge ${course.status.toLowerCase()}`}>{course.status}</span>
+                      <span style={{ marginLeft: '10px' }}>{course.code}</span>
+                    </div>
+                    <div className="course-dates">
+                      <small>{formatDate(course.startDate)} - {formatDate(course.endDate)}</small>
                     </div>
                   </div>
                   
@@ -487,6 +453,12 @@ const AdminCourse = () => {
                   </button>
                 </div>
               ))}
+              
+              {getFilteredCourses().length === 0 && !isLoading && (
+                <div className="no-courses-message">
+                  <p>No courses found. {activeFilter !== 'All' ? 'Try changing the filter or ' : ''}Add a new course to get started.</p>
+                </div>
+              )}
             </div>
           )}
           
@@ -498,10 +470,17 @@ const AdminCourse = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="menu-item" onClick={() => handleEditCourse(showContextMenu.courseId)}>
-                Edit
+                <i className="menu-icon">✏️</i> Edit
               </div>
               <div className="menu-item" onClick={() => handleArchiveCourse(showContextMenu.courseId)}>
-                Archive
+                <i className="menu-icon">📦</i> Archive
+              </div>
+              <div className="menu-item" onClick={() => {
+                setSelectedCourses([showContextMenu.courseId]);
+                setShowDeleteConfirm(true);
+                handleCloseContextMenu();
+              }}>
+                <i className="menu-icon">🗑️</i> Delete
               </div>
             </div>
           )}
@@ -546,17 +525,17 @@ const AdminCourse = () => {
                   
                   <div className="form-row">
                     <div className="form-group">
-                      <label htmlFor="instructor">Assigned Instructor*</label>
+                      <label htmlFor="instructorId">Assigned Instructor*</label>
                       <select
-                        id="instructor"
-                        name="instructor"
-                        value={formData.instructor}
+                        id="instructorId"
+                        name="instructorId"
+                        value={formData.instructorId}
                         onChange={handleInputChange}
                         required
                       >
                         <option value="">Select an instructor</option>
                         {instructors.map(instructor => (
-                          <option key={instructor.id} value={instructor.name}>
+                          <option key={instructor.id} value={instructor.id}>
                             {instructor.name}
                           </option>
                         ))}
@@ -564,18 +543,17 @@ const AdminCourse = () => {
                     </div>
                     
                     <div className="form-group">
-                      <label htmlFor="department">Department*</label>
+                      <label htmlFor="departmentId">Department</label>
                       <select
-                        id="department"
-                        name="department"
-                        value={formData.department}
+                        id="departmentId"
+                        name="departmentId"
+                        value={formData.departmentId}
                         onChange={handleInputChange}
-                        required
                       >
                         <option value="">Select department</option>
                         {departments.map(dept => (
-                          <option key={dept} value={dept}>
-                            {dept}
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
                           </option>
                         ))}
                       </select>
@@ -631,7 +609,13 @@ const AdminCourse = () => {
                         onChange={handleFileChange}
                         accept="image/*"
                       />
-                      <small>No file chosen</small>
+                      <small>
+                        {formData.thumbnailImage 
+                          ? formData.thumbnailImage.name 
+                          : editingCourse && editingCourse.thumbnail 
+                            ? 'Current thumbnail will be preserved' 
+                            : 'No file chosen'}
+                      </small>
                     </div>
                     
                     <div className="form-group">
@@ -646,9 +630,21 @@ const AdminCourse = () => {
                         <option value="Draft">Draft</option>
                         <option value="Published">Published</option>
                         <option value="Upcoming">Upcoming</option>
-                        <option value="Archive">Archive</option>
+                        <option value="Archived">Archived</option>
                       </select>
                     </div>
+                  </div>
+                  
+                  <div className="form-group checkbox-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="isFeatured"
+                        checked={formData.isFeatured}
+                        onChange={handleInputChange}
+                      />
+                      Feature this course on the home page
+                    </label>
                   </div>
                   
                   <div className="form-actions">
@@ -674,7 +670,7 @@ const AdminCourse = () => {
                 </div>
                 
                 <div className="confirmation-message">
-                  <p>You are about to delete published course(s). This will remove all associated data and cannot be undone.</p>
+                  <p>You are about to delete {selectedCourses.length > 1 ? `${selectedCourses.length} courses` : 'a course'}. This will remove all associated data and cannot be undone.</p>
                   <p>Are you sure you want to continue?</p>
                 </div>
                 
