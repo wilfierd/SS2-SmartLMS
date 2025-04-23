@@ -462,20 +462,17 @@ const AdminCourse = () => {
                   </div>
                   
                   <div className="course-thumbnail">
-                    {/* In a real implementation, use the actual thumbnail */}
-                    <div className="placeholder-thumbnail">
-                      {course.title === 'Web Programming' || course.title === 'Mobile Programming' ? (
-                        <div className="avatar-blue"></div>
-                      ) : (
-                        <div className="avatar-grey"></div>
-                      )}
-                    </div>
+                    {/* Replace the placeholder div with an icon */}
+                    {/* Assuming Font Awesome is available */}
+                    <i className="fas fa-book minimalist-icon"></i> 
+                    {/* Or use an SVG or another icon library */}
                   </div>
                   
                   <div className="course-info">
                     <h3>{course.title}</h3>
                     <div className="instructor-info">
-                      <span className="instructor-icon">👨‍🏫</span> {course.instructor}
+                      {/* Removed instructor icon span */}
+                      {course.instructor}
                     </div>
                     <div className="course-meta">
                       {course.lessons} lessons • {course.quizzes} quiz
