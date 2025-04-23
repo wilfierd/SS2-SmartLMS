@@ -1,10 +1,10 @@
 
 // File: src/components/ChangePasswordModal.js
 import React, { useState, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 import './ChangePasswordModal.css';
-import config from '../config';
+import config from '../../config';
 
 const API_URL = config.apiUrl;
 

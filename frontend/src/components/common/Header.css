@@ -1,0 +1,166 @@
+/* src/components/admin/Header.css */
+:root {
+    --header-height: 70px;
+    --sidebar-width-collapsed: 80px;
+    --sidebar-width-expanded: 240px;
+    --transition-speed: 0.3s;
+    --content-padding: 30px;
+  }
+  
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px var(--content-padding);
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: var(--header-height);
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width-collapsed);
+    right: 0;
+    z-index: 100;
+    transition: left var(--transition-speed) ease;
+    box-sizing: border-box;
+  }
+  
+  body.sidebar-expanded .admin-header {
+    left: var(--sidebar-width-expanded);
+  }
+  
+  .header-title h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+  }
+  
+  .header-search {
+    display: flex;
+    background-color: #f5f7fa;
+    border-radius: 30px;
+    padding: 5px 10px;
+    width: 300px;
+  }
+  
+  .header-search input {
+    border: none;
+    background: none;
+    outline: none;
+    flex: 1;
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+  
+  .header-search button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .header-date {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .header-notifications {
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .notification-icon {
+    font-size: 20px;
+  }
+  
+  .notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .header-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .profile-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .logout-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .logout-btn:hover {
+    background-color: #c0392b;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 992px) {
+    .header-search {
+      width: 200px;
+    }
+    
+    .header-date {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .admin-header {
+      left: 0;
+      padding-left: 70px; /* Make room for mobile toggle button */
+    }
+    
+    body.sidebar-expanded .admin-header {
+      left: 0;
+    }
+    
+    .header-search {
+      display: none;
+    }
+    
+    .header-right {
+      gap: 15px;
+    }
+    
+    .profile-name {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .header-notifications {
+      display: none;
+    }
+    
+    .admin-header {
+      padding-left: 60px;
+      padding-right: 15px;
+    }
+  }

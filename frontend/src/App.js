@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import ForgotPassword from './components/ForgotPassword';
-import ResetPassword from './components/ResetPassword';
-import ChangePasswordModal from './components/ChangePasswordModal';
+import Login from './components/auth/Login';
+import RoleBasedRoute from './components/routing/RoleBasedRoute';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
+import ChangePasswordModal from './components/auth/ChangePasswordModal';
+import UnauthorizedPage from './components/common/UnauthorizedPage';
 import AuthContext from './context/AuthContext';
 import axios from 'axios';
 import './App.css';
@@ -22,8 +23,8 @@ function App() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Get API URL and Google Client ID from environment variables
-  const API_URL = config.apiUrl;
-  const googleClientId = config.googleClientId;
+  const API_URL = config.apiUrl ;
+  const googleClientId = config.googleClientId || '';
 
   // Set up axios defaults
   useEffect(() => {
@@ -169,9 +170,18 @@ function App() {
               <Route path="/login" element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
               <Route path="/forgot-password" element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
               <Route path="/reset-password/:token" element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
               
-              {/* Protected routes */}
-              <Route path="/dashboard" element={auth.isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
+              {/* Role-based routes */}
+              <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
+              <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
+              <Route path="/users" element={<RoleBasedRoute component="users" />} />
+              <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
+              <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
+              <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
+              
+                                      
+              {/* Default routes */}
               <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
               <Route path="*" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
             </Routes>
