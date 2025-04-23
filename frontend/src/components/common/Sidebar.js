@@ -1,18 +1,20 @@
 // src/components/admin/Sidebar.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Sidebar.css';
-
 const Sidebar = ({ activeItem }) => {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   
   // List of menu items with icons and labels
+  // List of menu items with icons and labels
   const menuItems = [
-    { id: 'dashboard', icon: '⬜', label: 'Dashboard' },
-    { id: 'users', icon: '👤', label: 'Users Management' },
-    { id: 'courses', icon: '📚', label: 'Courses Management' },
-    { id: 'report', icon: '📊', label: 'Reports & Analytics' },
-    { id: 'settings', icon: '⚙️', label: 'Settings' },
-    { id: 'messages', icon: '✉️', label: 'Messages' },
+    { id: 'dashboard', icon: '⬜', label: 'Dashboard', path: '/dashboard' },
+    { id: 'users', icon: '👤', label: 'Users Management', path: '/users' },
+    { id: 'courses', icon: '📚', label: 'Courses Management', path: '/courses' },
+    { id: 'report', icon: '📊', label: 'Reports & Analytics', path: '/reports' },
+    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings' },
+    { id: 'messages', icon: '✉️', label: 'Messages', path: '/messages' },
   ];
 
   // Toggle sidebar expansion
@@ -71,7 +73,7 @@ const Sidebar = ({ activeItem }) => {
               <li 
                 key={item.id} 
                 className={activeItem === item.id ? 'active' : ''}
-                onClick={() => console.log(`Navigate to ${item.id}`)}
+                onClick={() => navigate(item.path)} 
               >
                 <div className="sidebar-item">
                   <span className="sidebar-icon">
