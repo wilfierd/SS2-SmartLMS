@@ -117,35 +117,78 @@ app.get('/api/status', (req, res) => {
 });
 
 // Register a new admin or instructor (admin only)
+// Register a new user (admin only)
 app.post('/api/users/register', authenticateToken, authorize(['admin']), async (req, res) => {
-  try {
-    const { email, password, firstName, lastName, role } = req.body;
-    
-    if (!email || !password || !role || !['instructor', 'admin'].includes(role)) {
-      return res.status(400).json({ message: 'Invalid user data' });
+    try {
+      const { email, password, firstName, lastName, role, bio, googleId } = req.body;
+      
+      // Validate required fields
+      if (!email || !password || !firstName || !lastName || !role) {
+        return res.status(400).json({ message: 'Email, password, first name, last name, and role are required' });
+      }
+      
+      // Validate role
+      if (!['instructor', 'admin', 'student'].includes(role)) {
+        return res.status(400).json({ message: 'Invalid role. Must be: instructor, admin, or student' });
+      }
+      
+      // Check if user already exists
+      const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+      if (existingUsers.length > 0) {
+        return res.status(409).json({ message: 'User already exists' });
+      }
+      
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Set appropriate fields based on role
+      let query, params;
+      
+      if (role === 'student') {
+        // Student user
+        query = `INSERT INTO users 
+                (email, password, first_name, last_name, role, is_password_changed, google_id) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        
+        params = [
+          email, 
+          hashedPassword, 
+          firstName, 
+          lastName, 
+          role, 
+          false, // Students need to change password on first login
+          googleId || null
+        ];
+      } else {
+        // Admin or instructor user
+        query = `INSERT INTO users 
+                (email, password, first_name, last_name, role, is_password_changed, bio) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        
+        params = [
+          email, 
+          hashedPassword, 
+          firstName, 
+          lastName, 
+          role, 
+          true, // Admins and instructors don't need to change password
+          bio || null
+        ];
+      }
+      
+      // Create user
+      const [result] = await pool.query(query, params);
+      
+      res.status(201).json({ 
+        message: 'User created successfully', 
+        userId: result.insertId,
+        role: role
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
     }
-    
-    // Check if user already exists
-    const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (existingUsers.length > 0) {
-      return res.status(409).json({ message: 'User already exists' });
-    }
-    
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Create user
-    const [result] = await pool.query(
-      'INSERT INTO users (email, password, first_name, last_name, role, is_password_changed) VALUES (?, ?, ?, ?, ?, TRUE)',
-      [email, hashedPassword, firstName, lastName, role]
-    );
-    
-    res.status(201).json({ message: 'User created successfully', userId: result.insertId });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+  });
 
 // Student registration with Google OAuth
 app.post('/api/auth/google', async (req, res) => {
@@ -878,6 +921,313 @@ app.post('/api/upload/thumbnail', authenticateToken, upload.single('thumbnail'),
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Thêm các route này vào file server.js
+
+// ============ USER MANAGEMENT ROUTES ============
+
+// Get all users (admin only)
+app.get('/api/users', authenticateToken, authorize(['admin']), async (req, res) => {
+    try {
+      // Add pagination support
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 0; // 0 means no limit
+      const offset = (page - 1) * limit;
+      
+      // Add search and filter support
+      const searchQuery = req.query.search ? `%${req.query.search}%` : null;
+      const roleFilter = req.query.role && ['admin', 'instructor', 'student'].includes(req.query.role.toLowerCase()) 
+                         ? req.query.role.toLowerCase() 
+                         : null;
+      
+      // Build base query
+      let query = 'SELECT id, email, first_name, last_name, role, google_id, is_password_changed, created_at, updated_at FROM users';
+      const queryParams = [];
+      
+      // Add WHERE conditions if needed
+      if (searchQuery || roleFilter) {
+        query += ' WHERE';
+        
+        if (searchQuery) {
+          query += ' (email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)';
+          queryParams.push(searchQuery, searchQuery, searchQuery);
+        }
+        
+        if (roleFilter) {
+          if (searchQuery) query += ' AND';
+          query += ' role = ?';
+          queryParams.push(roleFilter);
+        }
+      }
+      
+      // Add pagination if limit is set
+      if (limit > 0) {
+        query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+        queryParams.push(limit, offset);
+      } else {
+        query += ' ORDER BY created_at DESC';
+      }
+      
+      // Get total count for pagination
+      let countQuery = 'SELECT COUNT(*) AS total FROM users';
+      const countParams = [];
+      
+      if (searchQuery || roleFilter) {
+        countQuery += ' WHERE';
+        
+        if (searchQuery) {
+          countQuery += ' (email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)';
+          countParams.push(searchQuery, searchQuery, searchQuery);
+        }
+        
+        if (roleFilter) {
+          if (searchQuery) countQuery += ' AND';
+          countQuery += ' role = ?';
+          countParams.push(roleFilter);
+        }
+      }
+      
+      // Execute queries
+      const [users] = await pool.query(query, queryParams);
+      const [countResult] = await pool.query(countQuery, countParams);
+      
+      // Return data with pagination info if requested
+      if (limit > 0) {
+        res.json({
+          users,
+          pagination: {
+            total: countResult[0].total,
+            page,
+            limit,
+            totalPages: Math.ceil(countResult[0].total / limit)
+          }
+        });
+      } else {
+        res.json(users);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Get single user by ID (admin only)
+  app.get('/api/users/:id', authenticateToken, authorize(['admin']), async (req, res) => {
+    try {
+      const [users] = await pool.query(
+        'SELECT id, email, first_name, last_name, role, google_id, is_password_changed, created_at, updated_at FROM users WHERE id = ?',
+        [req.params.id]
+      );
+      
+      if (users.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      res.json(users[0]);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Register/Create user - already exists in your code: 
+  // app.post('/api/users/register', authenticateToken, authorize(['admin']), async...)
+  
+  // Update user (admin only)
+  // Update user (admin only)
+app.put('/api/users/:id', authenticateToken, authorize(['admin']), async (req, res) => {
+    try {
+      const { email, firstName, lastName, role, password, bio, googleId } = req.body;
+      const userId = req.params.id;
+      
+      // Check if user exists
+      const [existingUsers] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+      if (existingUsers.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      const existingUser = existingUsers[0];
+      
+      // Validate role if provided
+      if (role && !['admin', 'instructor', 'student'].includes(role)) {
+        return res.status(400).json({ message: 'Invalid role' });
+      }
+      
+      // Check if attempting to modify the last admin
+      if (existingUser.role === 'admin' && role && role !== 'admin') {
+        const [adminCount] = await pool.query('SELECT COUNT(*) as count FROM users WHERE role = "admin"');
+        if (adminCount[0].count <= 1) {
+          return res.status(400).json({ message: 'Cannot change the last admin user\'s role' });
+        }
+      }
+      
+      // Start a transaction to handle potentially complex updates
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        
+        // Build update query based on provided fields
+        const updates = {};
+        
+        if (firstName !== undefined) {
+          updates.first_name = firstName;
+        }
+        
+        if (lastName !== undefined) {
+          updates.last_name = lastName;
+        }
+        
+        if (role !== undefined) {
+          updates.role = role;
+        }
+        
+        // Handle password update if provided
+        if (password) {
+          // Hash the new password
+          const hashedPassword = await bcrypt.hash(password, 10);
+          updates.password = hashedPassword;
+          
+          // Reset password changed flag for students, mark as changed for others
+          const newRole = role || existingUser.role;
+          updates.is_password_changed = newRole !== 'student';
+        }
+        
+        // Handle role-specific fields
+        const newRole = role || existingUser.role;
+        const isRoleChanged = role && role !== existingUser.role;
+        
+        if (newRole === 'student') {
+          // For students
+          if (googleId !== undefined) {
+            updates.google_id = googleId;
+          }
+          
+          // If changing to student, set bio to NULL
+          if (isRoleChanged && existingUser.role !== 'student') {
+            updates.bio = null;
+          }
+        } else {
+          // For admin or instructor
+          if (bio !== undefined) {
+            updates.bio = bio;
+          }
+          
+          // If changing to admin or instructor, set google_id to NULL
+          if (isRoleChanged && existingUser.role === 'student') {
+            updates.google_id = null;
+          }
+        }
+        
+        // Add updated_at timestamp
+        updates.updated_at = new Date();
+        
+        // Generate SQL query and params from updates object
+        if (Object.keys(updates).length === 0) {
+          return res.status(400).json({ message: 'No fields to update' });
+        }
+        
+        const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+        const values = Object.values(updates);
+        
+        const query = `UPDATE users SET ${fields} WHERE id = ?`;
+        values.push(userId);
+        
+        // Execute the update
+        await connection.query(query, values);
+        await connection.commit();
+        
+        res.json({ 
+          message: 'User updated successfully',
+          role: updates.role || existingUser.role
+        });
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  // Delete user (admin only)
+  app.delete('/api/users/:id', authenticateToken, authorize(['admin']), async (req, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Don't allow deleting yourself
+      if (req.user.id === parseInt(userId)) {
+        return res.status(400).json({ message: 'You cannot delete your own account' });
+      }
+      
+      // Check if user exists
+      const [existingUsers] = await pool.query('SELECT role FROM users WHERE id = ?', [userId]);
+      if (existingUsers.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Check if attempting to delete the last admin
+      if (existingUsers[0].role === 'admin') {
+        const [adminCount] = await pool.query('SELECT COUNT(*) as count FROM users WHERE role = "admin"');
+        if (adminCount[0].count <= 1) {
+          return res.status(400).json({ message: 'Cannot delete the last admin user' });
+        }
+      }
+      
+      // Delete the user
+      await pool.query('DELETE FROM users WHERE id = ?', [userId]);
+      
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  // Batch delete users (admin only)
+  app.post('/api/users/batch-delete', authenticateToken, authorize(['admin']), async (req, res) => {
+    const { userIds } = req.body;
+    
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ message: 'No user IDs provided' });
+    }
+    
+    const connection = await pool.getConnection();
+    
+    try {
+      await connection.beginTransaction();
+      
+      // Check if current user is in the list
+      if (userIds.includes(req.user.id)) {
+        throw new Error('You cannot delete your own account');
+      }
+      
+      // Check for the last admin
+      const [adminUsers] = await connection.query('SELECT id FROM users WHERE role = "admin"');
+      const adminIds = adminUsers.map(admin => admin.id);
+      
+      // If all admins are being deleted, prevent it
+      if (adminIds.length <= userIds.filter(id => adminIds.includes(parseInt(id))).length) {
+        throw new Error('Cannot delete all admin users');
+      }
+      
+      // Delete the users
+      const placeholders = userIds.map(() => '?').join(',');
+      await connection.query(`DELETE FROM users WHERE id IN (${placeholders})`, userIds);
+      
+      await connection.commit();
+      
+      res.json({ message: `${userIds.length} users deleted successfully` });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error batch deleting users:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    } finally {
+      connection.release();
+    }
+  });
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

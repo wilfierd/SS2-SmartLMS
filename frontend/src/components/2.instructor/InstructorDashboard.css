@@ -1,18 +1,26 @@
 /* src/components/instructor/InstructorDashboard.css */
-.instructor-dashboard-container {
+:root {
+    --sidebar-width-collapsed: 80px;
+    --sidebar-width-expanded: 240px;
+    --header-height: 70px;
+    --transition-speed: 0.3s;
+    --content-padding: 30px;
+  }
+  
+  .instructor-dashboard-container {
     display: flex;
     background-color: #f8f9fa;
     min-height: 100vh;
   }
   
-  .instructor-main-content {
-    flex: 1;
-    margin-left: 80px;
-    transition: margin-left 0.3s ease;
-  }
-  
   .instructor-dashboard-content {
-    padding: 90px 20px 20px;
+    padding-top: calc(var(--header-height) + 20px);
+    padding-left: var(--content-padding);
+    padding-right: var(--content-padding);
+    padding-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: padding var(--transition-speed) ease;
     max-width: 1200px;
     margin: 0 auto;
   }
@@ -464,6 +472,11 @@
   }
   
   @media (max-width: 768px) {
+    .instructor-dashboard-content {
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+    
     .table-header, .table-row {
       display: block;
       padding: 10px;

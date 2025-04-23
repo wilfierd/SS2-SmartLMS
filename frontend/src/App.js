@@ -12,6 +12,7 @@ import AuthContext from './context/AuthContext';
 import axios from 'axios';
 import './App.css';
 import config from './config';
+import SidebarManager from './components/common/SidebarManager';
 
 function App() {
   const [auth, setAuth] = useState({
@@ -23,8 +24,13 @@ function App() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Get API URL and Google Client ID from environment variables
-  const API_URL = config.apiUrl ;
+  const API_URL = config.apiUrl;
   const googleClientId = config.googleClientId || '';
+
+  // Initialize sidebar state manager
+  useEffect(() => {
+    SidebarManager.initialize();
+  }, []);
 
   // Set up axios defaults
   useEffect(() => {
@@ -142,6 +148,9 @@ function App() {
       token: null,
       isLoading: false
     });
+    
+    // Reset sidebar state before logout
+    SidebarManager.setExpanded(false);
   };
 
   const updateUser = (userData) => {
@@ -180,7 +189,6 @@ function App() {
               <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
               <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
               
-                                      
               {/* Default routes */}
               <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
               <Route path="*" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />

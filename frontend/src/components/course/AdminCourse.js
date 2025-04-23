@@ -17,6 +17,9 @@ const AdminCourse = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [editingCourse, setEditingCourse] = useState(null);
   const [showContextMenu, setShowContextMenu] = useState({ visible: false, x: 0, y: 0, courseId: null });
+  const [sidebarExpanded, setSidebarExpanded] = useState(
+    localStorage.getItem('sidebarExpanded') === 'true' || false
+  );
 
   // State for dropdowns
   const [instructors, setInstructors] = useState([]);
@@ -41,6 +44,30 @@ const AdminCourse = () => {
 
   // Dynamic filter options based on departments
   const [filterOptions, setFilterOptions] = useState(['All']);
+
+  // Listen for sidebar state changes
+  useEffect(() => {
+    const handleSidebarChange = () => {
+      setSidebarExpanded(localStorage.getItem('sidebarExpanded') === 'true');
+    };
+
+    window.addEventListener('storage', handleSidebarChange);
+
+    // Check sidebar state when component mounts
+    const checkSidebarState = () => {
+      const isSidebarExpanded = document.body.classList.contains('sidebar-expanded');
+      setSidebarExpanded(isSidebarExpanded);
+    };
+
+    // Add MutationObserver to watch for body class changes
+    const observer = new MutationObserver(checkSidebarState);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      window.removeEventListener('storage', handleSidebarChange);
+      observer.disconnect();
+    };
+  }, []);
 
   // Load all data on component mount
   useEffect(() => {
@@ -370,7 +397,7 @@ const AdminCourse = () => {
   }, [showContextMenu.visible]);
 
   return (
-    <div className="admin-course-management">
+    <div className={`admin-course-management ${sidebarExpanded ? 'sidebar-expanded' : ''}`}>
       <Sidebar activeItem="courses" />
       
       <div className="admin-main-content">

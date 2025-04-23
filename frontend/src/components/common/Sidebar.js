@@ -1,12 +1,13 @@
-// src/components/admin/Sidebar.js
+// src/components/common/Sidebar.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Sidebar.css';
+
 const Sidebar = ({ activeItem }) => {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(false);
+  const location = useLocation();
+  const [expanded, setExpanded] = useState(localStorage.getItem('sidebarExpanded') === 'true' || false);
   
-  // List of menu items with icons and labels
   // List of menu items with icons and labels
   const menuItems = [
     { id: 'dashboard', icon: '⬜', label: 'Dashboard', path: '/dashboard' },
@@ -17,14 +18,32 @@ const Sidebar = ({ activeItem }) => {
     { id: 'messages', icon: '✉️', label: 'Messages', path: '/messages' },
   ];
 
-  // Toggle sidebar expansion
-  const toggleSidebar = () => {
-    setExpanded(!expanded);
-    // Add or remove class to body element for responsive layout
-    if (!expanded) {
+  // Apply sidebar state to body class for responsive layout
+  useEffect(() => {
+    if (expanded) {
       document.body.classList.add('sidebar-expanded');
     } else {
       document.body.classList.remove('sidebar-expanded');
+    }
+    
+    // Save sidebar state to localStorage
+    localStorage.setItem('sidebarExpanded', expanded);
+  }, [expanded]);
+  
+  // Toggle sidebar expansion
+  const toggleSidebar = (e) => {
+    // Prevent event from bubbling to parent elements
+    e.stopPropagation();
+    setExpanded(!expanded);
+  };
+  
+  // Close sidebar when navigating on mobile
+  const handleNavigate = (path) => {
+    navigate(path);
+    
+    // Only collapse sidebar on navigation if on mobile
+    if (window.innerWidth <= 768) {
+      setExpanded(false);
     }
   };
   
@@ -42,17 +61,22 @@ const Sidebar = ({ activeItem }) => {
           expanded && 
           window.innerWidth <= 768) {
         setExpanded(false);
-        document.body.classList.remove('sidebar-expanded');
       }
     };
     
+    // Add event listener for clicks anywhere in the document
     document.addEventListener('mousedown', handleClickOutside);
+    
+    // When route changes, adjust sidebar on mobile
+    if (window.innerWidth <= 768) {
+      setExpanded(false);
+    }
     
     // Cleanup event listener on component unmount
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [expanded]);
+  }, [expanded, location.pathname]);
 
   return (
     <>
@@ -73,7 +97,7 @@ const Sidebar = ({ activeItem }) => {
               <li 
                 key={item.id} 
                 className={activeItem === item.id ? 'active' : ''}
-                onClick={() => navigate(item.path)} 
+                onClick={() => handleNavigate(item.path)} 
               >
                 <div className="sidebar-item">
                   <span className="sidebar-icon">
