@@ -529,31 +529,36 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 // Get all courses with instructor and department information
 app.get('/api/courses', authenticateToken, async (req, res) => {
   try {
+    console.log("Fetching courses...");
     const [courses] = await pool.query(`
       SELECT c.*, 
              u.first_name, u.last_name, 
              d.name as department_name
       FROM courses c
-      JOIN users u ON c.instructor_id = u.id
+      LEFT JOIN users u ON c.instructor_id = u.id
       LEFT JOIN departments d ON c.department_id = d.id
       ORDER BY c.created_at DESC
     `);
     
-    // Format the response
+    console.log(`Found ${courses.length} courses`);
+    const baseUrl = `http://${req.hostname}:${PORT}`;
+    // Format the response with null checks
     const formattedCourses = courses.map(course => ({
       id: course.id,
       code: course.code,
       title: course.title,
-      instructor: `${course.first_name} ${course.last_name}`,
+      instructor: course.first_name && course.last_name ? `${course.first_name} ${course.last_name}` : 'Unknown',
       instructorId: course.instructor_id,
       department: course.department_name,
       departmentId: course.department_id,
       description: course.description,
       startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
       endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
-      status: course.status.charAt(0).toUpperCase() + course.status.slice(1), // Capitalize status
-      thumbnail: course.thumbnail_url,
-      isFeatured: course.is_featured === 1 // Convert to boolean
+      status: course.status ? (course.status.charAt(0).toUpperCase() + course.status.slice(1)) : 'Draft',
+      thumbnail: course.thumbnail_url ? 
+        (course.thumbnail_url.startsWith('http') ? course.thumbnail_url : `${baseUrl}${course.thumbnail_url}`) 
+        : null,
+      isFeatured: course.is_featured === 1
     }));
     
     res.json(formattedCourses);
@@ -832,6 +837,51 @@ app.post('/api/courses/batch-delete', authenticateToken, authorize(['admin']), a
     connection.release();
   }
 });
+
+// File upload middleware
+const multer = require('multer');
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)){
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Thumbnail upload endpoint
+app.post('/api/upload/thumbnail', authenticateToken, upload.single('thumbnail'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    
+    // Generate unique filename
+    const filename = Date.now() + '-' + req.file.originalname;
+    const newPath = path.join(uploadsDir, filename);
+    
+    // Move file to permanent location
+    fs.renameSync(req.file.path, newPath);
+    
+    // Create FULL URL path for the file (with server address)
+    const baseUrl = `http://${req.hostname}:${PORT}`;
+    const thumbnailUrl = `${baseUrl}/uploads/${filename}`;
+    
+    res.json({ 
+      message: 'File uploaded successfully',
+      thumbnailUrl 
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
