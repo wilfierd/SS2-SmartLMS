@@ -6,22 +6,21 @@ import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 import './Login.css';
 import config from '../../config';
+import notification from '../../utils/notification'; // Import notification utility
 
 const Login = () => {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Get API URL and Google Client ID from environment variables
   const API_URL = config.apiUrl;
-  const googleClientId = config.googleClientId;;
+  const googleClientId = config.googleClientId;
 
   // Regular login
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     try {
@@ -33,6 +32,7 @@ const Login = () => {
 
       setIsLoading(false);
       console.log('Login successful');
+      notification.success('Login successful'); // Success toast
       login(response.data.user, response.data.token);
     } catch (error) {
       setIsLoading(false);
@@ -51,13 +51,12 @@ const Login = () => {
         errorMessage = 'Server did not respond. Please check your connection.';
       }
       
-      setError(errorMessage);
+      notification.error(errorMessage); // Error toast
     }
   };
 
   // Google OAuth login/registration
   const handleGoogleSuccess = async (credentialResponse) => {
-    setError('');
     setIsLoading(true);
 
     try {
@@ -68,6 +67,7 @@ const Login = () => {
 
       setIsLoading(false);
       console.log('Google login processed by backend');
+      notification.success('Google login successful'); // Success toast
       login(response.data.user, response.data.token);
     } catch (error) {
       setIsLoading(false);
@@ -83,20 +83,19 @@ const Login = () => {
         errorMessage = 'Server did not respond. Please check your connection.';
       }
       
-      setError(errorMessage);
+      notification.error(errorMessage); // Error toast
     }
   };
 
   const handleGoogleFailure = (error) => {
     console.error('Google sign-in error:', error);
-    setError('Google sign-in was unsuccessful. Please try again.');
+    notification.error('Google sign-in was unsuccessful. Please try again.'); // Error toast
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
         <h1>LMS Login</h1>
-        {error && <div className="error-message">{error}</div>}
         
         <form onSubmit={handleLogin}>
           <div className="form-group">

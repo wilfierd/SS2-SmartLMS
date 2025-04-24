@@ -5,11 +5,11 @@ import Sidebar from '../common/Sidebar';
 import Header from '../common/Header';
 import axios from 'axios';
 import config from '../../config';
+import notification from '../../utils/notification'; // Import notification utility
 
 const AdminCourse = () => {
   const { auth } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [courses, setCourses] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -89,7 +89,6 @@ const AdminCourse = () => {
   // Fetch courses from the API
   const fetchCourses = async () => {
     setIsLoading(true);
-    setError(null);
     
     try {
       const response = await axios.get(`${API_URL}/courses`, {
@@ -100,7 +99,7 @@ const AdminCourse = () => {
       setIsLoading(false);
     } catch (err) {
       console.error("Error fetching courses:", err);
-      setError("Failed to load courses. Please try again.");
+      notification.error("Failed to load courses. Please try again."); // Error toast
       setIsLoading(false);
     }
   };
@@ -115,7 +114,7 @@ const AdminCourse = () => {
       setInstructors(response.data);
     } catch (err) {
       console.error("Error fetching instructors:", err);
-      // Don't set error here to avoid overriding course errors
+      notification.error("Failed to load instructors list."); // Error toast
     }
   };
 
@@ -129,6 +128,7 @@ const AdminCourse = () => {
       setDepartments(response.data);
     } catch (err) {
       console.error("Error fetching departments:", err);
+      notification.error("Failed to load departments list."); // Error toast
     }
   };
 
@@ -187,6 +187,9 @@ const AdminCourse = () => {
     setIsLoading(true);
     
     try {
+      // Show loading toast
+      const loadingToastId = notification.loading(editingCourse ? 'Updating course...' : 'Creating course...');
+      
       // Handle file upload first if we have a file
       let thumbnailUrl = null;
       if (formData.thumbnailImage) {
@@ -222,11 +225,15 @@ const AdminCourse = () => {
         await axios.put(`${API_URL}/courses/${editingCourse.id}`, courseData, {
           headers: { Authorization: `Bearer ${auth.token}` }
         });
+        notification.dismiss(loadingToastId); // Dismiss loading toast
+        notification.success('Course updated successfully'); // Success toast
       } else {
         // Create new course
         await axios.post(`${API_URL}/courses`, courseData, {
           headers: { Authorization: `Bearer ${auth.token}` }
         });
+        notification.dismiss(loadingToastId); // Dismiss loading toast
+        notification.success('Course created successfully'); // Success toast
       }
       
       // Refresh the courses list
@@ -235,7 +242,8 @@ const AdminCourse = () => {
       
     } catch (err) {
       console.error("Error saving course:", err);
-      setError(err.response?.data?.message || "Failed to save course. Please try again.");
+      const errorMessage = err.response?.data?.message || "Failed to save course. Please try again.";
+      notification.error(errorMessage); // Error toast
     } finally {
       setIsLoading(false);
     }
@@ -253,7 +261,7 @@ const AdminCourse = () => {
   // Handle course removal with real API
   const handleRemoveCourses = () => {
     if (selectedCourses.length === 0) {
-      setError("Please select at least one course to delete.");
+      notification.warning("Please select at least one course to delete."); // Warning toast
       return;
     }
     
@@ -274,11 +282,17 @@ const AdminCourse = () => {
     setIsLoading(true);
     
     try {
+      // Show loading toast
+      const loadingToastId = notification.loading('Deleting courses...');
+      
       // Use batch delete endpoint
       await axios.post(`${API_URL}/courses/batch-delete`, 
         { courseIds: selectedCourses },
         { headers: { Authorization: `Bearer ${auth.token}` }}
       );
+      
+      notification.dismiss(loadingToastId); // Dismiss loading toast
+      notification.success(`${selectedCourses.length} course(s) deleted successfully`); // Success toast
       
       // Refresh the courses list
       fetchCourses();
@@ -287,7 +301,8 @@ const AdminCourse = () => {
       
     } catch (err) {
       console.error("Error deleting courses:", err);
-      setError(err.response?.data?.message || "Failed to delete courses. Please try again.");
+      const errorMessage = err.response?.data?.message || "Failed to delete courses. Please try again.";
+      notification.error(errorMessage); // Error toast
     } finally {
       setIsLoading(false);
     }
@@ -348,26 +363,28 @@ const AdminCourse = () => {
     setIsLoading(true);
     
     try {
+      // Show loading toast
+      const loadingToastId = notification.loading('Archiving course...');
+      
       // Use the archive endpoint
       await axios.put(`${API_URL}/courses/${courseId}/archive`, {}, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
+      
+      notification.dismiss(loadingToastId); // Dismiss loading toast
+      notification.success('Course archived successfully'); // Success toast
       
       // Refresh the courses list
       fetchCourses();
       
     } catch (err) {
       console.error("Error archiving course:", err);
-      setError(err.response?.data?.message || "Failed to archive course. Please try again.");
+      const errorMessage = err.response?.data?.message || "Failed to archive course. Please try again.";
+      notification.error(errorMessage); // Error toast
     } finally {
       setIsLoading(false);
       handleCloseContextMenu();
     }
-  };
-
-  // Close error alert
-  const handleCloseError = () => {
-    setError(null);
   };
 
   // Format date for display
@@ -404,13 +421,6 @@ const AdminCourse = () => {
         <Header title="Course Catalog" />
         
         <div className="course-catalog-content">
-          {error && (
-            <div className="error-message">
-              {error}
-              <button className="close-button" onClick={handleCloseError}>×</button>
-            </div>
-          )}
-          
           <div className="filter-options">
             {filterOptions.map(filter => (
               <button
@@ -427,7 +437,7 @@ const AdminCourse = () => {
             <button className="add-btn" onClick={handleAddNewCourse}>
               <span className="icon">+</span> Add New Course
             </button>
-            <button className="remove-btn" onClick={handleRemoveCourses} disabled={selectedCourses.length === 0}>
+            <button className="remove-btn" onClick={handleRemoveCourses}>
               Remove {selectedCourses.length > 0 ? `(${selectedCourses.length})` : ''}
             </button>
           </div>

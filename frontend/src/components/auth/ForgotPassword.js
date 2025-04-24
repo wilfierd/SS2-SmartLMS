@@ -4,13 +4,12 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './ForgotPassword.css';
 import config from '../../config';
+import notification from '../../utils/notification'; // Import notification utility
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState('');
 
   // Get API URL from environment variables
   const API_URL = config.apiUrl;
@@ -19,19 +18,18 @@ const ForgotPassword = () => {
     e.preventDefault();
     
     // Reset states
-    setError('');
-    setMessage('');
     setIsLoading(true);
     
     try {
       // Send forgot password request
       const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
-      setMessage(response.data.message);
+      notification.success(response.data.message); // Success toast
       setIsSuccess(true);
       setEmail(''); // Clear the form
     } catch (error) {
       console.error('Forgot password error:', error);
-      setError(error.response?.data?.message || 'An error occurred. Please try again.');
+      const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
+      notification.error(errorMessage); // Error toast
       setIsSuccess(false);
     } finally {
       setIsLoading(false);
@@ -45,9 +43,6 @@ const ForgotPassword = () => {
         <p className="instruction">
           Enter your email address and we'll send you a link to reset your password.
         </p>
-        
-        {error && <div className="error-message">{error}</div>}
-        {message && <div className="success-message">{message}</div>}
         
         {!isSuccess && (
           <form onSubmit={handleSubmit}>

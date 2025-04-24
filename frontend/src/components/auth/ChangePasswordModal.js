@@ -1,10 +1,10 @@
-
 // File: src/components/ChangePasswordModal.js
 import React, { useState, useContext } from 'react';
 import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 import './ChangePasswordModal.css';
 import config from '../../config';
+import notification from '../../utils/notification'; // Import notification utility
 
 const API_URL = config.apiUrl;
 
@@ -13,22 +13,19 @@ const ChangePasswordModal = ({ onClose, forceChange }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    setError('');
     
     // Validation
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.');
+      notification.error('New passwords do not match.'); // Error toast
       return;
     }
     
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters long.');
+      notification.error('New password must be at least 8 characters long.'); // Error toast
       return;
     }
     
@@ -49,7 +46,7 @@ const ChangePasswordModal = ({ onClose, forceChange }) => {
       );
       
       setIsLoading(false);
-      setSuccess('Password changed successfully!');
+      notification.success('Password changed successfully!'); // Success toast
       
       // Update user in context
       const updatedUser = {
@@ -65,7 +62,8 @@ const ChangePasswordModal = ({ onClose, forceChange }) => {
       }
     } catch (error) {
       setIsLoading(false);
-      setError(error.response?.data?.message || 'Failed to change password. Please try again.');
+      const errorMessage = error.response?.data?.message || 'Failed to change password. Please try again.';
+      notification.error(errorMessage); // Error toast
     }
   };
 
@@ -79,9 +77,6 @@ const ChangePasswordModal = ({ onClose, forceChange }) => {
             For security reasons, you must change your default password before continuing.
           </p>
         )}
-        
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
         
         <form onSubmit={handleChangePassword}>
           <div className="form-group">

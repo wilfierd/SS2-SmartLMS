@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Toaster } from 'react-hot-toast'; // Add this import
 import Login from './components/auth/Login';
 import RoleBasedRoute from './components/routing/RoleBasedRoute';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -172,6 +173,9 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthContext.Provider value={{ auth, login, logout, updateUser }}>
+        {/* Add Toaster component here */}
+        <Toaster />
+        
         <Router>
           <div className="App">
             <Routes>

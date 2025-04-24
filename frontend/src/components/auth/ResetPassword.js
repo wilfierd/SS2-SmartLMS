@@ -4,6 +4,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './ResetPassword.css';
 import config from '../../config';
+import notification from '../../utils/notification'; // Import notification utility
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -13,8 +14,6 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
   const [isTokenValid, setIsTokenValid] = useState(false);
   const [userEmail, setUserEmail] = useState('');
 
@@ -31,11 +30,11 @@ const ResetPassword = () => {
           setIsTokenValid(true);
           setUserEmail(response.data.user.email);
         } else {
-          setError('Invalid or expired reset link. Please request a new one.');
+          notification.error('Invalid or expired reset link. Please request a new one.'); // Error toast
         }
       } catch (error) {
         console.error('Token verification error:', error);
-        setError('Invalid or expired reset link. Please request a new one.');
+        notification.error('Invalid or expired reset link. Please request a new one.'); // Error toast
       } finally {
         setIsLoading(false);
       }
@@ -44,7 +43,7 @@ const ResetPassword = () => {
     if (token) {
       verifyToken();
     } else {
-      setError('Reset token is missing.');
+      notification.error('Reset token is missing.'); // Error toast
       setIsLoading(false);
     }
   }, [token, API_URL]);
@@ -52,18 +51,14 @@ const ResetPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Reset states
-    setError('');
-    setMessage('');
-    
     // Validate passwords
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      notification.error('Password must be at least 8 characters long.'); // Error toast
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+      notification.error('Passwords do not match.'); // Error toast
       return;
     }
     
@@ -76,7 +71,7 @@ const ResetPassword = () => {
         newPassword
       });
       
-      setMessage(response.data.message);
+      notification.success(response.data.message); // Success toast
       
       // Redirect to login page after 3 seconds
       setTimeout(() => {
@@ -84,7 +79,8 @@ const ResetPassword = () => {
       }, 3000);
     } catch (error) {
       console.error('Password reset error:', error);
-      setError(error.response?.data?.message || 'An error occurred. Please try again.');
+      const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
+      notification.error(errorMessage); // Error toast
     } finally {
       setIsSubmitting(false);
     }
@@ -106,10 +102,7 @@ const ResetPassword = () => {
       <div className="reset-password-card">
         <h1>Reset Password</h1>
         
-        {error && <div className="error-message">{error}</div>}
-        {message && <div className="success-message">{message}</div>}
-        
-        {isTokenValid && !message && (
+        {isTokenValid && !isSubmitting && (
           <>
             <p className="instruction">
               Create a new password for <strong>{userEmail}</strong>
@@ -151,7 +144,7 @@ const ResetPassword = () => {
           </>
         )}
         
-        {(!isTokenValid || message) && (
+        {(!isTokenValid || isSubmitting) && (
           <div className="links">
             <Link to="/forgot-password" className="request-new-link">
               Request a new reset link
