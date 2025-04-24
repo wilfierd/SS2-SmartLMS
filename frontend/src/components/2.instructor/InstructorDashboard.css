@@ -2,9 +2,7 @@
 :root {
     --sidebar-width-collapsed: 80px;
     --sidebar-width-expanded: 240px;
-    --header-height: 70px;
     --transition-speed: 0.3s;
-    --content-padding: 30px;
   }
   
   .instructor-dashboard-container {
@@ -13,16 +11,31 @@
     min-height: 100vh;
   }
   
+  .instructor-main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width-collapsed);
+    transition: margin-left var(--transition-speed) ease;
+  }
+  
+  body.sidebar-expanded .instructor-main-content {
+    margin-left: var(--sidebar-width-expanded);
+  }
+  
   .instructor-dashboard-content {
-    padding-top: calc(var(--header-height) + 20px);
-    padding-left: var(--content-padding);
-    padding-right: var(--content-padding);
-    padding-bottom: 20px;
-    width: 100%;
-    box-sizing: border-box;
-    transition: padding var(--transition-speed) ease;
+    padding: 90px 20px 20px;
     max-width: 1200px;
     margin: 0 auto;
+  }
+  
+  /* When in mobile view */
+  @media (max-width: 768px) {
+    .instructor-main-content {
+      margin-left: 0;
+    }
+    
+    body.sidebar-expanded .instructor-main-content {
+      margin-left: 0;
+    }
   }
   
   .loading-spinner {
@@ -472,11 +485,6 @@
   }
   
   @media (max-width: 768px) {
-    .instructor-dashboard-content {
-      padding-left: 15px;
-      padding-right: 15px;
-    }
-    
     .table-header, .table-row {
       display: block;
       padding: 10px;
