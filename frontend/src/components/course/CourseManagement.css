@@ -707,3 +707,193 @@
       flex: 0 0 auto;
     }
   }
+
+
+  /* src/components/course/CourseManagement.css */
+/* Extending existing AdminCourse.css with additional styles for student and instructor functionality */
+
+.course-tabs-container {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.course-tab {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.course-tab:hover {
+  color: #3498db;
+}
+
+.course-tab.active {
+  color: #3498db;
+  border-bottom-color: #3498db;
+}
+
+/* Enrollment button for students */
+.enroll-btn {
+  display: block;
+  width: 80%;
+  margin: 15px auto 0;
+  padding: 10px 0;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-align: center;
+}
+
+/* Leave course button for students */
+.leave-course-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+  margin-top: 15px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-align: center;
+}
+
+.leave-course-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Course actions area */
+.course-actions {
+  margin-top: 15px;
+}
+
+/* Student course enrollment badge */
+.enrolled-badge {
+  display: inline-block;
+  background-color: #2ecc71;
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+/* Enrollment key field in course form */
+.enrollment-key-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.enrollment-key-section h3 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+/* Empty state when no courses are enrolled */
+.empty-enrolled-courses {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.empty-enrolled-courses h3 {
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.empty-enrolled-courses p {
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.browse-courses-link {
+  display: inline-block;
+  background-color: #3498db;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.browse-courses-link:hover {
+  background-color: #2980b9;
+}
+
+/* Progress indicator for enrolled courses */
+.course-progress {
+  margin: 15px 0;
+}
+
+.progress-bar-container {
+  height: 8px;
+  background-color: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-filled {
+  height: 100%;
+  background-color: #3498db;
+}
+
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #777;
+  margin-top: 5px;
+}
+
+/* Instructor label for course cards */
+.instructor-label {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  color: #7f8c8d;
+  font-size: 13px;
+}
+
+.instructor-label .icon {
+  margin-right: 5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .course-tabs-container {
+    flex-direction: column;
+    border-bottom: none;
+  }
+  
+  .course-tab {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  
+  .course-tab.active {
+    border-color: #3498db;
+    background-color: rgba(52, 152, 219, 0.1);
+  }
+}

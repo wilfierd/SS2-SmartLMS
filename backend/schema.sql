@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS departments (
 CREATE TABLE IF NOT EXISTS courses (
   id INT AUTO_INCREMENT PRIMARY KEY,
   code VARCHAR(20) NULL,
+  enrollment_key VARCHAR(255) NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   instructor_id INT NOT NULL,

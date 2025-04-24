@@ -664,7 +664,8 @@ app.post('/api/courses', authenticateToken, authorize(['admin']), async (req, re
       endDate, 
       status, 
       thumbnailUrl,
-      isFeatured
+      isFeatured,
+      enrollmentKey
     } = req.body;
     
     // Validate required fields
@@ -686,9 +687,10 @@ app.post('/api/courses', authenticateToken, authorize(['admin']), async (req, re
         end_date, 
         status, 
         thumbnail_url,
-        is_featured
+        is_featured,
+        enrollment_key
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title, 
         code,
@@ -699,7 +701,8 @@ app.post('/api/courses', authenticateToken, authorize(['admin']), async (req, re
         endDate || null, 
         normalizedStatus, 
         thumbnailUrl || null,
-        isFeatured ? 1 : 0
+        isFeatured ? 1 : 0,
+        enrollmentKey || null
       ]
     );
     
@@ -714,7 +717,7 @@ app.post('/api/courses', authenticateToken, authorize(['admin']), async (req, re
 });
 
 // Update a course
-app.put('/api/courses/:id', authenticateToken, authorize(['admin']), async (req, res) => {
+app.put('/api/courses/:id', authenticateToken, authorize(['admin', 'instructor']), async (req, res) => {
   try {
     const {
       title, 
@@ -726,16 +729,44 @@ app.put('/api/courses/:id', authenticateToken, authorize(['admin']), async (req,
       endDate, 
       status, 
       thumbnailUrl,
-      isFeatured
+      isFeatured,
+      enrollmentKey // New field
     } = req.body;
     
     // Validate required fields
-    if (!title || !instructorId || !description || !code) {
-      return res.status(400).json({ message: 'Title, code, instructor, and description are required' });
+    if (!title || !description || !code) {
+      return res.status(400).json({ message: 'Title, code, and description are required' });
+    }
+    
+    // For instructors, verify they own this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [req.params.id, req.user.id]
+      );
+      
+      if (courses.length === 0) {
+        return res.status(403).json({ message: 'You can only update your own courses' });
+      }
     }
     
     // Normalize status
     const normalizedStatus = status ? status.toLowerCase() : 'draft';
+    
+    const updateFields = [
+      title, 
+      code,
+      req.user.role === 'instructor' ? req.user.id : instructorId,
+      departmentId || null,
+      description, 
+      startDate || null, 
+      endDate || null, 
+      normalizedStatus, 
+      thumbnailUrl || null,
+      isFeatured ? 1 : 0,
+      enrollmentKey || null, // Update enrollment key
+      req.params.id
+    ];
     
     await pool.query(
       `UPDATE courses 
@@ -749,21 +780,10 @@ app.put('/api/courses/:id', authenticateToken, authorize(['admin']), async (req,
            status = ?, 
            thumbnail_url = ?,
            is_featured = ?,
+           enrollment_key = ?,
            updated_at = NOW() 
        WHERE id = ?`,
-      [
-        title, 
-        code,
-        instructorId, 
-        departmentId || null,
-        description, 
-        startDate || null, 
-        endDate || null, 
-        normalizedStatus, 
-        thumbnailUrl || null,
-        isFeatured ? 1 : 0,
-        req.params.id
-      ]
+      updateFields
     );
     
     res.json({ message: 'Course updated successfully' });
@@ -883,6 +903,7 @@ app.post('/api/courses/batch-delete', authenticateToken, authorize(['admin']), a
 
 // File upload middleware
 const multer = require('multer');
+const e = require('express');
 const upload = multer({
   dest: 'uploads/',
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
@@ -1231,6 +1252,122 @@ app.put('/api/users/:id', authenticateToken, authorize(['admin']), async (req, r
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+// ===============STUDENT COURSE ENDPOINT================= //
+
+// Fetch enrolled courses for current student
+app.get('/api/enrollments/my-courses', authenticateToken, authorize(['student']), async (req, res) => {
+  try {
+    const [enrollments] = await pool.query(`
+      SELECT c.*, u.first_name, u.last_name, e.enrollment_date, e.completion_status
+      FROM enrollments e
+      JOIN courses c ON e.course_id = c.id
+      JOIN users u ON c.instructor_id = u.id
+      WHERE e.student_id = ?
+      ORDER BY e.enrollment_date DESC
+    `, [req.user.id]);
+    
+    // Format response
+    const formattedCourses = enrollments.map(course => ({
+      id: course.id,
+      code: course.code,
+      title: course.title,
+      instructor: `${course.first_name} ${course.last_name}`,
+      instructorId: course.instructor_id,
+      department: course.department_id,
+      description: course.description,
+      startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
+      endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
+      status: course.status.charAt(0).toUpperCase() + course.status.slice(1),
+      thumbnail: course.thumbnail_url,
+      enrollmentDate: course.enrollment_date,
+      completionStatus: course.completion_status
+    }));
+    
+    res.json(formattedCourses);
+  } catch (error) {
+    console.error('Error fetching enrolled courses:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Enroll in a course with optional enrollment key
+app.post('/api/enrollments/enroll', authenticateToken, authorize(['student']), async (req, res) => {
+  try {
+    const { courseId, enrollmentKey } = req.body;
+    const studentId = req.user.id;
+    
+    // Validate courseId
+    if (!courseId) {
+      return res.status(400).json({ message: 'Course ID is required' });
+    }
+    
+    // Check if course exists and get its details
+    const [courses] = await pool.query('SELECT * FROM courses WHERE id = ?', [courseId]);
+    
+    if (courses.length === 0) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    
+    const course = courses[0];
+    
+    // Check if student is already enrolled
+    const [existingEnrollments] = await pool.query(
+      'SELECT * FROM enrollments WHERE student_id = ? AND course_id = ?',
+      [studentId, courseId]
+    );
+    
+    if (existingEnrollments.length > 0) {
+      return res.status(400).json({ message: 'You are already enrolled in this course' });
+    }
+    
+    // Check if course requires enrollment key
+    if (course.enrollment_key && course.enrollment_key !== enrollmentKey) {
+      return res.status(403).json({ message: 'Invalid enrollment key' });
+    }
+    
+    // Enroll the student
+    await pool.query(
+      'INSERT INTO enrollments (student_id, course_id, enrollment_date, completion_status) VALUES (?, ?, NOW(), "not_started")',
+      [studentId, courseId]
+    );
+    
+    res.status(201).json({ message: 'Successfully enrolled in course' });
+  } catch (error) {
+    console.error('Error enrolling in course:', error);
+    res.status(500).json({ message: 'Server error', details: error.message });
+  }
+});
+
+// Leave/unenroll from a course
+app.delete('/api/enrollments/leave/:courseId', authenticateToken, authorize(['student']), async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const studentId = req.user.id;
+    
+    // Check if student is enrolled in the course
+    const [enrollments] = await pool.query(
+      'SELECT * FROM enrollments WHERE student_id = ? AND course_id = ?',
+      [studentId, courseId]
+    );
+    
+    if (enrollments.length === 0) {
+      return res.status(404).json({ message: 'You are not enrolled in this course' });
+    }
+    
+    // Remove enrollment
+    await pool.query(
+      'DELETE FROM enrollments WHERE student_id = ? AND course_id = ?',
+      [studentId, courseId]
+    );
+    
+    res.json({ message: 'Successfully left the course' });
+  } catch (error) {
+    console.error('Error leaving course:', error);
+    res.status(500).json({ message: 'Server error', details: error.message });
+  }
+});
 
 // Start server
 app.listen(PORT, () => {
