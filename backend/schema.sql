@@ -299,39 +299,39 @@ VALUES
 ('Mobile Development', 'Courses related to mobile app development for iOS and Android');
 
 -- Insert Courses
-INSERT INTO courses (code, title, description, instructor_id, department_id, status, start_date, end_date, is_featured)
+INSERT INTO courses (code, enrollment_key, title, description, instructor_id, department_id, status, start_date, end_date, is_featured)
 VALUES
-('CS101', 'Introduction to Programming', 'Learn the fundamentals of programming with JavaScript. This course covers variables, control structures, functions, and basic DOM manipulation.', 
+('CS101', 'enrollment_key_1', 'Introduction to Programming', 'Learn the fundamentals of programming with JavaScript. This course covers variables, control structures, functions, and basic DOM manipulation.', 
  (SELECT id FROM users WHERE email = 'john.smith@lms.com'), 
  (SELECT id FROM departments WHERE name = 'Computer Science'),
  'published', '2023-01-15', '2023-04-15', TRUE),
  
-('WD101', 'Web Development Basics', 'Introduction to HTML, CSS, and modern web development. Build responsive websites from scratch and learn about web standards.', 
+('WD101', 'enrollment_key_2', 'Web Development Basics', 'Introduction to HTML, CSS, and modern web development. Build responsive websites from scratch and learn about web standards.', 
  (SELECT id FROM users WHERE email = 'john.smith@lms.com'), 
  (SELECT id FROM departments WHERE name = 'Web Development'),
  'published', '2023-02-01', '2023-05-01', TRUE),
  
-('DB101', 'Database Design', 'Learn how to design and implement relational databases. Topics include ER diagrams, normalization, SQL, and database optimization.', 
+('DB101', 'enrollment_key_3', 'Database Design', 'Learn how to design and implement relational databases. Topics include ER diagrams, normalization, SQL, and database optimization.', 
  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com'), 
  (SELECT id FROM departments WHERE name = 'Computer Science'),
  'published', '2023-01-10', '2023-04-10', FALSE),
  
-('JS201', 'Advanced JavaScript', 'Deep dive into JavaScript frameworks and modern practices. Learn about closures, async programming, and front-end frameworks.', 
+('JS201', 'enrollment_key_4', 'Advanced JavaScript', 'Deep dive into JavaScript frameworks and modern practices. Learn about closures, async programming, and front-end frameworks.', 
  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com'), 
  (SELECT id FROM departments WHERE name = 'Web Development'),
  'published', '2023-03-01', '2023-06-01', TRUE),
  
-('MD101', 'Mobile App Development', 'Introduction to building mobile applications with React Native. Create cross-platform mobile apps with JavaScript.', 
+('MD101', 'enrollment_key_5', 'Mobile App Development', 'Introduction to building mobile applications with React Native. Create cross-platform mobile apps with JavaScript.', 
  (SELECT id FROM users WHERE email = 'michael.brown@lms.com'), 
  (SELECT id FROM departments WHERE name = 'Mobile Development'),
  'published', '2023-02-15', '2023-05-15', FALSE),
  
-('AI101', 'Artificial Intelligence Fundamentals', 'Understand the core concepts of AI including machine learning, neural networks, and natural language processing.', 
+('AI101', 'enrollment_key_6', 'Artificial Intelligence Fundamentals', 'Understand the core concepts of AI including machine learning, neural networks, and natural language processing.', 
  (SELECT id FROM users WHERE email = 'lisa.wong@lms.com'), 
  (SELECT id FROM departments WHERE name = 'Data Science'),
  'published', '2023-03-10', '2023-06-10', TRUE),
  
-('DEV101', 'DevOps Practices', 'Learn about continuous integration, delivery, and deployment. Includes Docker, Jenkins, and cloud deployment strategies.', 
+('DEV101', 'enrollment_key_7', 'DevOps Practices', 'Learn about continuous integration, delivery, and deployment. Includes Docker, Jenkins, and cloud deployment strategies.', 
  (SELECT id FROM users WHERE email = 'michael.brown@lms.com'), 
  (SELECT id FROM departments WHERE name = 'Computer Science'),
  'draft', '2023-04-01', '2023-07-01', FALSE);
