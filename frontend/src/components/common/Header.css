@@ -1,4 +1,4 @@
-/* src/components/admin/Header.css */
+/* src/components/common/Header.css */
 :root {
     --header-height: 70px;
     --sidebar-width-collapsed: 80px;
@@ -135,6 +135,7 @@
     .admin-header {
       left: 0;
       padding-left: 70px; /* Make room for mobile toggle button */
+      width: 100%;
     }
     
     body.sidebar-expanded .admin-header {

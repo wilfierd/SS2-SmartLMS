@@ -1,5 +1,11 @@
 /* src/components/instructor/InstructorDashboard.css */
-.instructor-dashboard-container {
+:root {
+    --sidebar-width-collapsed: 80px;
+    --sidebar-width-expanded: 240px;
+    --transition-speed: 0.3s;
+  }
+  
+  .instructor-dashboard-container {
     display: flex;
     background-color: #f8f9fa;
     min-height: 100vh;
@@ -7,14 +13,29 @@
   
   .instructor-main-content {
     flex: 1;
-    margin-left: 80px;
-    transition: margin-left 0.3s ease;
+    margin-left: var(--sidebar-width-collapsed);
+    transition: margin-left var(--transition-speed) ease;
+  }
+  
+  body.sidebar-expanded .instructor-main-content {
+    margin-left: var(--sidebar-width-expanded);
   }
   
   .instructor-dashboard-content {
     padding: 90px 20px 20px;
     max-width: 1200px;
     margin: 0 auto;
+  }
+  
+  /* When in mobile view */
+  @media (max-width: 768px) {
+    .instructor-main-content {
+      margin-left: 0;
+    }
+    
+    body.sidebar-expanded .instructor-main-content {
+      margin-left: 0;
+    }
   }
   
   .loading-spinner {

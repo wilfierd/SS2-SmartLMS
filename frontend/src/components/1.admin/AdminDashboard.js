@@ -15,6 +15,9 @@ const AdminDashboard = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sidebarExpanded, setSidebarExpanded] = useState(
+    localStorage.getItem('sidebarExpanded') === 'true' || false
+  );
   
   // Calendar data for the current week
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -78,6 +81,30 @@ const AdminDashboard = () => {
     }
   ]);
 
+  // Listen for sidebar state changes
+  useEffect(() => {
+    const handleSidebarChange = () => {
+      setSidebarExpanded(localStorage.getItem('sidebarExpanded') === 'true');
+    };
+
+    window.addEventListener('storage', handleSidebarChange);
+
+    // Check sidebar state when component mounts
+    const checkSidebarState = () => {
+      const isSidebarExpanded = document.body.classList.contains('sidebar-expanded');
+      setSidebarExpanded(isSidebarExpanded);
+    };
+
+    // Add MutationObserver to watch for body class changes
+    const observer = new MutationObserver(checkSidebarState);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      window.removeEventListener('storage', handleSidebarChange);
+      observer.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
@@ -112,7 +139,7 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <div className="admin-dashboard-container">
+    <div className={`admin-dashboard-container ${sidebarExpanded ? 'sidebar-expanded' : ''}`}>
       <Sidebar activeItem="dashboard" />
       
       <div className="admin-main-content">
