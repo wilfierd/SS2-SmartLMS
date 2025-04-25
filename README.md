@@ -66,7 +66,7 @@ The frontend is already configured to use the Google client ID from the key.json
 
 ```bash
 cd ../backend
-npm start
+nodemon sever.js
 ```
 
 ### 8. Start the Frontend Server
