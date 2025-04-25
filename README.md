@@ -112,6 +112,7 @@ Students are required to change their password upon first login.
 If you encounter the "Google Client ID not configured" error:
 1. Make sure the backend server is running
 2. Check that the Google client ID in config.js matches the one in key.json
+(you can find this file in ours drive)
 3. Restart both frontend and backend servers
 
 ## License
