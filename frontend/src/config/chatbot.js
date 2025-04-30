@@ -10,7 +10,7 @@ const chatbotConfig = {
     // Include site name and URL in HTTP referer header as per OpenRouter's guidelines
     referer: "LMSHub - http://localhost:3000",
     // Used to show the source of AI responses in the UI
-    modelName: "DeepSeek V3-0324"
+    modelName: "DeepSeek V3"
   };
   
   export default chatbotConfig;
