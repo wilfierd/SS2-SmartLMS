@@ -10,6 +10,8 @@ import ResetPassword from './components/auth/ResetPassword';
 import ChangePasswordModal from './components/auth/ChangePasswordModal';
 import UnauthorizedPage from './components/common/UnauthorizedPage';
 import AuthContext from './context/AuthContext';
+import { ChatbotProvider } from './context/ChatbotContext'; // Import ChatbotProvider
+import Chatbot from './components/chatbot/Chatbot'; // Import Chatbot component
 import axios from 'axios';
 import './App.css';
 import config from './config';
@@ -183,6 +185,8 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthContext.Provider value={{ auth, login, logout, updateUser }}>
+        {/* Add Toaster component here */}
+        <ChatbotProvider>
         <Toaster />
         
         <Router>
@@ -201,7 +205,7 @@ function App() {
               <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
               <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
               <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
-              
+               
               {/* Virtual Classroom routes */}
               {/* Main route */}
               <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} />
@@ -239,25 +243,29 @@ function App() {
               
               {/* Assessment tools route */}
               <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} />
-              
+
               {/* Default routes */}
               <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
               <Route path="*" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
             </Routes>
 
-            {showPasswordModal && (
-              <ChangePasswordModal
-                onClose={() => {
-                  // Prevent closing if password hasn't been changed
-                  if (auth.user.isPasswordChanged) {
-                    setShowPasswordModal(false);
-                  }
-                }}
-                forceChange={!auth.user.isPasswordChanged}
-              />
-            )}
-          </div>
-        </Router>
+              {showPasswordModal && (
+                <ChangePasswordModal
+                  onClose={() => {
+                    // Prevent closing if password hasn't been changed
+                    if (auth.user.isPasswordChanged) {
+                      setShowPasswordModal(false);
+                    }
+                  }}
+                  forceChange={!auth.user.isPasswordChanged}
+                />
+              )}
+              
+              {/* Only show chatbot for authenticated users */}
+              {auth.isAuthenticated && <Chatbot />}
+            </div>
+          </Router>
+        </ChatbotProvider>
       </AuthContext.Provider>
     </GoogleOAuthProvider>
   );
