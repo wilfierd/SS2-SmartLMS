@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { Toaster } from 'react-hot-toast'; // Add this import
+import { Toaster } from 'react-hot-toast';
 import Login from './components/auth/Login';
 import RoleBasedRoute from './components/routing/RoleBasedRoute';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -10,6 +10,8 @@ import ResetPassword from './components/auth/ResetPassword';
 import ChangePasswordModal from './components/auth/ChangePasswordModal';
 import UnauthorizedPage from './components/common/UnauthorizedPage';
 import AuthContext from './context/AuthContext';
+import { ChatbotProvider } from './context/ChatbotContext'; // Import ChatbotProvider
+import Chatbot from './components/chatbot/Chatbot'; // Import Chatbot component
 import axios from 'axios';
 import './App.css';
 import config from './config';
@@ -173,44 +175,49 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthContext.Provider value={{ auth, login, logout, updateUser }}>
-        {/* Add Toaster component here */}
-        <Toaster />
-        
-        <Router>
-          <div className="App">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
-              <Route path="/forgot-password" element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
-              <Route path="/reset-password/:token" element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
-              <Route path="/unauthorized" element={<UnauthorizedPage />} />
-              
-              {/* Role-based routes */}
-              <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
-              <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
-              <Route path="/users" element={<RoleBasedRoute component="users" />} />
-              <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
-              <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
-              <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
-              
-              {/* Default routes */}
-              <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
-              <Route path="*" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
-            </Routes>
+        {/* Wrap the app with ChatbotProvider */}
+        <ChatbotProvider>
+          <Toaster />
+          
+          <Router>
+            <div className="App">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
+                <Route path="/forgot-password" element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
+                <Route path="/reset-password/:token" element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                
+                {/* Role-based routes */}
+                <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
+                <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
+                <Route path="/users" element={<RoleBasedRoute component="users" />} />
+                <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
+                <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
+                <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
+                
+                {/* Default routes */}
+                <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
+                <Route path="*" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
+              </Routes>
 
-            {showPasswordModal && (
-              <ChangePasswordModal
-                onClose={() => {
-                  // Prevent closing if password hasn't been changed
-                  if (auth.user.isPasswordChanged) {
-                    setShowPasswordModal(false);
-                  }
-                }}
-                forceChange={!auth.user.isPasswordChanged}
-              />
-            )}
-          </div>
-        </Router>
+              {showPasswordModal && (
+                <ChangePasswordModal
+                  onClose={() => {
+                    // Prevent closing if password hasn't been changed
+                    if (auth.user.isPasswordChanged) {
+                      setShowPasswordModal(false);
+                    }
+                  }}
+                  forceChange={!auth.user.isPasswordChanged}
+                />
+              )}
+              
+              {/* Only show chatbot for authenticated users */}
+              {auth.isAuthenticated && <Chatbot />}
+            </div>
+          </Router>
+        </ChatbotProvider>
       </AuthContext.Provider>
     </GoogleOAuthProvider>
   );
