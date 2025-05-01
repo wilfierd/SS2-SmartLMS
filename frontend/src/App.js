@@ -192,6 +192,8 @@ function App() {
               <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
               <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
               <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
+              <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} /> {/* New route for virtual classroom */}
+              <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} /> {/* New route for assessment tools */}
               
               {/* Default routes */}
               <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />

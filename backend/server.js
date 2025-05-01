@@ -10,6 +10,9 @@ const crypto = require('crypto');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const router = express.Router();
+const { v4: uuidv4 } = require('uuid');
+const moment = require('moment');
 
 
 const app = express();
@@ -1368,6 +1371,1776 @@ app.delete('/api/enrollments/leave/:courseId', authenticateToken, authorize(['st
     res.status(500).json({ message: 'Server error', details: error.message });
   }
 });
+
+// VIRTUAL SESSIONS ROUTES
+
+/**
+ * @route GET /virtual-sessions
+ * @desc Get virtual sessions with filtering
+ * @access Private
+ */
+router.get('/virtual-sessions', authenticateToken, async (req, res) => {
+    try {
+      const {
+        upcoming,
+        past,
+        status,
+        courseId,
+        instructorId,
+        startDate,
+        endDate,
+        search
+      } = req.query;
+  
+      let query = `
+        SELECT vs.*, 
+          c.title as courseTitle, 
+          CONCAT(u.first_name, ' ', u.last_name) as instructorName,
+          (SELECT COUNT(*) FROM session_registrations 
+            WHERE session_id = vs.id AND status IN ('registered', 'attended')) as participantCount
+      `;
+      
+      // For students, include their enrollment status
+      if (req.user.role === 'student') {
+        query += `,
+          (SELECT status FROM session_registrations 
+           WHERE session_id = vs.id AND user_id = ?) as enrollmentStatus
+        `;
+      }
+      
+      query += `
+        FROM virtual_sessions vs
+        JOIN courses c ON vs.course_id = c.id
+        JOIN users u ON vs.instructor_id = u.id
+        WHERE 1=1
+      `;
+      
+      const queryParams = [];
+      
+      // Add student user_id if student
+      if (req.user.role === 'student') {
+        queryParams.push(req.user.id);
+      }
+      
+      // Apply filters
+      if (status) {
+        query += ` AND vs.status = ?`;
+        queryParams.push(status);
+      }
+      
+      if (upcoming === 'true') {
+        query += ` AND ((vs.session_date > CURDATE()) OR 
+                       (vs.session_date = CURDATE() AND vs.start_time > CURTIME()))`;
+      }
+      
+      if (past === 'true') {
+        query += ` AND ((vs.session_date < CURDATE()) OR 
+                       (vs.session_date = CURDATE() AND vs.end_time < CURTIME()))`;
+      }
+      
+      if (courseId) {
+        query += ` AND vs.course_id = ?`;
+        queryParams.push(courseId);
+      }
+      
+      if (instructorId) {
+        query += ` AND vs.instructor_id = ?`;
+        queryParams.push(instructorId);
+      }
+      
+      if (startDate) {
+        query += ` AND vs.session_date >= ?`;
+        queryParams.push(startDate);
+      }
+      
+      if (endDate) {
+        query += ` AND vs.session_date <= ?`;
+        queryParams.push(endDate);
+      }
+      
+      if (search) {
+        query += ` AND (vs.title LIKE ? OR c.title LIKE ? OR 
+                       CONCAT(u.first_name, ' ', u.last_name) LIKE ?)`;
+        const searchTerm = `%${search}%`;
+        queryParams.push(searchTerm, searchTerm, searchTerm);
+      }
+      
+      // For students, filter by enrolled courses
+      if (req.user.role === 'student') {
+        query += `
+          AND (
+            vs.course_id IN (SELECT course_id FROM enrollments WHERE student_id = ?) OR
+            vs.id IN (SELECT session_id FROM session_registrations WHERE user_id = ?)
+          )
+        `;
+        queryParams.push(req.user.id, req.user.id);
+      }
+      
+      // For instructors, filter by their courses
+      if (req.user.role === 'instructor' && !instructorId) {
+        query += ` AND vs.instructor_id = ?`;
+        queryParams.push(req.user.id);
+      }
+      
+      // Sort accordingly to request
+      if (upcoming === 'true') {
+        query += ` ORDER BY vs.session_date ASC, vs.start_time ASC`;
+      } else if (past === 'true') {
+        query += ` ORDER BY vs.session_date DESC, vs.start_time DESC`;
+      } else if (status === 'active') {
+        query += ` ORDER BY vs.actual_start_time ASC`;
+      } else {
+        query += ` ORDER BY vs.created_at DESC`;
+      }
+      
+      const [sessions] = await pool.query(query, queryParams);
+      
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error fetching virtual sessions:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/:id
+   * @desc Get a virtual session by ID
+   * @access Private
+   */
+  router.get('/virtual-sessions/:id', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      let query = `
+        SELECT vs.*, 
+          c.title as courseTitle, 
+          CONCAT(u.first_name, ' ', u.last_name) as instructorName,
+          (SELECT COUNT(*) FROM session_registrations 
+           WHERE session_id = vs.id AND status IN ('registered', 'attended')) as participantCount,
+          (SELECT COUNT(*) FROM session_activities 
+           WHERE session_id = vs.id AND action = 'join') as joinCount
+      `;
+      
+      // For students, include their enrollment status
+      if (req.user.role === 'student') {
+        query += `,
+          (SELECT status FROM session_registrations 
+           WHERE session_id = vs.id AND user_id = ?) as enrollmentStatus
+        `;
+      }
+      
+      query += `
+        FROM virtual_sessions vs
+        JOIN courses c ON vs.course_id = c.id
+        JOIN users u ON vs.instructor_id = u.id
+        WHERE vs.id = ?
+      `;
+      
+      const queryParams = [];
+      
+      // Add student user_id if student
+      if (req.user.role === 'student') {
+        queryParams.push(req.user.id);
+      }
+      
+      queryParams.push(id);
+      
+      const [sessions] = await pool.query(query, queryParams);
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      // Get session settings
+      const [settings] = await pool.query(
+        `SELECT * FROM session_settings WHERE session_id = ?`,
+        [id]
+      );
+      
+      // Get registered participants
+      const [participants] = await pool.query(
+        `SELECT sr.*, CONCAT(u.first_name, ' ', u.last_name) as participantName, u.email 
+         FROM session_registrations sr
+         JOIN users u ON sr.user_id = u.id
+         WHERE sr.session_id = ?`,
+        [id]
+      );
+      
+      // Combine data
+      const sessionData = {
+        ...sessions[0],
+        settings: settings[0] || {},
+        participants
+      };
+      
+      // If instructor or admin, add additional data
+      if (req.user.role === 'instructor' || req.user.role === 'admin') {
+        // Get activity stats
+        const [activityStats] = await pool.query(
+          `SELECT 
+            COUNT(DISTINCT user_id) as uniqueParticipants,
+            AVG(duration_seconds) as averageDuration,
+            MAX(duration_seconds) as maxDuration
+           FROM session_activities
+           WHERE session_id = ? AND action = 'leave' AND duration_seconds IS NOT NULL`,
+          [id]
+        );
+        
+        sessionData.analytics = activityStats[0] || {};
+      }
+      
+      res.json(sessionData);
+    } catch (error) {
+      console.error('Error fetching virtual session:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions
+   * @desc Create a new virtual session
+   * @access Private (Instructors only)
+   */
+  router.post('/virtual-sessions', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const {
+        title,
+        courseId,
+        description,
+        sessionDate,
+        startTime,
+        endTime,
+        password,
+        maxParticipants,
+        isRecorded,
+        startNow,
+        recurrence,
+        settings
+      } = req.body;
+      
+      // Validate required fields
+      if (!title || !courseId) {
+        return res.status(400).json({ message: 'Title and course are required' });
+      }
+      
+      // If not starting now, validate date and time
+      if (!startNow && (!sessionDate || !startTime)) {
+        return res.status(400).json({ message: 'Session date and start time are required' });
+      }
+      
+      // Create room ID (UUID)
+      const roomId = uuidv4().replace(/-/g, '').substring(0, 12);
+      
+      // Hash password if provided
+      let hashedPassword = null;
+      if (password) {
+        hashedPassword = await bcrypt.hash(password, 10);
+      }
+      
+      // Prepare session data
+      const sessionData = {
+        title,
+        room_id: roomId,
+        course_id: courseId,
+        instructor_id: req.user.id,
+        description: description || null,
+        max_participants: maxParticipants || 30,
+        is_recorded: isRecorded !== undefined ? isRecorded : true,
+        password: hashedPassword
+      };
+      
+      // Handle start now vs. scheduled
+      if (startNow) {
+        sessionData.status = 'active';
+        sessionData.actual_start_time = new Date();
+        // Set session_date to today
+        sessionData.session_date = new Date().toISOString().split('T')[0];
+        sessionData.start_time = new Date().toTimeString().split(' ')[0];
+      } else {
+        sessionData.status = 'scheduled';
+        sessionData.session_date = sessionDate;
+        sessionData.start_time = startTime;
+        sessionData.end_time = endTime || null;
+      }
+      
+      // Insert the session
+      const [result] = await connection.query(
+        'INSERT INTO virtual_sessions SET ?',
+        sessionData
+      );
+      
+      const sessionId = result.insertId;
+      
+      // If there are custom settings, save them
+      if (settings) {
+        await connection.query(
+          'INSERT INTO session_settings SET ?',
+          { session_id: sessionId, ...settings }
+        );
+      } else {
+        // Insert default settings
+        await connection.query(
+          'INSERT INTO session_settings (session_id) VALUES (?)',
+          [sessionId]
+        );
+      }
+      
+      // Handle recurring sessions
+      if (recurrence && !startNow) {
+        const seriesId = uuidv4();
+        
+        await connection.query(
+          'INSERT INTO recurring_sessions SET ?',
+          {
+            parent_session_id: sessionId,
+            recurrence_type: recurrence.type,
+            day_of_week: recurrence.dayOfWeek || null,
+            week_of_month: recurrence.weekOfMonth || null,
+            start_date: sessionDate,
+            end_date: recurrence.endDate || null,
+            series_id: seriesId
+          }
+        );
+        
+        // Generate the recurring sessions
+        await generateRecurringSessions(connection, sessionId, recurrence, seriesId);
+      }
+      
+      await connection.commit();
+      
+      // Fetch the created session with additional info
+      const [sessions] = await pool.query(
+        `SELECT vs.*, c.title as courseTitle, CONCAT(u.first_name, ' ', u.last_name) as instructorName
+         FROM virtual_sessions vs
+         JOIN courses c ON vs.course_id = c.id
+         JOIN users u ON vs.instructor_id = u.id
+         WHERE vs.id = ?`,
+        [sessionId]
+      );
+      
+      res.status(201).json({
+        message: 'Session created successfully',
+        session: sessions[0]
+      });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error creating virtual session:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  /**
+   * @route PUT /virtual-sessions/:id
+   * @desc Update a virtual session
+   * @access Private (Session instructor or admin only)
+   */
+  router.put('/virtual-sessions/:id', authenticateToken, async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const { id } = req.params;
+      const {
+        title,
+        courseId,
+        description,
+        sessionDate,
+        startTime,
+        endTime,
+        password,
+        maxParticipants,
+        isRecorded,
+        recordingUrl,
+        status,
+        settings
+      } = req.body;
+      
+      // Verify session exists and user has permission
+      const [sessions] = await connection.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // Check permissions (must be instructor of the session or admin)
+      if (req.user.role !== 'admin' && session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'You do not have permission to update this session' });
+      }
+      
+      // Prepare update data
+      const updateData = {};
+      
+      // Only update provided fields
+      if (title) updateData.title = title;
+      if (courseId) updateData.course_id = courseId;
+      if (description !== undefined) updateData.description = description;
+      if (sessionDate) updateData.session_date = sessionDate;
+      if (startTime) updateData.start_time = startTime;
+      if (endTime !== undefined) updateData.end_time = endTime;
+      if (maxParticipants) updateData.max_participants = maxParticipants;
+      if (isRecorded !== undefined) updateData.is_recorded = isRecorded;
+      if (recordingUrl !== undefined) updateData.recording_url = recordingUrl;
+      if (status) updateData.status = status;
+      
+      // Update password if provided
+      if (password !== undefined) {
+        if (password) {
+          updateData.password = await bcrypt.hash(password, 10);
+        } else {
+          updateData.password = null;
+        }
+      }
+      
+      // Only proceed if there are fields to update
+      if (Object.keys(updateData).length > 0) {
+        await connection.query(
+          'UPDATE virtual_sessions SET ? WHERE id = ?',
+          [updateData, id]
+        );
+      }
+      
+      // Update settings if provided
+      if (settings) {
+        // Check if settings exist
+        const [existingSettings] = await connection.query(
+          'SELECT id FROM session_settings WHERE session_id = ?',
+          [id]
+        );
+        
+        if (existingSettings.length > 0) {
+          await connection.query(
+            'UPDATE session_settings SET ? WHERE session_id = ?',
+            [settings, id]
+          );
+        } else {
+          await connection.query(
+            'INSERT INTO session_settings SET ?',
+            { session_id: id, ...settings }
+          );
+        }
+      }
+      
+      await connection.commit();
+      
+      res.json({ message: 'Session updated successfully' });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error updating virtual session:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  /**
+   * @route DELETE /virtual-sessions/:id
+   * @desc Delete a virtual session
+   * @access Private (Session instructor or admin only)
+   */
+  router.delete('/virtual-sessions/:id', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify session exists and user has permission
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // Check permissions (must be instructor of the session or admin)
+      if (req.user.role !== 'admin' && session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'You do not have permission to delete this session' });
+      }
+      
+      // Don't allow deletion of active or completed sessions
+      if (session.status === 'active' || session.status === 'completed') {
+        return res.status(400).json({ 
+          message: `Cannot delete a session that is ${session.status}. You can only delete scheduled sessions.` 
+        });
+      }
+      
+      // Delete the session (cascade will handle related records)
+      await pool.query('DELETE FROM virtual_sessions WHERE id = ?', [id]);
+      
+      res.json({ message: 'Session deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting virtual session:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/end
+   * @desc End an active session
+   * @access Private (Session instructor only)
+   */
+  router.post('/virtual-sessions/:id/end', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify session exists and user has permission
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // Check permissions (must be instructor of the session)
+      if (session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'Only the session instructor can end the session' });
+      }
+      
+      // Ensure the session is active
+      if (session.status !== 'active') {
+        return res.status(400).json({ message: `Cannot end a session that is not active (current status: ${session.status})` });
+      }
+      
+      // Update the session status and end time
+      await pool.query(
+        'UPDATE virtual_sessions SET status = ?, actual_end_time = NOW() WHERE id = ?',
+        ['completed', id]
+      );
+      
+      // Calculate duration for all participants who haven't left
+      await pool.query(`
+        INSERT INTO session_activities (session_id, user_id, action, duration_seconds)
+        SELECT 
+          ?, 
+          user_id, 
+          'leave', 
+          TIMESTAMPDIFF(SECOND, MAX(timestamp), NOW())
+        FROM session_activities
+        WHERE session_id = ? AND action = 'join' AND user_id NOT IN (
+          SELECT user_id 
+          FROM session_activities 
+          WHERE session_id = ? AND action = 'leave' AND timestamp > (
+            SELECT MAX(timestamp) 
+            FROM session_activities 
+            WHERE session_id = ? AND action = 'join' AND user_id = session_activities.user_id
+          )
+        )
+        GROUP BY user_id
+      `, [id, id, id, id]);
+      
+      // Update participant statistics
+      await pool.query(`
+        UPDATE session_registrations
+        SET status = 'attended'
+        WHERE session_id = ? AND user_id IN (
+          SELECT DISTINCT user_id FROM session_activities 
+          WHERE session_id = ? AND action = 'join'
+        )
+      `, [id, id]);
+      
+      res.json({ message: 'Session ended successfully' });
+    } catch (error) {
+      console.error('Error ending virtual session:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/register
+   * @desc Register for a session (students)
+   * @access Private
+   */
+  router.post('/virtual-sessions/:id/register', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+      
+      // Verify session exists
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // Check if already registered
+      const [existingRegistration] = await pool.query(
+        'SELECT * FROM session_registrations WHERE session_id = ? AND user_id = ?',
+        [id, req.user.id]
+      );
+      
+      if (existingRegistration.length > 0) {
+        return res.status(400).json({ message: 'You are already registered for this session' });
+      }
+      
+      // Verify course enrollment
+      const [enrollment] = await pool.query(
+        'SELECT * FROM enrollments WHERE course_id = ? AND student_id = ?',
+        [session.course_id, req.user.id]
+      );
+      
+      if (enrollment.length === 0 && req.user.role === 'student') {
+        return res.status(403).json({ message: 'You must be enrolled in the course to register for this session' });
+      }
+      
+      // Check password if required
+      if (session.password) {
+        if (!password) {
+          return res.status(400).json({ message: 'Password is required for this session' });
+        }
+        
+        const passwordMatch = await bcrypt.compare(password, session.password);
+        if (!passwordMatch) {
+          return res.status(401).json({ message: 'Incorrect password' });
+        }
+      }
+      
+      // Register for the session
+      await pool.query(
+        'INSERT INTO session_registrations (session_id, user_id) VALUES (?, ?)',
+        [id, req.user.id]
+      );
+      
+      res.json({ message: 'Registration successful' });
+    } catch (error) {
+      console.error('Error registering for virtual session:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route DELETE /virtual-sessions/:id/register
+   * @desc Unregister from a session (students)
+   * @access Private
+   */
+  router.delete('/virtual-sessions/:id/register', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify registration exists
+      const [registration] = await pool.query(
+        'SELECT * FROM session_registrations WHERE session_id = ? AND user_id = ?',
+        [id, req.user.id]
+      );
+      
+      if (registration.length === 0) {
+        return res.status(404).json({ message: 'You are not registered for this session' });
+      }
+      
+      // Check if session has already started
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      if (session.status !== 'scheduled') {
+        return res.status(400).json({ message: 'Cannot unregister from a session that has already started or ended' });
+      }
+      
+      // Unregister from the session
+      await pool.query(
+        'DELETE FROM session_registrations WHERE session_id = ? AND user_id = ?',
+        [id, req.user.id]
+      );
+      
+      res.json({ message: 'Unregistered successfully' });
+    } catch (error) {
+      console.error('Error unregistering from virtual session:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/activity
+   * @desc Record user activity in a session (join, leave, etc.)
+   * @access Private
+   */
+  router.post('/virtual-sessions/:id/activity', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action, actionValue, deviceInfo } = req.body;
+      
+      // Validate action
+      const validActions = ['join', 'leave', 'screenShare', 'chat', 'hand_raise', 'microphone', 'camera'];
+      if (!validActions.includes(action)) {
+        return res.status(400).json({ message: 'Invalid action' });
+      }
+      
+      // Verify session exists
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      // Get user's IP address
+      const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      
+      // If action is 'leave', calculate duration from last join
+      let durationSeconds = null;
+      if (action === 'leave') {
+        const [joinActivity] = await pool.query(
+          `SELECT timestamp FROM session_activities 
+           WHERE session_id = ? AND user_id = ? AND action = 'join'
+           ORDER BY timestamp DESC LIMIT 1`,
+          [id, req.user.id]
+        );
+        
+        if (joinActivity.length > 0) {
+          const joinTime = new Date(joinActivity[0].timestamp);
+          const leaveTime = new Date();
+          durationSeconds = Math.floor((leaveTime - joinTime) / 1000);
+        }
+      }
+      
+      // Record the activity
+      await pool.query(
+        `INSERT INTO session_activities 
+         (session_id, user_id, action, action_value, duration_seconds, device_info, ip_address)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, req.user.id, action, actionValue, durationSeconds, deviceInfo, ipAddress]
+      );
+      
+      // If action is 'join', update registration status
+      if (action === 'join') {
+        await pool.query(
+          `INSERT INTO session_registrations (session_id, user_id, status)
+           VALUES (?, ?, 'attended')
+           ON DUPLICATE KEY UPDATE status = 'attended'`,
+          [id, req.user.id]
+        );
+      }
+      
+      res.json({ message: 'Activity recorded successfully' });
+    } catch (error) {
+      console.error('Error recording session activity:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/:id/activities
+   * @desc Get activities for a session (instructors and admins only)
+   * @access Private
+   */
+  router.get('/virtual-sessions/:id/activities', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify session exists and user has permission
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // If instructor, ensure they own the session
+      if (req.user.role === 'instructor' && session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'You do not have permission to view this session\'s activities' });
+      }
+      
+      // Get activities with user information
+      const [activities] = await pool.query(
+        `SELECT sa.*, CONCAT(u.first_name, ' ', u.last_name) as userName, u.email
+         FROM session_activities sa
+         JOIN users u ON sa.user_id = u.id
+         WHERE sa.session_id = ?
+         ORDER BY sa.timestamp DESC`,
+        [id]
+      );
+      
+      // Calculate attendance metrics
+      const [attendanceMetrics] = await pool.query(
+        `SELECT 
+          COUNT(DISTINCT user_id) as uniqueParticipants,
+          COUNT(CASE WHEN action = 'join' THEN 1 END) as totalJoins,
+          COUNT(CASE WHEN action = 'leave' THEN 1 END) as totalLeaves,
+          AVG(CASE WHEN action = 'leave' THEN duration_seconds END) as avgDurationSeconds,
+          MAX(CASE WHEN action = 'leave' THEN duration_seconds END) as maxDurationSeconds
+         FROM session_activities
+         WHERE session_id = ?`,
+        [id]
+      );
+      
+      // Get participant presence timeline
+      const [presenceTimeline] = await pool.query(
+        `SELECT 
+          user_id, 
+          CONCAT(u.first_name, ' ', u.last_name) as userName,
+          action,
+          timestamp
+         FROM session_activities sa
+         JOIN users u ON sa.user_id = u.id
+         WHERE session_id = ? AND (action = 'join' OR action = 'leave')
+         ORDER BY user_id, timestamp`,
+        [id]
+      );
+      
+      res.json({
+        activities,
+        metrics: attendanceMetrics[0],
+        presenceTimeline
+      });
+    } catch (error) {
+      console.error('Error fetching session activities:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/update-status
+   * @desc Update status of all sessions
+   * @access Private
+   */
+  router.get('/virtual-sessions/update-status', authenticateToken, async (req, res) => {
+    try {
+      // Call the stored procedure
+      await pool.query('CALL update_session_statuses()');
+      
+      res.json({ message: 'Session statuses updated successfully' });
+    } catch (error) {
+      console.error('Error updating session statuses:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/poll
+   * @desc Create a poll in a session
+   * @access Private (Instructors only)
+   */
+  router.post('/virtual-sessions/:id/poll', authenticateToken, authorize(['instructor']), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const { id } = req.params;
+      const { question, options, isAnonymous, isMultipleChoice } = req.body;
+      
+      // Validate request
+      if (!question || !options || !Array.isArray(options) || options.length < 2) {
+        return res.status(400).json({ message: 'Question and at least two options are required' });
+      }
+      
+      // Verify session exists and is active
+      const [sessions] = await connection.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // Check permissions (must be instructor of the session)
+      if (session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'Only the session instructor can create polls' });
+      }
+      
+      // Ensure the session is active
+      if (session.status !== 'active') {
+        return res.status(400).json({ message: 'Can only create polls in active sessions' });
+      }
+      
+      // Create the poll
+      const [pollResult] = await connection.query(
+        `INSERT INTO session_polls 
+         (session_id, creator_id, question, is_anonymous, is_multiple_choice)
+         VALUES (?, ?, ?, ?, ?)`,
+        [id, req.user.id, question, isAnonymous || false, isMultipleChoice !== false]
+      );
+      
+      const pollId = pollResult.insertId;
+      
+      // Add poll options
+      for (const option of options) {
+        await connection.query(
+          'INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)',
+          [pollId, option]
+        );
+      }
+      
+      await connection.commit();
+      
+      // Fetch the created poll with options
+      const [polls] = await pool.query(
+        'SELECT * FROM session_polls WHERE id = ?',
+        [pollId]
+      );
+      
+      const [pollOptions] = await pool.query(
+        'SELECT * FROM poll_options WHERE poll_id = ?',
+        [pollId]
+      );
+      
+      res.status(201).json({
+        message: 'Poll created successfully',
+        poll: {
+          ...polls[0],
+          options: pollOptions
+        }
+      });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error creating poll:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/poll/:pollId/respond
+   * @desc Respond to a poll
+   * @access Private
+   */
+  router.post('/virtual-sessions/:id/poll/:pollId/respond', authenticateToken, async (req, res) => {
+    try {
+      const { id, pollId } = req.params;
+      const { optionId } = req.body;
+      
+      // Validate request
+      if (!optionId) {
+        return res.status(400).json({ message: 'Option ID is required' });
+      }
+      
+      // Verify poll exists and belongs to the session
+      const [polls] = await pool.query(
+        'SELECT * FROM session_polls WHERE id = ? AND session_id = ?',
+        [pollId, id]
+      );
+      
+      if (polls.length === 0) {
+        return res.status(404).json({ message: 'Poll not found' });
+      }
+      
+      const poll = polls[0];
+      
+      // Check if poll is still active
+      if (poll.ended_at) {
+        return res.status(400).json({ message: 'This poll has ended' });
+      }
+      
+      // Verify option belongs to the poll
+      const [options] = await pool.query(
+        'SELECT * FROM poll_options WHERE id = ? AND poll_id = ?',
+        [optionId, pollId]
+      );
+      
+      if (options.length === 0) {
+        return res.status(404).json({ message: 'Option not found' });
+      }
+      
+      // Check if user has already responded to this poll
+      const [existingResponses] = await pool.query(
+        'SELECT * FROM poll_responses WHERE poll_id = ? AND user_id = ?',
+        [pollId, req.user.id]
+      );
+      
+      if (existingResponses.length > 0 && !poll.is_multiple_choice) {
+        return res.status(400).json({ message: 'You have already responded to this poll' });
+      }
+      
+      // Record the response
+      await pool.query(
+        'INSERT INTO poll_responses (poll_id, user_id, option_id) VALUES (?, ?, ?)',
+        [pollId, req.user.id, optionId]
+      );
+      
+      res.json({ message: 'Response recorded successfully' });
+    } catch (error) {
+      console.error('Error responding to poll:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/:id/polls
+   * @desc Get polls for a session
+   * @access Private
+   */
+  router.get('/virtual-sessions/:id/polls', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify session exists
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      // Get all polls for the session
+      const [polls] = await pool.query(
+        'SELECT * FROM session_polls WHERE session_id = ? ORDER BY created_at DESC',
+        [id]
+      );
+      
+      // For each poll, get the options and responses
+      const pollsWithDetails = await Promise.all(polls.map(async (poll) => {
+        // Get options
+        const [options] = await pool.query(
+          'SELECT * FROM poll_options WHERE poll_id = ?',
+          [poll.id]
+        );
+        
+        // Get response counts
+        const [responseCounts] = await pool.query(
+          `SELECT option_id, COUNT(*) as count
+           FROM poll_responses
+           WHERE poll_id = ?
+           GROUP BY option_id`,
+          [poll.id]
+        );
+        
+        // Calculate response percentages
+        const totalResponses = responseCounts.reduce((sum, item) => sum + item.count, 0);
+        const optionsWithCounts = options.map(option => {
+          const responseCount = responseCounts.find(r => r.option_id === option.id);
+          const count = responseCount ? responseCount.count : 0;
+          const percentage = totalResponses > 0 ? (count / totalResponses) * 100 : 0;
+          
+          return {
+            ...option,
+            count,
+            percentage: Math.round(percentage * 10) / 10 // Round to 1 decimal place
+          };
+        });
+        
+        // Check if current user has responded
+        const [userResponses] = await pool.query(
+          'SELECT option_id FROM poll_responses WHERE poll_id = ? AND user_id = ?',
+          [poll.id, req.user.id]
+        );
+        
+        const userResponseIds = userResponses.map(r => r.option_id);
+        
+        return {
+          ...poll,
+          options: optionsWithCounts,
+          totalResponses,
+          userResponseIds
+        };
+      }));
+      
+      res.json(pollsWithDetails);
+    } catch (error) {
+      console.error('Error fetching polls:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/breakout
+   * @desc Create breakout rooms
+   * @access Private (Instructors only)
+   */
+  router.post('/virtual-sessions/:id/breakout', authenticateToken, authorize(['instructor']), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const { id } = req.params;
+      const { roomCount, participantAssignments, autoAssign, roomNames } = req.body;
+      
+      // Validate request
+      if (!roomCount || roomCount < 1) {
+        return res.status(400).json({ message: 'Valid room count is required' });
+      }
+      
+      // Verify session exists and is active
+      const [sessions] = await connection.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // Check permissions (must be instructor of the session)
+      if (session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'Only the session instructor can create breakout rooms' });
+      }
+      
+      // Ensure the session is active
+      if (session.status !== 'active') {
+        return res.status(400).json({ message: 'Can only create breakout rooms in active sessions' });
+      }
+      
+      // Get all participants currently in the session
+      const [participants] = await connection.query(
+        `SELECT DISTINCT user_id
+         FROM session_activities
+         WHERE session_id = ? AND action = 'join' AND user_id NOT IN (
+           SELECT user_id
+           FROM session_activities
+           WHERE session_id = ? AND action = 'leave' AND timestamp > (
+             SELECT MAX(timestamp)
+             FROM session_activities
+             WHERE session_id = ? AND action = 'join' AND user_id = session_activities.user_id
+           )
+         )`,
+        [id, id, id]
+      );
+      
+      const participantIds = participants.map(p => p.user_id);
+      
+      // Create breakout rooms
+      const createdRooms = [];
+      for (let i = 0; i < roomCount; i++) {
+        const roomName = roomNames && roomNames[i] ? roomNames[i] : `Breakout Room ${i + 1}`;
+        
+        const [roomResult] = await connection.query(
+          'INSERT INTO breakout_rooms (session_id, name) VALUES (?, ?)',
+          [id, roomName]
+        );
+        
+        createdRooms.push({
+          id: roomResult.insertId,
+          name: roomName
+        });
+      }
+      
+      // Assign participants to rooms
+      if (participantAssignments) {
+        // Manual assignment
+        for (const [roomIndex, userIds] of Object.entries(participantAssignments)) {
+          if (roomIndex >= createdRooms.length) continue;
+          
+          const roomId = createdRooms[roomIndex].id;
+          
+          for (const userId of userIds) {
+            if (participantIds.includes(userId)) {
+              await connection.query(
+                'INSERT INTO breakout_room_participants (breakout_room_id, user_id) VALUES (?, ?)',
+                [roomId, userId]
+              );
+            }
+          }
+        }
+      } else if (autoAssign) {
+        // Auto-assignment (round-robin)
+        for (let i = 0; i < participantIds.length; i++) {
+          const roomIndex = i % roomCount;
+          const roomId = createdRooms[roomIndex].id;
+          
+          await connection.query(
+            'INSERT INTO breakout_room_participants (breakout_room_id, user_id) VALUES (?, ?)',
+            [roomId, participantIds[i]]
+          );
+        }
+      }
+      
+      await connection.commit();
+      
+      // Get the created rooms with participants
+      const roomsWithParticipants = await Promise.all(createdRooms.map(async (room) => {
+        const [roomParticipants] = await pool.query(
+          `SELECT brp.*, CONCAT(u.first_name, ' ', u.last_name) as participantName
+           FROM breakout_room_participants brp
+           JOIN users u ON brp.user_id = u.id
+           WHERE brp.breakout_room_id = ?`,
+          [room.id]
+        );
+        
+        return {
+          ...room,
+          participants: roomParticipants
+        };
+      }));
+      
+      res.status(201).json({
+        message: 'Breakout rooms created successfully',
+        rooms: roomsWithParticipants
+      });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error creating breakout rooms:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/:id/breakout
+   * @desc Get breakout rooms for a session
+   * @access Private
+   */
+  router.get('/virtual-sessions/:id/breakout', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify session exists
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      // Get all active breakout rooms for the session
+      const [rooms] = await pool.query(
+        'SELECT * FROM breakout_rooms WHERE session_id = ? AND ended_at IS NULL',
+        [id]
+      );
+      
+      // For each room, get the participants
+      const roomsWithParticipants = await Promise.all(rooms.map(async (room) => {
+        const [participants] = await pool.query(
+          `SELECT brp.*, CONCAT(u.first_name, ' ', u.last_name) as participantName
+           FROM breakout_room_participants brp
+           JOIN users u ON brp.user_id = u.id
+           WHERE brp.breakout_room_id = ? AND brp.left_at IS NULL`,
+          [room.id]
+        );
+        
+        return {
+          ...room,
+          participants
+        };
+      }));
+      
+      // For student, find their assigned room
+      if (req.user.role === 'student') {
+        const userRoom = roomsWithParticipants.find(room => 
+          room.participants.some(p => p.user_id === req.user.id)
+        );
+        
+        res.json({
+          userRoom,
+          isInRoom: !!userRoom
+        });
+      } else {
+        // For instructor, return all rooms
+        res.json(roomsWithParticipants);
+      }
+    } catch (error) {
+      console.error('Error fetching breakout rooms:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/recording
+   * @desc Upload recording information
+   * @access Private (Instructors only)
+   */
+  router.post('/virtual-sessions/:id/recording', authenticateToken, authorize(['instructor']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { recordingUrl, storagePath, startTime, endTime, sizeBytes } = req.body;
+      
+      // Validate request
+      if (!recordingUrl) {
+        return res.status(400).json({ message: 'Recording URL is required' });
+      }
+      
+      // Verify session exists
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // Check permissions (must be instructor of the session)
+      if (session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'Only the session instructor can add recordings' });
+      }
+      
+      // Ensure the session is completed
+      if (session.status !== 'completed') {
+        return res.status(400).json({ message: 'Can only add recordings to completed sessions' });
+      }
+      
+      // Add recording info
+      await pool.query(
+        `INSERT INTO session_recordings
+         (session_id, storage_path, recording_url, start_time, end_time, size_bytes, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'ready')`,
+        [id, storagePath || recordingUrl, recordingUrl, startTime || session.actual_start_time, 
+         endTime || session.actual_end_time, sizeBytes || 0]
+      );
+      
+      // Update session with recording URL
+      await pool.query(
+        'UPDATE virtual_sessions SET recording_url = ? WHERE id = ?',
+        [recordingUrl, id]
+      );
+      
+      res.status(201).json({
+        message: 'Recording information added successfully'
+      });
+    } catch (error) {
+      console.error('Error adding recording information:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/feedback
+   * @desc Submit feedback for a session
+   * @access Private
+   */
+  router.post('/virtual-sessions/:id/feedback', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { rating, comments, audioQuality, videoQuality, contentRating } = req.body;
+      
+      // Validate request
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: 'Valid rating (1-5) is required' });
+      }
+      
+      // Verify session exists
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      // Ensure the session is completed
+      const session = sessions[0];
+      if (session.status !== 'completed') {
+        return res.status(400).json({ message: 'Can only submit feedback for completed sessions' });
+      }
+      
+      // Check if user has already submitted feedback
+      const [existingFeedback] = await pool.query(
+        'SELECT * FROM session_feedback WHERE session_id = ? AND user_id = ?',
+        [id, req.user.id]
+      );
+      
+      if (existingFeedback.length > 0) {
+        // Update existing feedback
+        await pool.query(
+          `UPDATE session_feedback
+           SET rating = ?, comments = ?, audio_quality_rating = ?, 
+               video_quality_rating = ?, content_rating = ?, 
+               submitted_at = NOW()
+           WHERE session_id = ? AND user_id = ?`,
+          [rating, comments, audioQuality, videoQuality, contentRating, id, req.user.id]
+        );
+        
+        res.json({ message: 'Feedback updated successfully' });
+      } else {
+        // Submit new feedback
+        await pool.query(
+          `INSERT INTO session_feedback
+           (session_id, user_id, rating, comments, audio_quality_rating, 
+            video_quality_rating, content_rating)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [id, req.user.id, rating, comments, audioQuality, videoQuality, contentRating]
+        );
+        
+        res.status(201).json({ message: 'Feedback submitted successfully' });
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/:id/feedback
+   * @desc Get feedback for a session (instructors only)
+   * @access Private (Instructors only)
+   */
+  router.get('/virtual-sessions/:id/feedback', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify session exists and user has permission
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      // If instructor, ensure they own the session
+      if (req.user.role === 'instructor' && session.instructor_id !== req.user.id) {
+        return res.status(403).json({ message: 'You do not have permission to view this session\'s feedback' });
+      }
+      
+      // Get all feedback for the session
+      const [feedbackItems] = await pool.query(
+        `SELECT sf.*, CONCAT(u.first_name, ' ', u.last_name) as userName
+         FROM session_feedback sf
+         JOIN users u ON sf.user_id = u.id
+         WHERE sf.session_id = ?
+         ORDER BY sf.submitted_at DESC`,
+        [id]
+      );
+      
+      // Calculate averages
+      const totalRating = feedbackItems.reduce((sum, item) => sum + item.rating, 0);
+      const totalAudioRating = feedbackItems.reduce((sum, item) => sum + (item.audio_quality_rating || 0), 0);
+      const totalVideoRating = feedbackItems.reduce((sum, item) => sum + (item.video_quality_rating || 0), 0);
+      const totalContentRating = feedbackItems.reduce((sum, item) => sum + (item.content_rating || 0), 0);
+      
+      const count = feedbackItems.length;
+      const audioCount = feedbackItems.filter(item => item.audio_quality_rating !== null).length;
+      const videoCount = feedbackItems.filter(item => item.video_quality_rating !== null).length;
+      const contentCount = feedbackItems.filter(item => item.content_rating !== null).length;
+      
+      const averages = {
+        overallRating: count > 0 ? totalRating / count : 0,
+        audioRating: audioCount > 0 ? totalAudioRating / audioCount : 0,
+        videoRating: videoCount > 0 ? totalVideoRating / videoCount : 0,
+        contentRating: contentCount > 0 ? totalContentRating / contentCount : 0,
+        totalResponses: count
+      };
+      
+      res.json({
+        feedback: feedbackItems,
+        averages
+      });
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/:id/chat
+   * @desc Send a chat message in a session
+   * @access Private
+   */
+  router.post('/virtual-sessions/:id/chat', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { message, isPrivate, recipientId } = req.body;
+      
+      // Validate request
+      if (!message) {
+        return res.status(400).json({ message: 'Message text is required' });
+      }
+      
+      // Verify session exists and is active
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      const session = sessions[0];
+      
+      if (session.status !== 'active') {
+        return res.status(400).json({ message: 'Can only send messages in active sessions' });
+      }
+      
+      // Get session settings
+      const [settings] = await pool.query(
+        'SELECT * FROM session_settings WHERE session_id = ?',
+        [id]
+      );
+      
+      // Verify chat is enabled
+      if (settings.length > 0) {
+        const chatEnabled = settings[0].chat_enabled;
+        const privateChatEnabled = settings[0].private_chat_enabled;
+        
+        if (!chatEnabled) {
+          return res.status(403).json({ message: 'Chat is disabled for this session' });
+        }
+        
+        if (isPrivate && !privateChatEnabled) {
+          return res.status(403).json({ message: 'Private chat is disabled for this session' });
+        }
+      }
+      
+      // Send the message
+      await pool.query(
+        `INSERT INTO session_chats
+         (session_id, user_id, message, is_private, recipient_id)
+         VALUES (?, ?, ?, ?, ?)`,
+        [id, req.user.id, message, isPrivate || false, recipientId || null]
+      );
+      
+      res.status(201).json({ message: 'Message sent successfully' });
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/:id/chat
+   * @desc Get chat messages for a session
+   * @access Private
+   */
+  router.get('/virtual-sessions/:id/chat', authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { since } = req.query;
+      
+      // Verify session exists
+      const [sessions] = await pool.query(
+        'SELECT * FROM virtual_sessions WHERE id = ?',
+        [id]
+      );
+      
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      // Set up query params
+      const queryParams = [id, req.user.id, req.user.id];
+      
+      // Basic query for messages
+      let query = `
+        SELECT sc.*, CONCAT(u.first_name, ' ', u.last_name) as senderName,
+          IF(sc.recipient_id IS NOT NULL, CONCAT(ru.first_name, ' ', ru.last_name), NULL) as recipientName
+        FROM session_chats sc
+        JOIN users u ON sc.user_id = u.id
+        LEFT JOIN users ru ON sc.recipient_id = ru.id
+        WHERE sc.session_id = ? 
+          AND (sc.is_private = FALSE 
+            OR sc.user_id = ? 
+            OR sc.recipient_id = ?)
+      `;
+      
+      // Add filter for messages since a specific time
+      if (since) {
+        query += ' AND sc.timestamp > ?';
+        queryParams.push(since);
+      }
+      
+      // Order by timestamp
+      query += ' ORDER BY sc.timestamp ASC';
+      
+      const [messages] = await pool.query(query, queryParams);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /virtual-sessions/templates
+   * @desc Create a room template
+   * @access Private (Instructors only)
+   */
+  router.post('/virtual-sessions/templates', authenticateToken, authorize(['instructor']), async (req, res) => {
+    try {
+      const { name, description, settings, isPublic } = req.body;
+      
+      // Validate request
+      if (!name || !settings) {
+        return res.status(400).json({ message: 'Name and settings are required' });
+      }
+      
+      // Create the template
+      const [result] = await pool.query(
+        `INSERT INTO room_templates
+         (creator_id, name, description, settings, is_public)
+         VALUES (?, ?, ?, ?, ?)`,
+        [req.user.id, name, description || '', JSON.stringify(settings), isPublic || false]
+      );
+      
+      res.status(201).json({
+        message: 'Template created successfully',
+        templateId: result.insertId
+      });
+    } catch (error) {
+      console.error('Error creating room template:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /virtual-sessions/templates
+   * @desc Get room templates
+   * @access Private (Instructors only)
+   */
+  router.get('/virtual-sessions/templates', authenticateToken, authorize(['instructor']), async (req, res) => {
+    try {
+      // Get templates created by the user and public templates
+      const [templates] = await pool.query(
+        `SELECT rt.*, CONCAT(u.first_name, ' ', u.last_name) as creatorName
+         FROM room_templates rt
+         JOIN users u ON rt.creator_id = u.id
+         WHERE rt.creator_id = ? OR rt.is_public = TRUE
+         ORDER BY rt.created_at DESC`,
+        [req.user.id]
+      );
+      
+      // Parse the settings JSON for each template
+      const formattedTemplates = templates.map(template => ({
+        ...template,
+        settings: JSON.parse(template.settings)
+      }));
+      
+      res.json(formattedTemplates);
+    } catch (error) {
+      console.error('Error fetching room templates:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  });
+  
+  /**
+   * Helper function to generate recurring sessions
+   */
+  async function generateRecurringSessions(connection, parentSessionId, recurrence, seriesId) {
+    // Get parent session details
+    const [parentSessions] = await connection.query(
+      'SELECT * FROM virtual_sessions WHERE id = ?',
+      [parentSessionId]
+    );
+    
+    if (parentSessions.length === 0) {
+      throw new Error('Parent session not found');
+    }
+    
+    const parentSession = parentSessions[0];
+    
+    // Get start date and end date for recurrence
+    const startDate = moment(parentSession.session_date);
+    const endDate = recurrence.endDate ? moment(recurrence.endDate) : moment(startDate).add(3, 'months');
+    
+    // Generate dates based on recurrence type
+    const dates = [];
+    let currentDate = moment(startDate).add(1, 'day'); // Start from next day
+    
+    while (currentDate.isSameOrBefore(endDate)) {
+      let addSession = false;
+      
+      switch (recurrence.type) {
+        case 'daily':
+          addSession = true;
+          break;
+        case 'weekly':
+          if (currentDate.day() === (recurrence.dayOfWeek || startDate.day())) {
+            addSession = true;
+          }
+          break;
+        case 'biweekly':
+          if (currentDate.day() === (recurrence.dayOfWeek || startDate.day()) && 
+              currentDate.diff(startDate, 'weeks') % 2 === 0) {
+            addSession = true;
+          }
+          break;
+        case 'monthly':
+          // Same day of month
+          if (currentDate.date() === startDate.date()) {
+            addSession = true;
+          }
+          break;
+      }
+      
+      if (addSession) {
+        dates.push(currentDate.format('YYYY-MM-DD'));
+      }
+      
+      currentDate.add(1, 'day');
+    }
+    
+    // Create recurring sessions
+    for (const date of dates) {
+      const sessionData = {
+        title: parentSession.title,
+        room_id: uuidv4().replace(/-/g, '').substring(0, 12), // Generate new room ID
+        course_id: parentSession.course_id,
+        instructor_id: parentSession.instructor_id,
+        description: parentSession.description,
+        session_date: date,
+        start_time: parentSession.start_time,
+        end_time: parentSession.end_time,
+        status: 'scheduled',
+        password: parentSession.password,
+        max_participants: parentSession.max_participants,
+        is_recorded: parentSession.is_recorded
+      };
+      
+      // Insert the recurring session
+      const [result] = await connection.query(
+        'INSERT INTO virtual_sessions SET ?',
+        sessionData
+      );
+      
+      const sessionId = result.insertId;
+      
+      // Insert session settings (copy from parent)
+      const [parentSettings] = await connection.query(
+        'SELECT * FROM session_settings WHERE session_id = ?',
+        [parentSessionId]
+      );
+      
+      if (parentSettings.length > 0) {
+        const settingsData = { ...parentSettings[0] };
+        delete settingsData.id;
+        settingsData.session_id = sessionId;
+        
+        await connection.query(
+          'INSERT INTO session_settings SET ?',
+          settingsData
+        );
+      }
+    }
+  }
+  
+  module.exports = router;
 
 // Start server
 app.listen(PORT, () => {

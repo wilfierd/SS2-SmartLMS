@@ -5,7 +5,8 @@ import AuthContext from '../../context/AuthContext';
 import AdminDashboard from '../1.admin/AdminDashboard';
 import InstructorDashboard from '../2.instructor/InstructorDashboard';
 import StudentDashboard from '../3.student/StudentDashboard';
-import CourseManagement from '../course/CourseManagement'; // Import the new shared component
+import CourseManagement from '../course/CourseManagement';
+import VirtualClassroom from '../classroom/VirtualClassroom'; // Import the new component
 import AdminUsers from '../users/AdminUsers';
 import UnauthorizedPage from '../common/UnauthorizedPage';
 
@@ -24,19 +25,24 @@ const RoleBasedRoute = ({ component }) => {
   const componentMap = {
     admin: {
       dashboard: <AdminDashboard />,
-      courses: <CourseManagement />, // Use the shared component for admin
+      courses: <CourseManagement />,
       users: <AdminUsers />,
-      // Add other admin components...
+      reports: <div>Reports & Analytics (Coming Soon)</div>,
+      settings: <div>Settings (Coming Soon)</div>,
+      messages: <div>Messages (Coming Soon)</div>,
     },
     instructor: {
       dashboard: <InstructorDashboard />,
-      courses: <CourseManagement />, // Use the shared component for instructor
-      // Add other instructor components...
+      courses: <CourseManagement />,
+      classroom: <VirtualClassroom />, // Add the virtual classroom component
+      assessment: <div>Assessment Tools (Coming Soon)</div>,
+      messages: <div>Messages (Coming Soon)</div>,
     },
     student: {
       dashboard: <StudentDashboard />,
-      courses: <CourseManagement />, // Use the shared component for student
-      // Add other student components...
+      courses: <CourseManagement />,
+      classroom: <VirtualClassroom />, // Add the virtual classroom component
+      messages: <div>Messages (Coming Soon)</div>,
     }
   };
   
