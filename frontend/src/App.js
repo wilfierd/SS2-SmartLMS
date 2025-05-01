@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { Toaster } from 'react-hot-toast'; // Add this import
+import { Toaster } from 'react-hot-toast';
 import Login from './components/auth/Login';
 import RoleBasedRoute from './components/routing/RoleBasedRoute';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -14,6 +14,11 @@ import axios from 'axios';
 import './App.css';
 import config from './config';
 import SidebarManager from './components/common/SidebarManager';
+
+// Import Virtual Classroom components directly
+import VirtualClassroom from './components/classroom/VirtualClassroom';
+import SessionAnalytics from './components/classroom/SessionAnalytics';
+import SessionRecordingView from './components/classroom/SessionRecordingView';
 
 function App() {
   const [auth, setAuth] = useState({
@@ -170,10 +175,14 @@ function App() {
     return <div className="loading">Loading...</div>;
   }
 
+  // Create a ProtectedRoute component for reuse
+  const ProtectedRoute = ({ children }) => {
+    return auth.isAuthenticated ? children : <Navigate to="/login" />;
+  };
+
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthContext.Provider value={{ auth, login, logout, updateUser }}>
-        {/* Add Toaster component here */}
         <Toaster />
         
         <Router>
@@ -192,8 +201,44 @@ function App() {
               <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
               <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
               <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
-              <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} /> {/* New route for virtual classroom */}
-              <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} /> {/* New route for assessment tools */}
+              
+              {/* Virtual Classroom routes */}
+              {/* Main route */}
+              <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} />
+              
+              {/* Alternative path for consistency with component navigation */}
+              <Route path="/virtual-classroom" element={<Navigate to="/classroom" />} />
+              
+              {/* Sub-routes for specific classroom features */}
+              <Route 
+                path="/classroom/analytics/:sessionId" 
+                element={
+                  <ProtectedRoute>
+                    <SessionAnalytics />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/classroom/recording/:sessionId/:recordingId" 
+                element={
+                  <ProtectedRoute>
+                    <SessionRecordingView />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/classroom/recording/:sessionId" 
+                element={
+                  <ProtectedRoute>
+                    <SessionRecordingView />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Assessment tools route */}
+              <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} />
               
               {/* Default routes */}
               <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
