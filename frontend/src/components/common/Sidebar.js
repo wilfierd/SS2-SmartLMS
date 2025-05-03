@@ -1,22 +1,46 @@
 // src/components/common/Sidebar.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import AuthContext from '../../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = ({ activeItem }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { auth } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(localStorage.getItem('sidebarExpanded') === 'true' || false);
   
-  // List of menu items with icons and labels
-  const menuItems = [
-    { id: 'dashboard', icon: '⬜', label: 'Dashboard', path: '/dashboard' },
-    { id: 'users', icon: '👤', label: 'Users Management', path: '/users' },
-    { id: 'courses', icon: '📚', label: 'Courses Management', path: '/courses' },
-    { id: 'report', icon: '📊', label: 'Reports & Analytics', path: '/reports' },
-    { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings' },
-    { id: 'messages', icon: '✉️', label: 'Messages', path: '/messages' },
-  ];
+  // Role-specific menu items
+  const getMenuItems = () => {
+    switch (auth.user.role) {
+      case 'admin':
+        return [
+          { id: 'dashboard', icon: '⬜', label: 'Dashboard', path: '/dashboard' },
+          { id: 'users', icon: '👤', label: 'Users Management', path: '/users' },
+          { id: 'courses', icon: '📚', label: 'Courses Management', path: '/courses' },
+          { id: 'report', icon: '📊', label: 'Reports & Analytics', path: '/reports' },
+          { id: 'settings', icon: '⚙️', label: 'Settings', path: '/settings' },
+          { id: 'messages', icon: '✉️', label: 'Messages', path: '/messages' },
+        ];
+      case 'instructor':
+        return [
+          { id: 'dashboard', icon: '⬜', label: 'Dashboard', path: '/dashboard' },
+          { id: 'courses', icon: '📚', label: 'Courses', path: '/courses' },
+          { id: 'classroom', icon: '🎦', label: 'Virtual Classroom', path: '/classroom' },
+          { id: 'assessment', icon: '📝', label: 'Assessment', path: '/assessment' },
+          { id: 'messages', icon: '✉️', label: 'Messages', path: '/messages' },
+        ];
+      case 'student':
+        return [
+          { id: 'dashboard', icon: '⬜', label: 'Dashboard', path: '/dashboard' },
+          { id: 'courses', icon: '📚', label: 'My Courses', path: '/courses' },
+          { id: 'classroom', icon: '🎦', label: 'Virtual Classroom', path: '/classroom' },
+          { id: 'messages', icon: '✉️', label: 'Messages', path: '/messages' },
+        ];
+      default:
+        return [];
+    }
+  };
 
   // Apply sidebar state to body class for responsive layout
   useEffect(() => {
@@ -78,6 +102,14 @@ const Sidebar = ({ activeItem }) => {
     };
   }, [expanded, location.pathname]);
 
+  // Get role-specific menu items
+  const menuItems = getMenuItems();
+
+  // Determine appropriate label based on user role
+  let roleLabel = 'Admin';
+  if (auth.user.role === 'instructor') roleLabel = 'Instructor';
+  if (auth.user.role === 'student') roleLabel = 'Student';
+
   return (
     <>
       {/* Mobile toggle button */}
@@ -89,6 +121,11 @@ const Sidebar = ({ activeItem }) => {
         <div className="sidebar-logo">
           <span className="logo-icon">LMS</span>
           <span className="logo-text">Learning System</span>
+        </div>
+        
+        <div className="sidebar-user-info">
+          <div className="user-role">{roleLabel}</div>
+          <div className="user-name">{auth.user.firstName || auth.user.email.split('@')[0]}</div>
         </div>
         
         <nav className="sidebar-nav">

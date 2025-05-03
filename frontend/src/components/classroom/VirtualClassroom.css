@@ -1,0 +1,605 @@
+/* src/components/classroom/VirtualClassroom.css */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --disabled-color: #95a5a6;
+    --text-color: #333;
+    --light-text: #7f8c8d;
+    --border-color: #ecf0f1;
+    --bg-color: #f8f9fa;
+    --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --modal-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --sidebar-width-collapsed: 80px;
+    --sidebar-width-expanded: 240px;
+    --header-height: 70px;
+    --transition-speed: 0.3s;
+  }
+  
+  .virtual-classroom-container {
+    display: flex;
+    background-color: var(--bg-color);
+    min-height: 100vh;
+  }
+  
+  .classroom-main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width-collapsed);
+    transition: margin-left var(--transition-speed) ease;
+  }
+  
+  body.sidebar-expanded .classroom-main-content {
+    margin-left: var(--sidebar-width-expanded);
+  }
+  
+  .classroom-content {
+    padding: 90px 30px 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* Loading indicator */
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-size: 18px;
+    color: var(--light-text);
+  }
+  
+  /* Instructor action buttons */
+  .instructor-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .start-now-btn, .create-session-btn {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .start-now-btn {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .create-session-btn {
+    background-color: white;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+  }
+  
+  .start-now-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  .create-session-btn:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .btn-icon {
+    margin-right: 10px;
+    font-size: 18px;
+  }
+  
+  /* Small variant for buttons */
+  .start-now-btn.small, .create-session-btn.small {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+  
+  /* Tab navigation */
+  .classroom-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 25px;
+  }
+  
+  .classroom-tab {
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-color);
+    position: relative;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  
+  .classroom-tab:hover {
+    color: var(--primary-color);
+  }
+  
+  .classroom-tab.active {
+    color: var(--primary-color);
+  }
+  
+  .classroom-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--primary-color);
+  }
+  
+  /* Session cards */
+  .sessions-section {
+    margin-bottom: 30px;
+  }
+  
+  .section-header {
+    margin-bottom: 20px;
+  }
+  
+  .section-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+  }
+  
+  .session-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  
+  .session-header {
+    display: flex;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .session-date-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    margin-right: 20px;
+  }
+  
+  .session-date-time.past {
+    background-color: var(--light-text);
+  }
+  
+  .session-date {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  
+  .session-month {
+    font-size: 14px;
+  }
+  
+  .session-title {
+    flex: 1;
+  }
+  
+  .session-title h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+  }
+  
+  .session-course {
+    font-size: 14px;
+    color: var(--light-text);
+    margin: 0;
+  }
+  
+  .session-details {
+    padding: 0 20px 20px;
+  }
+  
+  .session-details p {
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  
+  .enrollment-status {
+    background-color: #f0f8ff;
+    padding: 8px;
+    border-radius: 4px;
+    border-left: 3px solid var(--primary-color);
+  }
+  
+  .session-actions {
+    display: flex;
+    padding: 0 20px 20px;
+    gap: 10px;
+  }
+  
+  /* Buttons */
+  .primary-btn, .secondary-btn, .danger-btn, .disabled-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .primary-btn {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .secondary-btn {
+    background-color: white;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+  }
+  
+  .danger-btn {
+    background-color: var(--danger-color);
+    color: white;
+  }
+  
+  .disabled-btn {
+    background-color: var(--disabled-color);
+    color: white;
+    cursor: not-allowed;
+  }
+  
+  .primary-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  .secondary-btn:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .danger-btn:hover {
+    background-color: #c0392b;
+  }
+  
+  .record-btn {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+  }
+  
+  /* Active sessions */
+  .active-sessions {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  }
+  
+  .active-session-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .live-indicator {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: #e74c3c;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  
+  .session-content {
+    padding: 20px;
+  }
+  
+  .session-content h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    padding-right: 60px;
+  }
+  
+  .active-session-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .join-btn, .rejoin-btn, .leave-btn, .end-btn, .register-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+  }
+  
+  .join-btn, .rejoin-btn {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .join-btn:disabled {
+    background-color: var(--disabled-color);
+    cursor: not-allowed;
+  }
+  
+  .register-btn {
+    background-color: var(--secondary-color);
+    color: white;
+  }
+  
+  .leave-btn {
+    background-color: #f39c12;
+    color: white;
+  }
+  
+  .end-btn {
+    background-color: var(--danger-color);
+    color: white;
+  }
+  
+  .join-btn:hover, .rejoin-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  .register-btn:hover {
+    background-color: #27ae60;
+  }
+  
+  .leave-btn:hover {
+    background-color: #d35400;
+  }
+  
+  .end-btn:hover {
+    background-color: #c0392b;
+  }
+  
+  /* Empty state */
+  .empty-state, .no-sessions-message {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+  }
+  
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+  
+  .empty-state h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .empty-state p {
+    color: var(--light-text);
+    margin-bottom: 20px;
+  }
+  
+  .empty-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  
+  .modal-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--modal-shadow);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--light-text);
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    padding: 0 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .form-group small {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--light-text);
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 15px;
+    padding: 0 20px;
+    margin-bottom: 20px;
+  }
+  
+  .form-row .form-group {
+    flex: 1;
+    padding: 0;
+    margin-bottom: 0;
+  }
+  
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+  }
+  
+  .checkbox-group label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+  }
+  
+  .checkbox-group input {
+    width: auto;
+    margin-right: 10px;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .cancel-btn, .submit-btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .cancel-btn {
+    background-color: #f8f9fa;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+  }
+  
+  .submit-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+  }
+  
+  .cancel-btn:hover {
+    background-color: #e9ecef;
+  }
+  
+  .submit-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 992px) {
+    .active-sessions {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .classroom-main-content {
+      margin-left: 0;
+    }
+    
+    body.sidebar-expanded .classroom-main-content {
+      margin-left: 0;
+    }
+    
+    .classroom-content {
+      padding: 90px 15px 15px;
+    }
+    
+    .instructor-actions {
+      flex-direction: column;
+    }
+    
+    .form-row {
+      flex-direction: column;
+      gap: 0;
+    }
+    
+    .classroom-tab {
+      padding: 12px 15px;
+      font-size: 14px;
+    }
+    
+    .session-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .session-date-time {
+      margin-bottom: 15px;
+    }
+    
+    .active-session-controls {
+      flex-direction: column;
+    }
+  }

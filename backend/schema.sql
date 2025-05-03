@@ -560,3 +560,338 @@ VALUES
 ('timezone', 'UTC', 'regional', 'Default timezone for the application'),
 ('enable_google_login', 'true', 'authentication', 'Enable Google OAuth login'),
 ('max_file_upload_size', '50', 'uploads', 'Maximum file upload size in MB');
+
+-- Virtual Classroom Tables
+-- Virtual Sessions Tables
+
+-- Main sessions table
+CREATE TABLE virtual_sessions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  room_id VARCHAR(255) NOT NULL UNIQUE,
+  course_id INT NOT NULL,
+  instructor_id INT NOT NULL,
+  description TEXT,
+  session_date DATE,
+  start_time TIME,
+  end_time TIME,
+  actual_start_time DATETIME,
+  actual_end_time DATETIME,
+  status ENUM('scheduled', 'active', 'completed', 'cancelled') DEFAULT 'scheduled',
+  password VARCHAR(255),
+  max_participants INT DEFAULT 30,
+  is_recorded BOOLEAN DEFAULT TRUE,
+  recording_url VARCHAR(512),
+  analytics_data JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Create indexes for sessions
+CREATE INDEX idx_virtual_sessions_status ON virtual_sessions(status);
+CREATE INDEX idx_virtual_sessions_course ON virtual_sessions(course_id);
+CREATE INDEX idx_virtual_sessions_instructor ON virtual_sessions(instructor_id);
+CREATE INDEX idx_virtual_sessions_date ON virtual_sessions(session_date);
+
+-- Recurring sessions configuration
+CREATE TABLE recurring_sessions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  parent_session_id INT NOT NULL,
+  recurrence_type ENUM('daily', 'weekly', 'biweekly', 'monthly') NOT NULL,
+  day_of_week INT, -- For weekly/biweekly (1=Monday, 7=Sunday)
+  week_of_month INT, -- For monthly (1-5)
+  start_date DATE NOT NULL,
+  end_date DATE,
+  series_id VARCHAR(255) NOT NULL, -- To group sessions in a series
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (parent_session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE
+);
+
+-- Session registration (for password-protected or confirmation-required sessions)
+CREATE TABLE session_registrations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  user_id INT NOT NULL,
+  registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  status ENUM('registered', 'attended', 'no_show') DEFAULT 'registered',
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_registration (session_id, user_id)
+);
+
+-- Session activity log - tracks joins, leaves, actions during session
+CREATE TABLE session_activities (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  user_id INT NOT NULL,
+  action ENUM('join', 'leave', 'screenShare', 'chat', 'hand_raise', 'microphone', 'camera') NOT NULL,
+  action_value BOOLEAN, -- For toggleable actions like mic/camera
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  duration_seconds INT, -- For tracking time in session (calculated on leave)
+  device_info VARCHAR(255), -- Browser/OS info
+  ip_address VARCHAR(50),
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- In-session chat messages
+CREATE TABLE session_chats (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  user_id INT NOT NULL,
+  message TEXT NOT NULL,
+  is_private BOOLEAN DEFAULT FALSE,
+  recipient_id INT, -- If private message, who it's to
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Breakout rooms
+CREATE TABLE breakout_rooms (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  ended_at TIMESTAMP NULL,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE
+);
+
+-- Breakout room participants
+CREATE TABLE breakout_room_participants (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  breakout_room_id INT NOT NULL,
+  user_id INT NOT NULL,
+  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  left_at TIMESTAMP NULL,
+  FOREIGN KEY (breakout_room_id) REFERENCES breakout_rooms(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Polls created during sessions
+CREATE TABLE session_polls (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  creator_id INT NOT NULL,
+  question TEXT NOT NULL,
+  is_anonymous BOOLEAN DEFAULT FALSE,
+  is_multiple_choice BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  ended_at TIMESTAMP NULL,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Poll options
+CREATE TABLE poll_options (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  poll_id INT NOT NULL,
+  option_text TEXT NOT NULL,
+  FOREIGN KEY (poll_id) REFERENCES session_polls(id) ON DELETE CASCADE
+);
+
+-- Poll responses
+CREATE TABLE poll_responses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  poll_id INT NOT NULL,
+  user_id INT NOT NULL,
+  option_id INT NOT NULL,
+  responded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (poll_id) REFERENCES session_polls(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_response (poll_id, user_id, option_id)
+);
+
+-- Session recordings
+CREATE TABLE session_recordings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  storage_path VARCHAR(512) NOT NULL,
+  recording_url VARCHAR(512),
+  start_time TIMESTAMP NOT NULL,
+  end_time TIMESTAMP,
+  size_bytes BIGINT,
+  status ENUM('processing', 'ready', 'failed') DEFAULT 'processing',
+  is_downloadable BOOLEAN DEFAULT FALSE,
+  is_editable BOOLEAN DEFAULT FALSE,
+  access_count INT DEFAULT 0,
+  transcript TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE
+);
+
+-- Recording access permissions
+CREATE TABLE recording_permissions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  recording_id INT NOT NULL,
+  user_id INT, -- NULL means course-wide permission
+  course_id INT, -- NULL means specific user permission
+  can_view BOOLEAN DEFAULT TRUE,
+  can_download BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_by INT NOT NULL,
+  FOREIGN KEY (recording_id) REFERENCES session_recordings(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Session feedback
+CREATE TABLE session_feedback (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  user_id INT NOT NULL,
+  rating INT NOT NULL, -- 1-5 scale
+  comments TEXT,
+  audio_quality_rating INT, -- 1-5 scale
+  video_quality_rating INT, -- 1-5 scale
+  content_rating INT, -- 1-5 scale
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_feedback (session_id, user_id)
+);
+
+-- Calendar integration 
+CREATE TABLE session_calendar_events (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  calendar_provider ENUM('google', 'microsoft', 'apple') NOT NULL,
+  external_event_id VARCHAR(255) NOT NULL,
+  organizer_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Session settings
+CREATE TABLE session_settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  waiting_room_enabled BOOLEAN DEFAULT FALSE,
+  auto_recording BOOLEAN DEFAULT TRUE,
+  participants_can_share BOOLEAN DEFAULT TRUE,
+  chat_enabled BOOLEAN DEFAULT TRUE,
+  private_chat_enabled BOOLEAN DEFAULT TRUE,
+  participants_can_unmute BOOLEAN DEFAULT TRUE,
+  participants_video_on_join BOOLEAN DEFAULT FALSE,
+  participants_audio_on_join BOOLEAN DEFAULT FALSE,
+  allow_anonymous_users BOOLEAN DEFAULT FALSE,
+  only_authenticated_users BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE
+);
+
+-- User preferences for virtual sessions
+CREATE TABLE user_session_preferences (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  default_video_on BOOLEAN DEFAULT TRUE,
+  default_audio_on BOOLEAN DEFAULT TRUE,
+  preferred_view ENUM('grid', 'speaker', 'sidebar') DEFAULT 'grid',
+  bandwidth_preference ENUM('low', 'medium', 'high') DEFAULT 'high',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Room templates for quick setup
+CREATE TABLE room_templates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  creator_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  settings JSON NOT NULL, -- Stores all configurable session settings
+  is_public BOOLEAN DEFAULT FALSE, -- If true, available to all instructors
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Stored procedures for automatic processes
+
+-- Procedure to update session statuses
+DELIMITER //
+CREATE PROCEDURE update_session_statuses()
+BEGIN
+  -- Set sessions to active if current time is between start and end times
+  UPDATE virtual_sessions
+  SET status = 'active', 
+      actual_start_time = IFNULL(actual_start_time, NOW())
+  WHERE status = 'scheduled' 
+    AND ((session_date = CURDATE() AND start_time <= CURTIME() AND 
+         (end_time IS NULL OR end_time > CURTIME())) 
+         OR (session_date < CURDATE() AND actual_end_time IS NULL));
+  
+  -- Set sessions to completed if end time has passed
+  UPDATE virtual_sessions
+  SET status = 'completed',
+      actual_end_time = IFNULL(actual_end_time, NOW())
+  WHERE status = 'active' 
+    AND ((session_date = CURDATE() AND end_time IS NOT NULL AND end_time <= CURTIME())
+         OR (session_date < CURDATE()));
+
+  -- Mark no-shows in registrations
+  UPDATE session_registrations sr
+  JOIN virtual_sessions vs ON sr.session_id = vs.id
+  SET sr.status = 'no_show'
+  WHERE vs.status = 'completed' 
+    AND sr.status = 'registered';
+END //
+DELIMITER ;
+
+-- Function to generate a unique room ID
+DELIMITER //
+CREATE FUNCTION generate_room_id() 
+RETURNS VARCHAR(255) DETERMINISTIC
+BEGIN
+  DECLARE room_id VARCHAR(255);
+  DECLARE is_unique BOOLEAN DEFAULT FALSE;
+  
+  WHILE NOT is_unique DO
+    -- Generate a random room ID (using alphanumeric characters)
+    SET room_id = CONCAT(
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      '-',
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      '-',
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1),
+      SUBSTRING('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', RAND()*62+1, 1)
+    );
+    
+    -- Check if the room ID already exists
+    IF NOT EXISTS (SELECT 1 FROM virtual_sessions WHERE room_id = room_id) THEN
+      SET is_unique = TRUE;
+    END IF;
+  END WHILE;
+  
+  RETURN room_id;
+END //
+DELIMITER ;
+
+-- Trigger to automatically set room_id when creating a new session
+DELIMITER //
+CREATE TRIGGER before_session_insert 
+BEFORE INSERT ON virtual_sessions
+FOR EACH ROW
+BEGIN
+  IF NEW.room_id IS NULL OR NEW.room_id = '' THEN
+    SET NEW.room_id = generate_room_id();
+  END IF;
+END //
+DELIMITER ;
+
+-- Event to automatically update session statuses every minute
+CREATE EVENT update_session_statuses_event
+ON SCHEDULE EVERY 1 MINUTE
+DO CALL update_session_statuses();
