@@ -54,6 +54,21 @@ const transporter = nodemailer.createTransport({
     }
   });
 
+// File upload middleware
+const multer = require('multer');
+const e = require('express');
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)){
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+
 // Check if database connection is successful
 pool.getConnection()
   .then(connection => {
@@ -900,20 +915,6 @@ app.post('/api/courses/batch-delete', authenticateToken, authorize(['admin']), a
     connection.release();
   }
 });
-
-// File upload middleware
-const multer = require('multer');
-const e = require('express');
-const upload = multer({
-  dest: 'uploads/',
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)){
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
 
 // Thumbnail upload endpoint
 app.post('/api/upload/thumbnail', authenticateToken, upload.single('thumbnail'), async (req, res) => {
@@ -2548,6 +2549,1499 @@ app.get('/api/virtual-sessions', authenticateToken, async (req, res) => {
       res.status(500).json({ message: 'Server error', error: error.message });
     }
   });
+
+  // Add these routes to the server.js file
+
+// =============== COURSE DETAILS ENDPOINTS ================= //
+
+// Get course details including modules and lessons
+app.get('/api/courses/:id/detail', authenticateToken, async (req, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      // Get course info
+      const [courses] = await pool.query(`
+        SELECT c.*, 
+               u.first_name, u.last_name, 
+               d.name as department_name
+        FROM courses c
+        LEFT JOIN users u ON c.instructor_id = u.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.id = ?
+      `, [courseId]);
+      
+      if (courses.length === 0) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+      
+      const course = courses[0];
+      
+      // Format the course data
+      const formattedCourse = {
+        id: course.id,
+        code: course.code,
+        title: course.title,
+        instructor: `${course.first_name} ${course.last_name}`,
+        instructorId: course.instructor_id,
+        department: course.department_name,
+        departmentId: course.department_id,
+        description: course.description,
+        startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
+        endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
+        status: course.status.charAt(0).toUpperCase() + course.status.slice(1),
+        thumbnail: course.thumbnail_url,
+        isFeatured: course.is_featured === 1
+      };
+      
+      res.json(formattedCourse);
+    } catch (error) {
+      console.error('Error fetching course details:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Get modules for a course
+  app.get('/api/courses/:id/modules', authenticateToken, async (req, res) => {
+    try {
+      const courseId = req.params.id;
+      
+      // Get modules
+      const [modules] = await pool.query(`
+        SELECT * FROM course_modules
+        WHERE course_id = ?
+        ORDER BY order_index ASC
+      `, [courseId]);
+      
+      // Get lessons for each module
+      const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+        const [lessons] = await pool.query(`
+          SELECT l.*, GROUP_CONCAT(lm.id) as material_ids, GROUP_CONCAT(lm.title) as material_titles, 
+          GROUP_CONCAT(lm.file_path) as material_paths, GROUP_CONCAT(lm.external_url) as material_urls,
+          GROUP_CONCAT(lm.material_type) as material_types
+          FROM lessons l
+          LEFT JOIN lesson_materials lm ON l.id = lm.lesson_id
+          WHERE l.module_id = ?
+          GROUP BY l.id
+          ORDER BY l.order_index ASC
+        `, [module.id]);
+        
+        // Format lesson materials
+        const formattedLessons = lessons.map(lesson => {
+          let materials = [];
+          
+          if (lesson.material_ids) {
+            const ids = lesson.material_ids.split(',');
+            const titles = lesson.material_titles.split(',');
+            const paths = lesson.material_paths.split(',');
+            const urls = lesson.material_urls.split(',');
+            const types = lesson.material_types.split(',');
+            
+            materials = ids.map((id, index) => ({
+              id,
+              title: titles[index],
+              filePath: paths[index],
+              externalUrl: urls[index],
+              materialType: types[index]
+            }));
+          }
+          
+          return {
+            id: lesson.id,
+            title: lesson.title,
+            description: lesson.description,
+            contentType: lesson.content_type,
+            content: lesson.content,
+            durationMinutes: lesson.duration_minutes,
+            orderIndex: lesson.order_index,
+            isPublished: lesson.is_published === 1,
+            materials
+          };
+        });
+        
+        return {
+          ...module,
+          lessons: formattedLessons
+        };
+      }));
+      
+      res.json(modulesWithLessons);
+    } catch (error) {
+      console.error('Error fetching course modules:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Get enrolled students for a course (instructor or admin only)
+  app.get('/api/courses/:id/students', authenticateToken, async (req, res) => {
+    try {
+      const courseId = req.params.id;
+      const userId = req.user.id;
+      
+      // Check if user is an admin or the instructor of the course
+      if (req.user.role !== 'admin') {
+        const [courseCheck] = await pool.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, userId]
+        );
+        
+        if (courseCheck.length === 0) {
+          return res.status(403).json({ message: 'You are not authorized to view this information' });
+        }
+      }
+      
+      // Get enrolled students
+      const [students] = await pool.query(`
+        SELECT u.id, u.email, u.first_name, u.last_name, e.enrollment_date, e.completion_status
+        FROM enrollments e
+        JOIN users u ON e.student_id = u.id
+        WHERE e.course_id = ?
+        ORDER BY e.enrollment_date DESC
+      `, [courseId]);
+      
+      res.json(students);
+    } catch (error) {
+      console.error('Error fetching enrolled students:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Create a new module
+  app.post('/api/courses/:id/modules', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    try {
+      const courseId = req.params.id;
+      const { title, description } = req.body;
+      const userId = req.user.id;
+      
+      // Validate input
+      if (!title) {
+        return res.status(400).json({ message: 'Module title is required' });
+      }
+      
+      // Check if user is an admin or the instructor of the course
+      if (req.user.role !== 'admin') {
+        const [courseCheck] = await pool.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, userId]
+        );
+        
+        if (courseCheck.length === 0) {
+          return res.status(403).json({ message: 'You can only add modules to your own courses' });
+        }
+      }
+      
+      // Get the next order index
+      const [orderResult] = await pool.query(
+        'SELECT MAX(order_index) as max_order FROM course_modules WHERE course_id = ?',
+        [courseId]
+      );
+      
+      const nextOrder = (orderResult[0].max_order || 0) + 1;
+      
+      // Insert the new module
+      const [result] = await pool.query(
+        'INSERT INTO course_modules (course_id, title, description, order_index, is_published) VALUES (?, ?, ?, ?, ?)',
+        [courseId, title, description || null, nextOrder, true]
+      );
+      
+      res.status(201).json({
+        message: 'Module created successfully',
+        moduleId: result.insertId
+      });
+    } catch (error) {
+      console.error('Error creating module:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Configure storage for lesson materials
+  const lessonStorage = multer.diskStorage({
+    destination: function(req, file, cb) {
+      const courseId = req.params.id;
+      const dir = path.join(__dirname, 'uploads', 'lessons', courseId);
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      cb(null, dir);
+    },
+    filename: function(req, file, cb) {
+      // Create unique filename
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, 'lesson-' + uniqueSuffix + ext);
+    }
+  });
+  
+  const lessonUpload = multer({ 
+    storage: lessonStorage,
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for lesson materials
+  });
+  
+  // Create a new lesson with materials
+  app.post('/api/courses/:id/lessons', authenticateToken, authorize(['instructor', 'admin']), lessonUpload.array('materials', 10), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const courseId = req.params.id;
+      const { title, description, content, contentType, moduleId, videoUrl } = req.body;
+      const userId = req.user.id;
+      
+      // Validate input
+      if (!title || !moduleId) {
+        return res.status(400).json({ message: 'Lesson title and module ID are required' });
+      }
+      
+      // Check if user is an admin or the instructor of the course
+      if (req.user.role !== 'admin') {
+        const [courseCheck] = await connection.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, userId]
+        );
+        
+        if (courseCheck.length === 0) {
+          return res.status(403).json({ message: 'You can only add lessons to your own courses' });
+        }
+      }
+      
+      // Verify the module belongs to the course
+      const [moduleCheck] = await connection.query(
+        'SELECT * FROM course_modules WHERE id = ? AND course_id = ?',
+        [moduleId, courseId]
+      );
+      
+      if (moduleCheck.length === 0) {
+        return res.status(404).json({ message: 'Module not found or does not belong to this course' });
+      }
+      
+      // Get the next order index
+      const [orderResult] = await connection.query(
+        'SELECT MAX(order_index) as max_order FROM lessons WHERE module_id = ?',
+        [moduleId]
+      );
+      
+      const nextOrder = (orderResult[0].max_order || 0) + 1;
+      
+      // Process video URL for video content type
+      let finalContent = content;
+      if (contentType === 'video' && videoUrl) {
+        finalContent = videoUrl;
+      }
+      
+      // Insert the lesson
+      const [lessonResult] = await connection.query(
+        `INSERT INTO lessons 
+         (module_id, title, description, content_type, content, order_index, is_published) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [moduleId, title, description || null, contentType, finalContent || null, nextOrder, true]
+      );
+      
+      const lessonId = lessonResult.insertId;
+      
+      // Process uploaded files as materials if any
+      if (req.files && req.files.length > 0) {
+        for (const file of req.files) {
+          const filePath = `/uploads/lessons/${courseId}/${file.filename}`;
+          const fileExt = path.extname(file.originalname).toLowerCase();
+          
+          // Determine material type based on file extension
+          let materialType = 'document'; // Default
+          if (['.jpg', '.jpeg', '.png', '.gif', '.svg'].includes(fileExt)) {
+            materialType = 'image';
+          } else if (['.mp4', '.avi', '.mov', '.wmv', '.flv'].includes(fileExt)) {
+            materialType = 'video';
+          } else if (['.mp3', '.wav', '.ogg'].includes(fileExt)) {
+            materialType = 'audio';
+          } else if (['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt'].includes(fileExt)) {
+            materialType = 'document';
+          }
+          
+          // Insert the material
+          await connection.query(
+            `INSERT INTO lesson_materials 
+             (lesson_id, title, file_path, material_type) 
+             VALUES (?, ?, ?, ?)`,
+            [lessonId, file.originalname, filePath, materialType]
+          );
+        }
+      }
+      
+      // If video URL is provided for non-video content type, add it as a material
+      if (videoUrl && contentType !== 'video') {
+        await connection.query(
+          `INSERT INTO lesson_materials 
+           (lesson_id, title, external_url, material_type) 
+           VALUES (?, ?, ?, ?)`,
+          [lessonId, 'Video Reference', videoUrl, 'video']
+        );
+      }
+      
+      await connection.commit();
+      
+      res.status(201).json({
+        message: 'Lesson created successfully',
+        lessonId: lessonId
+      });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error creating lesson:', error);
+      res.status(500).json({ message: 'Server error' });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  // Update a module
+  app.put('/api/courses/:courseId/modules/:moduleId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    try {
+      const { courseId, moduleId } = req.params;
+      const { title, description, isPublished, orderIndex } = req.body;
+      const userId = req.user.id;
+      
+      // Check if user is an admin or the instructor of the course
+      if (req.user.role !== 'admin') {
+        const [courseCheck] = await pool.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, userId]
+        );
+        
+        if (courseCheck.length === 0) {
+          return res.status(403).json({ message: 'You can only modify your own courses' });
+        }
+      }
+      
+      // Update the module
+      const updateFields = [];
+      const values = [];
+      
+      if (title !== undefined) {
+        updateFields.push('title = ?');
+        values.push(title);
+      }
+      
+      if (description !== undefined) {
+        updateFields.push('description = ?');
+        values.push(description);
+      }
+      
+      if (isPublished !== undefined) {
+        updateFields.push('is_published = ?');
+        values.push(isPublished ? 1 : 0);
+      }
+      
+      if (orderIndex !== undefined) {
+        updateFields.push('order_index = ?');
+        values.push(orderIndex);
+      }
+      
+      if (updateFields.length === 0) {
+        return res.status(400).json({ message: 'No fields to update' });
+      }
+      
+      // Add moduleId and courseId to values
+      values.push(moduleId);
+      values.push(courseId);
+      
+      await pool.query(
+        `UPDATE course_modules SET ${updateFields.join(', ')}, updated_at = NOW() 
+         WHERE id = ? AND course_id = ?`,
+        values
+      );
+      
+      res.json({ message: 'Module updated successfully' });
+    } catch (error) {
+      console.error('Error updating module:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Update a lesson
+  app.put('/api/courses/:courseId/lessons/:lessonId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    try {
+      const { courseId, lessonId } = req.params;
+      const { title, description, content, contentType, isPublished, orderIndex } = req.body;
+      const userId = req.user.id;
+      
+      // Check if user is an admin or the instructor of the course
+      if (req.user.role !== 'admin') {
+        const [courseCheck] = await pool.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, userId]
+        );
+        
+        if (courseCheck.length === 0) {
+          return res.status(403).json({ message: 'You can only modify your own courses' });
+        }
+      }
+      
+      // Verify the lesson belongs to a module in this course
+      const [lessonCheck] = await pool.query(`
+        SELECT l.* 
+        FROM lessons l
+        JOIN course_modules cm ON l.module_id = cm.id
+        WHERE l.id = ? AND cm.course_id = ?
+      `, [lessonId, courseId]);
+      
+      if (lessonCheck.length === 0) {
+        return res.status(404).json({ message: 'Lesson not found or does not belong to this course' });
+      }
+      
+      // Update the lesson
+      const updateFields = [];
+      const values = [];
+      
+      if (title !== undefined) {
+        updateFields.push('title = ?');
+        values.push(title);
+      }
+      
+      if (description !== undefined) {
+        updateFields.push('description = ?');
+        values.push(description);
+      }
+      
+      if (content !== undefined) {
+        updateFields.push('content = ?');
+        values.push(content);
+      }
+      
+      if (contentType !== undefined) {
+        updateFields.push('content_type = ?');
+        values.push(contentType);
+      }
+      
+      if (isPublished !== undefined) {
+        updateFields.push('is_published = ?');
+        values.push(isPublished ? 1 : 0);
+      }
+      
+      if (orderIndex !== undefined) {
+        updateFields.push('order_index = ?');
+        values.push(orderIndex);
+      }
+      
+      if (updateFields.length === 0) {
+        return res.status(400).json({ message: 'No fields to update' });
+      }
+      
+      // Add lessonId to values
+      values.push(lessonId);
+      
+      await pool.query(
+        `UPDATE lessons SET ${updateFields.join(', ')}, updated_at = NOW() 
+         WHERE id = ?`,
+        values
+      );
+      
+      res.json({ message: 'Lesson updated successfully' });
+    } catch (error) {
+      console.error('Error updating lesson:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Delete a module
+  app.delete('/api/courses/:courseId/modules/:moduleId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const { courseId, moduleId } = req.params;
+      const userId = req.user.id;
+      
+      // Check if user is an admin or the instructor of the course
+      if (req.user.role !== 'admin') {
+        const [courseCheck] = await connection.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, userId]
+        );
+        
+        if (courseCheck.length === 0) {
+          return res.status(403).json({ message: 'You can only modify your own courses' });
+        }
+      }
+      
+      // Get all lessons in this module to delete their materials
+      const [lessons] = await connection.query(
+        'SELECT id FROM lessons WHERE module_id = ?',
+        [moduleId]
+      );
+      
+      // Delete lesson materials for each lesson
+      for (const lesson of lessons) {
+        await connection.query(
+          'DELETE FROM lesson_materials WHERE lesson_id = ?',
+          [lesson.id]
+        );
+      }
+      
+      // Delete lessons
+      await connection.query(
+        'DELETE FROM lessons WHERE module_id = ?',
+        [moduleId]
+      );
+      
+      // Delete the module
+      await connection.query(
+        'DELETE FROM course_modules WHERE id = ? AND course_id = ?',
+        [moduleId, courseId]
+      );
+      
+      await connection.commit();
+      
+      res.json({ message: 'Module deleted successfully' });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error deleting module:', error);
+      res.status(500).json({ message: 'Server error' });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  // Delete a lesson
+  app.delete('/api/courses/:courseId/lessons/:lessonId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const { courseId, lessonId } = req.params;
+      const userId = req.user.id;
+      
+      // Check if user is an admin or the instructor of the course
+      if (req.user.role !== 'admin') {
+        const [courseCheck] = await connection.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, userId]
+        );
+        
+        if (courseCheck.length === 0) {
+          return res.status(403).json({ message: 'You can only modify your own courses' });
+        }
+      }
+      
+      // Verify the lesson belongs to a module in this course
+      const [lessonCheck] = await connection.query(`
+        SELECT l.* 
+        FROM lessons l
+        JOIN course_modules cm ON l.module_id = cm.id
+        WHERE l.id = ? AND cm.course_id = ?
+      `, [lessonId, courseId]);
+      
+      if (lessonCheck.length === 0) {
+        return res.status(404).json({ message: 'Lesson not found or does not belong to this course' });
+      }
+      
+      // Delete lesson materials
+      await connection.query(
+        'DELETE FROM lesson_materials WHERE lesson_id = ?',
+        [lessonId]
+      );
+      
+      // Delete the lesson
+      await connection.query(
+        'DELETE FROM lessons WHERE id = ?',
+        [lessonId]
+      );
+      
+      await connection.commit();
+      
+      res.json({ message: 'Lesson deleted successfully' });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error deleting lesson:', error);
+      res.status(500).json({ message: 'Server error' });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  // Serve lesson materials
+  app.use('/uploads/lessons', express.static(path.join(__dirname, 'uploads', 'lessons')));
+
+  // =============== ASSESSMENT ROUTES ===============
+
+// ============ ASSIGNMENT ROUTES ============
+
+/**
+ * @route POST /api/courses/:courseId/assignments
+ * @desc Create a new assignment
+ * @access Private (instructors and admins only)
+ */
+app.post('/api/courses/:courseId/assignments', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const { 
+        lesson_id, 
+        title, 
+        description, 
+        max_points, 
+        due_date,
+        allowed_file_types,
+        max_file_size,
+        allow_late_submissions
+      } = req.body;
+      
+      // Validation
+      if (!title || !lesson_id || !due_date) {
+        return res.status(400).json({ message: 'Title, lesson, and due date are required' });
+      }
+      
+      // For instructors, verify they teach this course
+      if (req.user.role === 'instructor') {
+        const [courses] = await pool.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, req.user.id]
+        );
+        
+        if (courses.length === 0) {
+          return res.status(403).json({ message: 'You can only create assignments for your own courses' });
+        }
+      }
+      
+      // Create assignment
+      const [result] = await pool.query(
+        `INSERT INTO assignments 
+         (course_id, lesson_id, title, description, max_points, due_date, allowed_file_types, max_file_size, allow_late_submissions)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          courseId,
+          lesson_id,
+          title,
+          description || null,
+          max_points || 100,
+          due_date,
+          allowed_file_types || 'pdf,docx',
+          max_file_size || 5,
+          allow_late_submissions || false
+        ]
+      );
+      
+      res.status(201).json({
+        message: 'Assignment created successfully',
+        assignmentId: result.insertId
+      });
+    } catch (error) {
+      console.error('Error creating assignment:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /api/courses/:courseId/assignments
+   * @desc Get all assignments for a course
+   * @access Private
+   */
+  app.get('/api/courses/:courseId/assignments', authenticateToken, async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      const [assignments] = await pool.query(
+        `SELECT a.*, cm.title as lesson_title
+         FROM assignments a
+         JOIN course_modules cm ON a.lesson_id = cm.id
+         WHERE a.course_id = ?
+         ORDER BY a.due_date ASC`,
+        [courseId]
+      );
+      
+      // For students, include submission status
+      if (req.user.role === 'student') {
+        const studentId = req.user.id;
+        
+        // Get submission status for each assignment
+        for (let assignment of assignments) {
+          const [submissions] = await pool.query(
+            `SELECT * FROM assignment_submissions 
+             WHERE assignment_id = ? AND student_id = ?
+             ORDER BY submission_date DESC LIMIT 1`,
+            [assignment.id, studentId]
+          );
+          
+          if (submissions.length > 0) {
+            assignment.submission = {
+              id: submissions[0].id,
+              date: submissions[0].submission_date,
+              isLate: submissions[0].is_late,
+              grade: submissions[0].grade,
+              status: submissions[0].grade ? 'graded' : 'submitted'
+            };
+          } else {
+            assignment.submission = null;
+          }
+        }
+      }
+      
+      res.json(assignments);
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /api/assignments/:id
+   * @desc Get a single assignment with details
+   * @access Private
+   */
+  app.get('/api/assignments/:id', authenticateToken, async (req, res) => {
+    try {
+      const assignmentId = req.params.id;
+      
+      const [assignments] = await pool.query(
+        `SELECT a.*, c.title as course_title, cm.title as lesson_title
+         FROM assignments a
+         JOIN courses c ON a.course_id = c.id
+         JOIN course_modules cm ON a.lesson_id = cm.id
+         WHERE a.id = ?`,
+        [assignmentId]
+      );
+      
+      if (assignments.length === 0) {
+        return res.status(404).json({ message: 'Assignment not found' });
+      }
+      
+      const assignment = assignments[0];
+      
+      // For students, include their submission if exists
+      if (req.user.role === 'student') {
+        const studentId = req.user.id;
+        
+        const [submissions] = await pool.query(
+          `SELECT * FROM assignment_submissions 
+           WHERE assignment_id = ? AND student_id = ?
+           ORDER BY submission_date DESC LIMIT 1`,
+          [assignmentId, studentId]
+        );
+        
+        if (submissions.length > 0) {
+          assignment.submission = submissions[0];
+        } else {
+          assignment.submission = null;
+        }
+      }
+      
+      // For instructors, include all submissions
+      if (req.user.role === 'instructor' || req.user.role === 'admin') {
+        const [submissions] = await pool.query(
+          `SELECT s.*, CONCAT(u.first_name, ' ', u.last_name) as student_name
+           FROM assignment_submissions s
+           JOIN users u ON s.student_id = u.id
+           WHERE s.assignment_id = ?
+           ORDER BY s.submission_date DESC`,
+          [assignmentId]
+        );
+        
+        assignment.submissions = submissions;
+      }
+      
+      res.json(assignment);
+    } catch (error) {
+      console.error('Error fetching assignment:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /api/assignments/:id/submit
+   * @desc Submit an assignment (for students)
+   * @access Private (students only)
+   */
+  app.post('/api/assignments/:id/submit', authenticateToken, authorize(['student']), upload.single('file'), async (req, res) => {
+    try {
+      const assignmentId = req.params.id;
+      const studentId = req.user.id;
+      const { comments } = req.body;
+      
+      // Check if the file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      
+      // Get the assignment
+      const [assignments] = await pool.query(
+        'SELECT * FROM assignments WHERE id = ?',
+        [assignmentId]
+      );
+      
+      if (assignments.length === 0) {
+        return res.status(404).json({ message: 'Assignment not found' });
+      }
+      
+      const assignment = assignments[0];
+      
+      // Check allowed file types
+      const allowedTypes = assignment.allowed_file_types.split(',');
+      const fileExt = req.file.originalname.split('.').pop().toLowerCase();
+      
+      if (!allowedTypes.includes(fileExt)) {
+        // Remove the uploaded file
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          message: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}` 
+        });
+      }
+      
+      // Check file size
+      const fileSizeInMB = req.file.size / (1024 * 1024);
+      if (fileSizeInMB > assignment.max_file_size) {
+        // Remove the uploaded file
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          message: `File too large. Maximum size: ${assignment.max_file_size} MB` 
+        });
+      }
+      
+      // Check if past due date
+      const now = new Date();
+      const dueDate = new Date(assignment.due_date);
+      const isLate = now > dueDate;
+      
+      // If late and late submissions not allowed
+      if (isLate && !assignment.allow_late_submissions) {
+        // Remove the uploaded file
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ message: 'Submission deadline has passed' });
+      }
+      
+      // Create submission directory if it doesn't exist
+      const submissionDir = path.join(__dirname, 'uploads', 'submissions', assignmentId);
+      if (!fs.existsSync(submissionDir)) {
+        fs.mkdirSync(submissionDir, { recursive: true });
+      }
+      
+      // Generate unique filename with original extension
+      const uniqueFilename = `${studentId}_${Date.now()}.${fileExt}`;
+      const filePath = path.join(submissionDir, uniqueFilename);
+      
+      // Move file to proper location
+      fs.renameSync(req.file.path, filePath);
+      
+      // DB path for storage
+      const dbFilePath = `/uploads/submissions/${assignmentId}/${uniqueFilename}`;
+      
+      // Save submission to database
+      const [result] = await pool.query(
+        `INSERT INTO assignment_submissions 
+         (assignment_id, student_id, file_path, file_type, file_size, comments, is_late)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          assignmentId,
+          studentId,
+          dbFilePath,
+          fileExt,
+          Math.round(req.file.size / 1024), // Size in KB
+          comments || null,
+          isLate
+        ]
+      );
+      
+      res.status(201).json({
+        message: 'Assignment submitted successfully',
+        submissionId: result.insertId,
+        isLate
+      });
+    } catch (error) {
+      console.error('Error submitting assignment:', error);
+      // Clean up file if it was uploaded
+      if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /api/submissions/:id/grade
+   * @desc Grade an assignment submission
+   * @access Private (instructors and admins only)
+   */
+  app.post('/api/submissions/:id/grade', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    try {
+      const submissionId = req.params.id;
+      const { grade, feedback } = req.body;
+      
+      if (grade === undefined || grade === null) {
+        return res.status(400).json({ message: 'Grade is required' });
+      }
+      
+      // Verify the submission exists
+      const [submissions] = await pool.query(
+        `SELECT s.*, a.course_id
+         FROM assignment_submissions s
+         JOIN assignments a ON s.assignment_id = a.id
+         WHERE s.id = ?`,
+        [submissionId]
+      );
+      
+      if (submissions.length === 0) {
+        return res.status(404).json({ message: 'Submission not found' });
+      }
+      
+      const submission = submissions[0];
+      
+      // For instructors, verify they teach this course
+      if (req.user.role === 'instructor') {
+        const [courses] = await pool.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [submission.course_id, req.user.id]
+        );
+        
+        if (courses.length === 0) {
+          return res.status(403).json({ message: 'You can only grade submissions for your own courses' });
+        }
+      }
+      
+      // Update the submission with grade
+      await pool.query(
+        `UPDATE assignment_submissions
+         SET grade = ?, feedback = ?, graded_by = ?, graded_at = NOW()
+         WHERE id = ?`,
+        [grade, feedback || null, req.user.id, submissionId]
+      );
+      
+      res.json({ message: 'Submission graded successfully' });
+    } catch (error) {
+      console.error('Error grading submission:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  // ============ QUIZ ROUTES ============
+  
+  /**
+   * @route POST /api/courses/:courseId/quizzes
+   * @desc Create a new quiz or test
+   * @access Private (instructors and admins only)
+   */
+  app.post('/api/courses/:courseId/:quizType', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const courseId = req.params.courseId;
+      const quizType = req.params.quizType;
+      
+      // Validate quiz type
+      if (quizType !== 'quizzes' && quizType !== 'tests') {
+        return res.status(400).json({ message: 'Invalid quiz type. Must be "quizzes" or "tests"' });
+      }
+      
+      const isTest = quizType === 'tests';
+      
+      const { 
+        lesson_id, 
+        title, 
+        description, 
+        time_limit_minutes, 
+        passing_score,
+        questions 
+      } = req.body;
+      
+      // Validation
+      if (!title || !lesson_id || !questions || !Array.isArray(questions) || questions.length === 0) {
+        return res.status(400).json({ 
+          message: 'Title, lesson, and at least one question are required' 
+        });
+      }
+      
+      // For instructors, verify they teach this course
+      if (req.user.role === 'instructor') {
+        const [courses] = await connection.query(
+          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+          [courseId, req.user.id]
+        );
+        
+        if (courses.length === 0) {
+          await connection.rollback();
+          return res.status(403).json({ 
+            message: 'You can only create quizzes for your own courses' 
+          });
+        }
+      }
+      
+      // Create the quiz
+      const [quizResult] = await connection.query(
+        `INSERT INTO quizzes 
+         (course_id, lesson_id, title, description, time_limit_minutes, passing_score, is_test)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          courseId,
+          lesson_id,
+          title,
+          description || null,
+          time_limit_minutes || 30,
+          passing_score || 70,
+          isTest
+        ]
+      );
+      
+      const quizId = quizResult.insertId;
+      
+      // Add questions
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i];
+        
+        // Validate question
+        if (!question.question_text || !question.question_type) {
+          await connection.rollback();
+          return res.status(400).json({ 
+            message: `Question ${i+1} is missing text or type` 
+          });
+        }
+        
+        // Create question
+        const [questionResult] = await connection.query(
+          `INSERT INTO quiz_questions 
+           (quiz_id, question_text, question_type, image_data, points, order_index)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            quizId,
+            question.question_text,
+            question.question_type,
+            question.image || null,
+            question.points || 1,
+            i
+          ]
+        );
+        
+        const questionId = questionResult.insertId;
+        
+        // Handle different question types
+        if (question.question_type === 'multiple_choice') {
+          if (!question.options || !Array.isArray(question.options) || question.options.length === 0) {
+            await connection.rollback();
+            return res.status(400).json({ 
+              message: `Question ${i+1} has no options` 
+            });
+          }
+          
+          // Ensure at least one correct answer
+          const hasCorrectOption = question.options.some(option => option.isCorrect);
+          if (!hasCorrectOption) {
+            await connection.rollback();
+            return res.status(400).json({ 
+              message: `Question ${i+1} must have at least one correct answer` 
+            });
+          }
+          
+          // Add options
+          for (let j = 0; j < question.options.length; j++) {
+            const option = question.options[j];
+            if (option.text && option.text.trim() !== '') {
+              await connection.query(
+                `INSERT INTO question_options 
+                 (question_id, option_text, is_correct, order_index)
+                 VALUES (?, ?, ?, ?)`,
+                [
+                  questionId,
+                  option.text,
+                  option.isCorrect || false,
+                  j
+                ]
+              );
+            }
+          }
+        } else if (question.question_type === 'fill_in_blank') {
+          if (!question.fillInAnswer) {
+            await connection.rollback();
+            return res.status(400).json({ 
+              message: `Question ${i+1} has no answer` 
+            });
+          }
+          
+          // Add correct answer
+          await connection.query(
+            `INSERT INTO fill_in_answers 
+             (question_id, answer_text)
+             VALUES (?, ?)`,
+            [
+              questionId,
+              question.fillInAnswer
+            ]
+          );
+        }
+      }
+      
+      await connection.commit();
+      
+      res.status(201).json({
+        message: `${isTest ? 'Test' : 'Quiz'} created successfully`,
+        quizId: quizId
+      });
+    } catch (error) {
+      await connection.rollback();
+      console.error(`Error creating ${req.params.quizType}:`, error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  /**
+   * @route GET /api/courses/:courseId/quizzes
+   * @desc Get all quizzes or tests for a course
+   * @access Private
+   */
+  app.get('/api/courses/:courseId/:quizType', authenticateToken, async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const quizType = req.params.quizType;
+      
+      // Validate quiz type
+      if (quizType !== 'quizzes' && quizType !== 'tests' && quizType !== 'all-assessments') {
+        return res.status(400).json({ message: 'Invalid quiz type. Must be "quizzes", "tests", or "all-assessments"' });
+      }
+      
+      let query = `
+        SELECT q.*, cm.title as lesson_title,
+               (SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = q.id) as question_count
+        FROM quizzes q
+        JOIN course_modules cm ON q.lesson_id = cm.id
+        WHERE q.course_id = ?
+      `;
+      
+      if (quizType === 'quizzes') {
+        query += ' AND q.is_test = FALSE';
+      } else if (quizType === 'tests') {
+        query += ' AND q.is_test = TRUE';
+      }
+      
+      query += ' ORDER BY q.created_at DESC';
+      
+      const [quizzes] = await pool.query(query, [courseId]);
+      
+      // For students, include attempt info for each quiz
+      if (req.user.role === 'student') {
+        const studentId = req.user.id;
+        
+        for (let quiz of quizzes) {
+          const [attempts] = await pool.query(
+            `SELECT * FROM quiz_attempts 
+             WHERE quiz_id = ? AND student_id = ?
+             ORDER BY start_time DESC`,
+            [quiz.id, studentId]
+          );
+          
+          quiz.attempts = attempts;
+          quiz.bestScore = attempts.length > 0 ? 
+                          Math.max(...attempts.map(a => a.score || 0)) : 
+                          null;
+          quiz.hasPassed = attempts.some(a => a.passed === true);
+        }
+      }
+      
+      res.json(quizzes);
+    } catch (error) {
+      console.error(`Error fetching ${req.params.quizType}:`, error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  /**
+   * @route GET /api/quizzes/:id
+   * @desc Get a single quiz with questions
+   * @access Private
+   */
+  app.get('/api/quizzes/:id', authenticateToken, async (req, res) => {
+    try {
+      const quizId = req.params.id;
+      
+      // Get quiz details
+      const [quizzes] = await pool.query(
+        `SELECT q.*, c.title as course_title, cm.title as lesson_title
+         FROM quizzes q
+         JOIN courses c ON q.course_id = c.id
+         JOIN course_modules cm ON q.lesson_id = cm.id
+         WHERE q.id = ?`,
+        [quizId]
+      );
+      
+      if (quizzes.length === 0) {
+        return res.status(404).json({ message: 'Quiz not found' });
+      }
+      
+      const quiz = quizzes[0];
+      
+      // Add quiz questions with options/answers
+      const [questions] = await pool.query(
+        `SELECT * FROM quiz_questions 
+         WHERE quiz_id = ? 
+         ORDER BY order_index ASC`,
+        [quizId]
+      );
+      
+      // For each question, get options or fill-in answer
+      for (let question of questions) {
+        if (question.question_type === 'multiple_choice') {
+          const [options] = await pool.query(
+            `SELECT * FROM question_options 
+             WHERE question_id = ? 
+             ORDER BY order_index ASC`,
+            [question.id]
+          );
+          question.options = options;
+        } else if (question.question_type === 'fill_in_blank') {
+          const [answers] = await pool.query(
+            `SELECT * FROM fill_in_answers 
+             WHERE question_id = ?`,
+            [question.id]
+          );
+          if (answers.length > 0) {
+            question.answer = answers[0].answer_text;
+          }
+        }
+      }
+      
+      // If user is instructor or admin, include the questions with answers
+      if (req.user.role === 'instructor' || req.user.role === 'admin') {
+        quiz.questions = questions;
+      } 
+      // If student and it's not a practice quiz or they haven't taken it yet
+      else if (req.user.role === 'student') {
+        const studentId = req.user.id;
+        
+        // Get student's attempts
+        const [attempts] = await pool.query(
+          `SELECT * FROM quiz_attempts 
+           WHERE quiz_id = ? AND student_id = ?
+           ORDER BY start_time DESC`,
+          [quizId, studentId]
+        );
+        
+        quiz.attempts = attempts;
+        
+        // Only include questions without answers if they haven't completed it yet
+        // or if it's a practice quiz and they've completed it
+        const latestAttempt = attempts.length > 0 ? attempts[0] : null;
+        
+        if (!latestAttempt || !latestAttempt.is_completed || (!quiz.is_test && quiz.show_answers)) {
+          // For incomplete attempts or practice quizzes, show questions but hide correct answers
+          quiz.questions = questions.map(q => {
+            const questionCopy = {...q};
+            
+            if (q.question_type === 'multiple_choice') {
+              questionCopy.options = q.options.map(o => ({
+                id: o.id,
+                option_text: o.option_text,
+                order_index: o.order_index
+                // Remove is_correct
+              }));
+            } else if (q.question_type === 'fill_in_blank') {
+              delete questionCopy.answer;
+            }
+            
+            return questionCopy;
+          });
+        }
+      }
+      
+      res.json(quiz);
+    } catch (error) {
+      console.error('Error fetching quiz:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /api/quizzes/:id/start
+   * @desc Start a quiz attempt
+   * @access Private (students only)
+   */
+  app.post('/api/quizzes/:id/start', authenticateToken, authorize(['student']), async (req, res) => {
+    try {
+      const quizId = req.params.id;
+      const studentId = req.user.id;
+      
+      // Verify quiz exists
+      const [quizzes] = await pool.query('SELECT * FROM quizzes WHERE id = ?', [quizId]);
+      
+      if (quizzes.length === 0) {
+        return res.status(404).json({ message: 'Quiz not found' });
+      }
+      
+      const quiz = quizzes[0];
+      
+      // Check for existing incomplete attempt
+      const [existingAttempts] = await pool.query(
+        `SELECT * FROM quiz_attempts 
+         WHERE quiz_id = ? AND student_id = ? AND is_completed = FALSE`,
+        [quizId, studentId]
+      );
+      
+      if (existingAttempts.length > 0) {
+        return res.json({
+          message: 'You have an existing attempt in progress',
+          attemptId: existingAttempts[0].id
+        });
+      }
+      
+      // Start new attempt
+      const [result] = await pool.query(
+        `INSERT INTO quiz_attempts (quiz_id, student_id, start_time)
+         VALUES (?, ?, NOW())`,
+        [quizId, studentId]
+      );
+      
+      const attemptId = result.insertId;
+      
+      res.status(201).json({
+        message: 'Quiz attempt started',
+        attemptId: attemptId,
+        timeLimit: quiz.time_limit_minutes
+      });
+    } catch (error) {
+      console.error('Error starting quiz:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    }
+  });
+  
+  /**
+   * @route POST /api/quiz-attempts/:id/submit
+   * @desc Submit a quiz attempt with answers
+   * @access Private (students only)
+   */
+  app.post('/api/quiz-attempts/:id/submit', authenticateToken, authorize(['student']), async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const attemptId = req.params.id;
+      const studentId = req.user.id;
+      const { responses } = req.body;
+      
+      if (!responses || !Array.isArray(responses)) {
+        return res.status(400).json({ message: 'Responses are required' });
+      }
+      
+      // Verify attempt exists and belongs to student
+      const [attempts] = await connection.query(
+        `SELECT a.*, q.passing_score, q.is_test
+         FROM quiz_attempts a
+         JOIN quizzes q ON a.quiz_id = q.id
+         WHERE a.id = ? AND a.student_id = ?`,
+        [attemptId, studentId]
+      );
+      
+      if (attempts.length === 0) {
+        await connection.rollback();
+        return res.status(404).json({ message: 'Attempt not found or not yours' });
+      }
+      
+      const attempt = attempts[0];
+      
+      // Check if attempt already completed
+      if (attempt.is_completed) {
+        await connection.rollback();
+        return res.status(400).json({ message: 'This attempt is already completed' });
+      }
+      
+      // Get all questions for this quiz
+      const [questions] = await connection.query(
+        'SELECT * FROM quiz_questions WHERE quiz_id = ?',
+        [attempt.quiz_id]
+      );
+      
+      // Score calculation variables
+      let totalPoints = 0;
+      let earnedPoints = 0;
+      
+      // Process each response
+      for (const response of responses) {
+        const question = questions.find(q => q.id === response.questionId);
+        
+        if (!question) {
+          continue; // Skip invalid question IDs
+        }
+        
+        totalPoints += question.points;
+        let isCorrect = false;
+        
+        if (question.question_type === 'multiple_choice') {
+          // Verify the option exists and is correct
+          if (response.optionId) {
+            const [options] = await connection.query(
+              'SELECT * FROM question_options WHERE id = ? AND question_id = ?',
+              [response.optionId, question.id]
+            );
+            
+            if (options.length > 0) {
+              isCorrect = options[0].is_correct;
+              if (isCorrect) {
+                earnedPoints += question.points;
+              }
+              
+              // Save the response
+              await connection.query(
+                `INSERT INTO quiz_responses 
+                 (attempt_id, question_id, selected_option_id, is_correct)
+                 VALUES (?, ?, ?, ?)`,
+                [attemptId, question.id, response.optionId, isCorrect]
+              );
+            }
+          }
+        } else if (question.question_type === 'fill_in_blank') {
+          // Get correct answer
+          const [answers] = await connection.query(
+            'SELECT * FROM fill_in_answers WHERE question_id = ?',
+            [question.id]
+          );
+          
+          if (answers.length > 0) {
+            // Case-insensitive comparison
+            const correct = answers[0].answer_text.toLowerCase().trim();
+            const submitted = (response.textAnswer || '').toLowerCase().trim();
+            
+            isCorrect = (correct === submitted);
+            if (isCorrect) {
+              earnedPoints += question.points;
+            }
+            
+            // Save the response
+            await connection.query(
+              `INSERT INTO quiz_responses 
+               (attempt_id, question_id, text_answer, is_correct)
+               VALUES (?, ?, ?, ?)`,
+              [attemptId, question.id, response.textAnswer, isCorrect]
+            );
+          }
+        }
+      }
+      
+      // Calculate score as percentage
+      const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
+      const passed = score >= attempt.passing_score;
+      
+      // Complete the attempt
+      await connection.query(
+        `UPDATE quiz_attempts
+         SET end_time = NOW(), score = ?, passed = ?, is_completed = TRUE
+         WHERE id = ?`,
+        [score, passed, attemptId]
+      );
+      
+      await connection.commit();
+      
+      res.json({
+        message: 'Quiz completed successfully',
+        score,
+        passed,
+        totalPoints,
+        earnedPoints
+      });
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error submitting quiz:', error);
+      res.status(500).json({ message: 'Server error', details: error.message });
+    } finally {
+      connection.release();
+    }
+  });
+  
+  // Serve uploaded submission files
+  app.use('/uploads/submissions', express.static(path.join(__dirname, 'uploads', 'submissions')));
 
 // Start server
 app.listen(PORT, () => {

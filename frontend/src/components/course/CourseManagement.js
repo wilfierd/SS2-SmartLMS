@@ -1,15 +1,17 @@
 // src/components/course/CourseManagement.js
 import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../../context/AuthContext';
-import './CourseManagement.css'; // Reuse existing CSS
+import './CourseManagement.css';
 import Sidebar from '../common/Sidebar';
 import Header from '../common/Header';
 import axios from 'axios';
 import config from '../../config';
 import notification from '../../utils/notification';
+import { useNavigate } from 'react-router-dom';
 
 const CourseManagement = () => {
   const { auth } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [courses, setCourses] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
@@ -42,7 +44,7 @@ const CourseManagement = () => {
     thumbnailImage: null,
     status: 'Draft',
     isFeatured: false,
-    enrollmentKey: '', // For course creation/editing
+    enrollmentKey: '',
     requiresEnrollmentKey: false
   });
 
@@ -71,8 +73,8 @@ const CourseManagement = () => {
       case 'instructor':
         return {
           canCreate: true, 
-          canEdit: true, // But can edit their own courses
-          canDelete: true, // Can't delete courses
+          canEdit: true, // Can edit their own courses
+          canDelete: false, // FIXED: Instructors shouldn't delete courses
           canArchive: true, // Can archive their own courses
           canEnroll: false,
           canLeave: false,
@@ -153,6 +155,11 @@ const CourseManagement = () => {
   // Check if instructor owns a course
   const isOwnCourse = (course) => {
     return auth.user.role === 'instructor' && course.instructorId === auth.user.id;
+  };
+
+  // Navigation to course details
+  const handleViewCourseDetails = (courseId) => {
+    navigate(`/courses/${courseId}/detail`);
   };
 
   // Fetch courses from the API
@@ -691,6 +698,7 @@ const CourseManagement = () => {
               <button 
                 className="remove-btn" 
                 onClick={handleRemoveCourses}
+                disabled={selectedCourses.length === 0}
               >
                 Remove {selectedCourses.length > 0 ? `(${selectedCourses.length})` : ''}
               </button>
@@ -710,6 +718,8 @@ const CourseManagement = () => {
                       key={course.id}
                       className="course-card"
                       onContextMenu={(e) => handleContextMenu(e, course.id)}
+                      onClick={() => handleViewCourseDetails(course.id)}
+                      style={{ cursor: 'pointer' }}
                     >
                       <div className="course-thumbnail">
                         {course.thumbnail ? (
@@ -735,7 +745,10 @@ const CourseManagement = () => {
                         <div className="course-actions">
                           <button 
                             className="leave-course-btn"
-                            onClick={() => handleLeaveCourse(course.id)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent navigating to course detail
+                              handleLeaveCourse(course.id);
+                            }}
                           >
                             Leave Course
                           </button>
@@ -755,13 +768,18 @@ const CourseManagement = () => {
                     key={course.id}
                     className={`course-card ${selectedCourses.includes(course.id) ? 'selected' : ''}`}
                     onContextMenu={(e) => handleContextMenu(e, course.id)}
+                    onClick={() => handleViewCourseDetails(course.id)}
+                    style={{ cursor: 'pointer' }}
                   >
                     {(permissions.canDelete || permissions.canEdit) && (
                       <div className="course-checkbox">
                         <input
                           type="checkbox"
                           checked={selectedCourses.includes(course.id)}
-                          onChange={() => handleToggleSelection(course.id)}
+                          onChange={(e) => {
+                            e.stopPropagation(); // Prevent navigating to course detail
+                            handleToggleSelection(course.id);
+                          }}
                         />
                       </div>
                     )}
@@ -791,7 +809,10 @@ const CourseManagement = () => {
                       {auth.user.role === 'student' && !isEnrolled(course.id) && (
                         <button 
                           className="enroll-btn"
-                          onClick={() => handleEnrollCourse(course.id)}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent navigating to course detail
+                            handleEnrollCourse(course.id);
+                          }}
                         >
                           Enroll Now
                         </button>
@@ -800,10 +821,13 @@ const CourseManagement = () => {
                     
                     {/* Only show menu button for admin or for instructors who own the course */}
                     {(auth.user.role === 'admin' || (auth.user.role === 'instructor' && isOwnCourse(course))) && (
-                      <button className="course-menu-btn" onClick={(e) => {
-                        e.stopPropagation();
-                        handleContextMenu(e, course.id);
-                      }}>
+                      <button 
+                        className="course-menu-btn" 
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent navigating to course detail
+                          handleContextMenu(e, course.id);
+                        }}
+                      >
                         ⋮
                       </button>
                     )}
@@ -827,6 +851,13 @@ const CourseManagement = () => {
               style={{ top: showContextMenu.y, left: showContextMenu.x }}
               onClick={(e) => e.stopPropagation()}
             >
+              <div className="menu-item" onClick={() => {
+                handleViewCourseDetails(showContextMenu.courseId);
+                handleCloseContextMenu();
+              }}>
+                <i className="menu-icon">👁️</i> View Details
+              </div>
+              
               {permissions.canEdit && (
                 <div className="menu-item" onClick={() => handleEditCourse(showContextMenu.courseId)}>
                   <i className="menu-icon">✏️</i> Edit

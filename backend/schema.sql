@@ -895,3 +895,155 @@ DELIMITER ;
 CREATE EVENT update_session_statuses_event
 ON SCHEDULE EVERY 1 MINUTE
 DO CALL update_session_statuses();
+
+-- =============== ASSESSMENT TABLES ===============
+
+-- Assignments table
+CREATE TABLE IF NOT EXISTS assignments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  lesson_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  max_points INT NOT NULL DEFAULT 100,
+  due_date DATETIME NOT NULL,
+  allowed_file_types VARCHAR(255) NOT NULL DEFAULT 'pdf,docx',
+  max_file_size INT NOT NULL DEFAULT 5, -- in MB
+  allow_late_submissions BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (lesson_id) REFERENCES course_modules(id) ON DELETE CASCADE
+);
+
+-- Assignment submissions
+CREATE TABLE IF NOT EXISTS assignment_submissions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  assignment_id INT NOT NULL,
+  student_id INT NOT NULL,
+  file_path VARCHAR(512) NOT NULL,
+  file_type VARCHAR(50) NOT NULL,
+  file_size INT NOT NULL, -- in KB
+  submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  comments TEXT,
+  is_late BOOLEAN DEFAULT FALSE,
+  grade DECIMAL(5,2) DEFAULT NULL,
+  feedback TEXT,
+  graded_by INT DEFAULT NULL,
+  graded_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (graded_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Quizzes and Tests
+CREATE TABLE IF NOT EXISTS quizzes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  lesson_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  time_limit_minutes INT NOT NULL DEFAULT 30,
+  passing_score DECIMAL(5,2) NOT NULL DEFAULT 70.00,
+  is_test BOOLEAN DEFAULT FALSE, -- FALSE for practice quiz, TRUE for graded test
+  allow_multiple_attempts BOOLEAN DEFAULT TRUE,
+  show_answers BOOLEAN DEFAULT TRUE, -- Show correct answers after completion
+  randomize_questions BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (lesson_id) REFERENCES course_modules(id) ON DELETE CASCADE
+);
+
+-- Quiz Questions
+CREATE TABLE IF NOT EXISTS quiz_questions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  quiz_id INT NOT NULL,
+  question_text TEXT NOT NULL,
+  question_type ENUM('multiple_choice', 'fill_in_blank') NOT NULL,
+  image_data LONGTEXT, -- Base64 encoded image or NULL
+  points INT NOT NULL DEFAULT 1,
+  order_index INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
+);
+
+-- Question Options (for multiple choice)
+CREATE TABLE IF NOT EXISTS question_options (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  question_id INT NOT NULL,
+  option_text TEXT NOT NULL,
+  is_correct BOOLEAN DEFAULT FALSE,
+  order_index INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE
+);
+
+-- Fill-in-blank correct answers
+CREATE TABLE IF NOT EXISTS fill_in_answers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  question_id INT NOT NULL,
+  answer_text VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE
+);
+
+-- Quiz Attempts
+CREATE TABLE IF NOT EXISTS quiz_attempts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  quiz_id INT NOT NULL,
+  student_id INT NOT NULL,
+  start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  end_time TIMESTAMP NULL,
+  score DECIMAL(5,2) DEFAULT NULL,
+  passed BOOLEAN DEFAULT NULL,
+  is_completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Quiz Responses
+CREATE TABLE IF NOT EXISTS quiz_responses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  attempt_id INT NOT NULL,
+  question_id INT NOT NULL,
+  selected_option_id INT DEFAULT NULL, -- For multiple choice
+  text_answer VARCHAR(255) DEFAULT NULL, -- For fill-in-blank
+  is_correct BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE,
+  FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE,
+  FOREIGN KEY (selected_option_id) REFERENCES question_options(id) ON DELETE SET NULL
+);
+
+-- Create necessary indexes for better performance
+CREATE INDEX idx_assignments_course ON assignments(course_id);
+CREATE INDEX idx_assignments_lesson ON assignments(lesson_id);
+CREATE INDEX idx_submissions_assignment ON assignment_submissions(assignment_id);
+CREATE INDEX idx_submissions_student ON assignment_submissions(student_id);
+CREATE INDEX idx_quizzes_course ON quizzes(course_id);
+CREATE INDEX idx_quizzes_lesson ON quizzes(lesson_id);
+CREATE INDEX idx_questions_quiz ON quiz_questions(quiz_id);
+CREATE INDEX idx_options_question ON question_options(question_id);
+CREATE INDEX idx_answers_question ON fill_in_answers(question_id);
+CREATE INDEX idx_attempts_quiz ON quiz_attempts(quiz_id);
+CREATE INDEX idx_attempts_student ON quiz_attempts(student_id);
+CREATE INDEX idx_responses_attempt ON quiz_responses(attempt_id);
+
+ALTER TABLE quizzes ADD COLUMN is_test BOOLEAN DEFAULT FALSE;
+ALTER TABLE quiz_questions ADD COLUMN image_data TEXT;
+ALTER TABLE quiz_questions MODIFY COLUMN question_type VARCHAR(200);
+ALTER TABLE assignments ADD COLUMN allowed_file_types TEXT;
+ALTER TABLE assignments ADD COLUMN max_file_size VARCHAR(10);
+
+
+
+

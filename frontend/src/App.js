@@ -9,6 +9,7 @@ import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import ChangePasswordModal from './components/auth/ChangePasswordModal';
 import UnauthorizedPage from './components/common/UnauthorizedPage';
+import CourseDetail from './components/course/CourseDetail';
 import AuthContext from './context/AuthContext';
 import { ChatbotProvider } from './context/ChatbotContext'; // Import ChatbotProvider
 import Chatbot from './components/chatbot/Chatbot'; // Import Chatbot component
@@ -205,6 +206,19 @@ function App() {
               <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
               <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
               <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
+              
+              {/* Course Detail Route */}
+              <Route path="/courses/:courseId/detail" element={
+                <ProtectedRoute>
+                  <CourseDetail />
+                </ProtectedRoute>
+              } />
+              
+              {/* Quiz Detail Routes */}
+              <Route path="/quizzes/:quizId" element={<RoleBasedRoute component="quizDetail" />} />
+              
+              {/* Assignment Detail Route - can be added when implemented */}
+              <Route path="/assignments/:assignmentId" element={<RoleBasedRoute component="assignmentDetail" />} />
                
               {/* Virtual Classroom routes */}
               {/* Main route */}
