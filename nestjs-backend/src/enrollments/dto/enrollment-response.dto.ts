@@ -8,7 +8,7 @@ export class EnrollmentResponseDto {
   code: string;
   description?: string;
   instructor: string;
-  thumbnail?: string;
+  thumbnailUrl?: string;
   status: string;
   startDate: Date;
   endDate: Date;

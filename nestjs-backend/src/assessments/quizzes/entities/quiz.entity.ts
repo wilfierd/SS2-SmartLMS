@@ -15,35 +15,11 @@ export class Quiz {
   @Column({ nullable: true, type: 'text' })
   description: string;
 
-  @Column({ name: 'time_limit_minutes', default: 60 })
-  timeLimitMinutes: number;
-
-  @Column({ name: 'passing_score', default: 70 })
-  passingScore: number;
-
-  @Column({ name: 'is_test', default: false })
-  isTest: boolean;
-
-  @Column({ name: 'allow_multiple_attempts', default: false })
-  allowMultipleAttempts: boolean;
-
-  @Column({ name: 'show_answers', default: true })
-  showAnswers: boolean;
-
-  @Column({ name: 'randomize_questions', default: false })
-  randomizeQuestions: boolean;
-
   @Column({ name: 'course_id' })
   courseId: number;
 
   @Column({ name: 'lesson_id' })
   lessonId: number;
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
 
   @ManyToOne(() => Course)
   @JoinColumn({ name: 'course_id' })
@@ -53,9 +29,33 @@ export class Quiz {
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
+  @Column({ name: 'time_limit_minutes', default: 30 })
+  timeLimitMinutes: number;
+
+  @Column({ name: 'passing_score', default: 70 })
+  passingScore: number;
+
+  @Column({ name: 'is_test', default: false })
+  isTest: boolean;
+
+  @Column({ name: 'show_answers', default: true })
+  showAnswers: boolean;
+
+  @Column({ name: 'allow_retake', default: true })
+  allowRetake: boolean;
+
+  @Column({ name: 'randomize_questions', default: false })
+  randomizeQuestions: boolean;
+
   @OneToMany(() => QuizQuestion, question => question.quiz)
   questions: QuizQuestion[];
 
   @OneToMany(() => QuizAttempt, attempt => attempt.quiz)
   attempts: QuizAttempt[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 } 

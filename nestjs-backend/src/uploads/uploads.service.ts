@@ -195,15 +195,11 @@ export class UploadsService {
     submission.assignmentId = submissionData.assignmentId;
     submission.studentId = submissionData.studentId;
     submission.filePath = submissionData.filePath;
+    submission.fileType = submissionData.fileType;
+    submission.fileSize = submissionData.fileSize;
     submission.submissionDate = submissionData.submissionDate;
     submission.isLate = false; // Default value
-    submission.comments = submissionData.comments || undefined;
-    
-    // Handle nullable fields correctly - use 0 or null for numeric fields
-    submission.grade = 0;
-    submission.feedback = undefined;
-    submission.gradedAt = undefined;
-    submission.gradedById = 0;
+    submission.comments = submissionData.comments || null;
     
     return this.submissionRepository.save(submission);
   }
@@ -238,9 +234,11 @@ export class UploadsService {
     submission.assignmentId = submissionData.assignmentId;
     submission.studentId = submissionData.studentId;
     submission.filePath = submissionData.filePath;
+    submission.fileType = submissionData.fileType;
+    submission.fileSize = submissionData.fileSize;
     submission.isLate = submissionData.isLate;
     submission.submissionDate = new Date();
-    submission.comments = submissionData.comments || undefined;
+    submission.comments = submissionData.comments || null;
     
     return this.submissionRepository.save(submission);
   }

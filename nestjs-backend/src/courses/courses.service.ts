@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Course, CourseStatus } from './entities/course.entity';
@@ -124,6 +124,11 @@ export class CoursesService {
   }
 
   async remove(id: number, userId: number, userRole: UserRole): Promise<void> {
+    // Validate input
+    if (!id || isNaN(id)) {
+      throw new BadRequestException('Invalid course ID');
+    }
+    
     const course = await this.findOne(id);
     
     // Check permissions
@@ -131,10 +136,22 @@ export class CoursesService {
       throw new ForbiddenException('You can only delete your own courses');
     }
     
-    const result = await this.coursesRepository.delete(id);
-    
-    if (result.affected === 0) {
-      throw new NotFoundException(`Course with ID ${id} not found`);
+    try {
+      const result = await this.coursesRepository.delete(id);
+      
+      if (result.affected === 0) {
+        throw new NotFoundException(`Course with ID ${id} not found or already deleted`);
+      }
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      } else if (error.code === 'ER_ROW_IS_REFERENCED' || error.code === '23503') { 
+        // MySQL or PostgreSQL foreign key error codes
+        throw new BadRequestException('Cannot delete this course because it is referenced by other entities (e.g., enrollments or modules)');
+      } else {
+        throw new BadRequestException('Failed to delete course');
+      }
     }
   }
 
@@ -152,6 +169,11 @@ export class CoursesService {
   }
 
   async batchDelete(ids: number[], userId: number, userRole: UserRole): Promise<void> {
+    // Validate input
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new BadRequestException('No course IDs provided for deletion');
+    }
+    
     // For instructors, verify they own all courses
     if (userRole === UserRole.INSTRUCTOR) {
       for (const id of ids) {
@@ -162,7 +184,11 @@ export class CoursesService {
       }
     }
     
-    await this.coursesRepository.delete(ids);
+    const result = await this.coursesRepository.delete(ids);
+    
+    if (result.affected === 0) {
+      throw new NotFoundException(`No courses were deleted. Courses may not exist.`);
+    }
   }
 
   async isInstructorOfCourse(courseId: number, instructorId: number): Promise<boolean> {

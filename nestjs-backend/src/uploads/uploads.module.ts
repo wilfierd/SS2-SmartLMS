@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -82,7 +82,7 @@ import { Course } from '../courses/entities/course.entity';
       inject: [ConfigService],
     }),
     CoursesModule,
-    AssignmentsModule
+    forwardRef(() => AssignmentsModule)
   ],
   controllers: [UploadsController],
   providers: [UploadsService],

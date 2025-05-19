@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AssignmentsModule } from './assignments/assignments.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 

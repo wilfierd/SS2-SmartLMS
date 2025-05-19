@@ -96,8 +96,8 @@ export class AssignmentsService {
 
     // Update submission with grade info
     submission.grade = dto.grade;
-    submission.feedback = dto.feedback;
-    submission.gradedById = instructorId;
+    submission.feedback = dto.feedback || null;
+    submission.gradedBy = instructorId;
     submission.gradedAt = new Date();
 
     return this.submissionsRepository.save(submission);
@@ -153,7 +153,7 @@ export class AssignmentsService {
         // Reset grade info if resubmitting
         grade: null,
         feedback: null,
-        gradedById: null,
+        gradedBy: null,
         gradedAt: null,
       });
     } else {

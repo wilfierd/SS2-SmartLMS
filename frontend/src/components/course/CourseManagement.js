@@ -718,7 +718,12 @@ const CourseManagement = () => {
                       key={course.id}
                       className="course-card"
                       onContextMenu={(e) => handleContextMenu(e, course.id)}
-                      onClick={() => handleViewCourseDetails(course.id)}
+                      onClick={(e) => {
+                        // Only navigate to details if not clicking on the checkbox or menu button
+                        if (!e.target.closest('.course-checkbox') && !e.target.closest('.course-menu-btn')) {
+                          handleViewCourseDetails(course.id);
+                        }
+                      }}
                       style={{ cursor: 'pointer' }}
                     >
                       <div className="course-thumbnail">
@@ -768,16 +773,25 @@ const CourseManagement = () => {
                     key={course.id}
                     className={`course-card ${selectedCourses.includes(course.id) ? 'selected' : ''}`}
                     onContextMenu={(e) => handleContextMenu(e, course.id)}
-                    onClick={() => handleViewCourseDetails(course.id)}
+                    onClick={(e) => {
+                      // Only navigate to details if not clicking on the checkbox or menu button
+                      if (!e.target.closest('.course-checkbox') && !e.target.closest('.course-menu-btn')) {
+                        handleViewCourseDetails(course.id);
+                      }
+                    }}
                     style={{ cursor: 'pointer' }}
                   >
                     {(permissions.canDelete || permissions.canEdit) && (
-                      <div className="course-checkbox">
+                      <div 
+                        className="course-checkbox"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
                         <input
                           type="checkbox"
                           checked={selectedCourses.includes(course.id)}
                           onChange={(e) => {
-                            e.stopPropagation(); // Prevent navigating to course detail
                             handleToggleSelection(course.id);
                           }}
                         />

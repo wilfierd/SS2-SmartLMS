@@ -253,13 +253,21 @@
     right: 10px;
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 20px;
     cursor: pointer;
     color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
   }
   
   .course-menu-btn:hover {
     color: var(--text-color);
+    background-color: rgba(0, 0, 0, 0.05);
   }
   
   /* Context Menu */

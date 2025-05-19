@@ -1,17 +1,24 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Quiz } from './quiz.entity';
 import { QuestionOption } from './question-option.entity';
 import { FillInAnswer } from './fill-in-answer.entity';
 
 export enum QuestionType {
   MULTIPLE_CHOICE = 'multiple_choice',
-  FILL_IN_BLANK = 'fill_in_blank',
+  FILL_IN_BLANK = 'fill_in_blank'
 }
 
 @Entity('quiz_questions')
 export class QuizQuestion {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ name: 'quiz_id' })
+  quizId: number;
+
+  @ManyToOne(() => Quiz, quiz => quiz.questions, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'quiz_id' })
+  quiz: Quiz;
 
   @Column({ name: 'question_text', type: 'text' })
   questionText: string;
@@ -24,31 +31,24 @@ export class QuizQuestion {
   })
   questionType: QuestionType;
 
-  @Column({ name: 'image_data', type: 'text', nullable: true })
+  @Column({ nullable: true, name: 'image_data', type: 'text' })
   imageData: string;
 
   @Column({ default: 1 })
   points: number;
 
-  @Column({ name: 'order_index', default: 0 })
+  @Column({ name: 'order_index' })
   orderIndex: number;
-
-  @Column({ name: 'quiz_id' })
-  quizId: number;
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
-
-  @ManyToOne(() => Quiz, quiz => quiz.questions, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'quiz_id' })
-  quiz: Quiz;
 
   @OneToMany(() => QuestionOption, option => option.question)
   options: QuestionOption[];
 
   @OneToOne(() => FillInAnswer, answer => answer.question)
   fillInAnswer: FillInAnswer;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 } 

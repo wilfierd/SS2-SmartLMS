@@ -1,6 +1,6 @@
 export enum CourseStatus {
   DRAFT = 'draft',
-  ACTIVE = 'active',
-  ARCHIVED = 'archived',
-  COMPLETED = 'completed'
+  PUBLISHED = 'published',
+  UPCOMING = 'upcoming',
+  ARCHIVED = 'archived'
 } 

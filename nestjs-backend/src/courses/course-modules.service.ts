@@ -102,4 +102,24 @@ export class CourseModulesService {
     const module = await this.findOne(moduleId);
     return module.courseId;
   }
+
+  async findByCourseWithLessons(courseId: number): Promise<any> {
+    // Raw query to match Express implementation
+    return this.courseModulesRepository.query(`
+      SELECT m.*, 
+             GROUP_CONCAT(l.id) as lesson_ids, 
+             GROUP_CONCAT(l.title) as lesson_titles,
+             GROUP_CONCAT(l.description) as lesson_descriptions,
+             GROUP_CONCAT(l.content_type) as lesson_content_types,
+             GROUP_CONCAT(l.content) as lesson_contents,
+             GROUP_CONCAT(l.duration_minutes) as lesson_durations,
+             GROUP_CONCAT(l.order_index) as lesson_order_indexes,
+             GROUP_CONCAT(l.is_published) as lesson_is_published
+      FROM course_modules m
+      LEFT JOIN lessons l ON m.id = l.module_id
+      WHERE m.course_id = ?
+      GROUP BY m.id
+      ORDER BY m.order_index ASC
+    `, [courseId]);
+  }
 } 

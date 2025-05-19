@@ -8,6 +8,7 @@ import { QuestionOption } from './entities/question-option.entity';
 import { FillInAnswer } from './entities/fill-in-answer.entity';
 import { QuizAttempt } from './entities/quiz-attempt.entity';
 import { QuizResponse } from './entities/quiz-response.entity';
+import { CoursesModule } from '../../courses/courses.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { QuizResponse } from './entities/quiz-response.entity';
       FillInAnswer,
       QuizAttempt,
       QuizResponse
-    ])
+    ]),
+    CoursesModule
   ],
   controllers: [QuizzesController],
   providers: [QuizzesService],

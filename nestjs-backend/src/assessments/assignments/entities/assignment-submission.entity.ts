@@ -7,54 +7,54 @@ export class AssignmentSubmission {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ name: 'assignment_id' })
+  assignmentId: number;
+
+  @ManyToOne(() => Assignment, assignment => assignment.submissions, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'assignment_id' })
+  assignment: Assignment;
+
+  @Column({ name: 'student_id' })
+  studentId: number;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'student_id' })
+  student: User;
+
   @Column({ name: 'file_path' })
   filePath: string;
 
   @Column({ name: 'file_type' })
   fileType: string;
 
-  @Column({ name: 'file_size' })
+  @Column({ name: 'file_size', type: 'int' })
   fileSize: number;
+
+  @Column({ nullable: true, type: 'text' })
+  comments: string | null;
+
+  @Column({ default: false, name: 'is_late' })
+  isLate: boolean;
+
+  @Column({ nullable: true, type: 'float' })
+  grade: number | null;
+
+  @Column({ nullable: true, type: 'text' })
+  feedback: string | null;
+
+  @Column({ nullable: true, name: 'graded_by' })
+  gradedBy: number | null;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'graded_by' })
+  grader: User;
+
+  @Column({ nullable: true, name: 'graded_at', type: 'datetime' })
+  gradedAt: Date | null;
 
   @CreateDateColumn({ name: 'submission_date' })
   submissionDate: Date;
 
-  @Column({ nullable: true, type: 'text' })
-  comments?: string;
-
-  @Column({ name: 'is_late', default: false })
-  isLate: boolean;
-
-  @Column({ nullable: true, type: 'float' })
-  grade: number;
-
-  @Column({ nullable: true, type: 'text' })
-  feedback?: string;
-
-  @Column({ name: 'graded_at', nullable: true, type: 'datetime' })
-  gradedAt?: Date;
-
-  @Column({ name: 'assignment_id' })
-  assignmentId: number;
-
-  @Column({ name: 'student_id' })
-  studentId: number;
-
-  @Column({ name: 'graded_by_id', nullable: true })
-  gradedById: number;
-
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
-  @ManyToOne(() => Assignment, assignment => assignment.submissions)
-  @JoinColumn({ name: 'assignment_id' })
-  assignment: Assignment;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'student_id' })
-  student: User;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'graded_by_id' })
-  gradedBy: User;
 } 

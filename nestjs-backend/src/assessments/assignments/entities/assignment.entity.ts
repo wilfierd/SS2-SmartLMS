@@ -17,10 +17,10 @@ export class Assignment {
   @Column({ name: 'max_points', default: 100 })
   maxPoints: number;
 
-  @Column({ name: 'due_date', type: 'datetime', nullable: true })
+  @Column({ name: 'due_date', type: 'datetime' })
   dueDate: Date;
 
-  @Column({ name: 'allowed_file_types', default: 'pdf,docx,zip' })
+  @Column({ name: 'allowed_file_types', default: 'pdf,docx,doc' })
   allowedFileTypes: string;
 
   @Column({ name: 'max_file_size', default: 5 })

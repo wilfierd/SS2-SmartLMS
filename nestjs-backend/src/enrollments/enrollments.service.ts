@@ -144,7 +144,7 @@ export class EnrollmentsService {
       code: course.code,
       description: course.description,
       instructor: instructorName,
-      thumbnail: course.thumbnailUrl,
+      thumbnailUrl: course.thumbnailUrl,
       status: course.status,
       startDate: course.startDate,
       endDate: course.endDate,

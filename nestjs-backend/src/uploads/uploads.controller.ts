@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UploadedFiles, Param, Request, Body, UseGuards, NotFoundException, BadRequestException, ForbiddenException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UploadedFiles, Param, Request, Body, UseGuards, NotFoundException, BadRequestException, ForbiddenException, InternalServerErrorException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiParam, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,6 +20,7 @@ export class UploadsController {
   constructor(
     private readonly uploadsService: UploadsService,
     private readonly coursesService: CoursesService,
+    @Inject(forwardRef(() => AssignmentsService))
     private readonly assignmentsService: AssignmentsService
   ) {}
 

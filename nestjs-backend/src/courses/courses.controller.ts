@@ -9,7 +9,9 @@ import {
   Query, 
   Request, 
   UseGuards,
-  NotFoundException
+  NotFoundException,
+  ParseIntPipe,
+  BadRequestException
 } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -66,8 +68,8 @@ export class CoursesController {
         description: course.description,
         startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
         endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
-        status: course.status ? (course.status.charAt(0).toUpperCase() + course.status.slice(1)) : 'Draft',
-        thumbnail: course.thumbnail_url ? 
+        status: course.status || 'draft',
+        thumbnailUrl: course.thumbnail_url ? 
           (course.thumbnail_url.startsWith('http') ? course.thumbnail_url : `${baseUrl}${course.thumbnail_url}`) 
           : null,
         isFeatured: course.is_featured === 1
@@ -144,8 +146,8 @@ export class CoursesController {
         description: course.description,
         startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
         endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
-        status: course.status.charAt(0).toUpperCase() + course.status.slice(1), // Capitalize status
-        thumbnail: course.thumbnail_url ? 
+        status: course.status || 'draft',
+        thumbnailUrl: course.thumbnail_url ? 
           (course.thumbnail_url.startsWith('http') ? course.thumbnail_url : `${baseUrl}${course.thumbnail_url}`)
           : null,
         isFeatured: course.is_featured === 1 // Convert to boolean
@@ -194,6 +196,11 @@ export class CoursesController {
     @Body() updateCourseDto: UpdateCourseDto,
     @Request() req,
   ): Promise<CourseResponseDto> {
+    console.log('Updating course with data:', JSON.stringify(updateCourseDto));
+    if (updateCourseDto.status) {
+      console.log('Status received in update:', updateCourseDto.status);
+      console.log('Valid status values:', Object.values(CourseStatus));
+    }
     const course = await this.coursesService.update(
       +id,
       updateCourseDto,
@@ -222,21 +229,68 @@ export class CoursesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
   async remove(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Request() req,
   ): Promise<{ message: string }> {
-    await this.coursesService.remove(+id, req.user.id, req.user.role);
-    return { message: 'Course deleted successfully' };
+    try {
+      console.log(`Deleting course with ID: ${id}`);
+      await this.coursesService.remove(id, req.user.id, req.user.role);
+      return { message: 'Course deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      throw error;
+    }
   }
 
   @Post('batch-delete')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
   async batchDelete(
-    @Body('ids') ids: number[],
+    @Body('courseIds') courseIds: number[],
     @Request() req,
   ): Promise<{ message: string }> {
-    await this.coursesService.batchDelete(ids, req.user.id, req.user.role);
-    return { message: `${ids.length} courses deleted successfully` };
+    try {
+      console.log(`Batch deleting courses with IDs: ${JSON.stringify(courseIds)}`);
+      
+      if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
+        throw new BadRequestException('No course IDs provided for deletion');
+      }
+      
+      await this.coursesService.batchDelete(courseIds, req.user.id, req.user.role);
+      return { message: `${courseIds.length} courses deleted successfully` };
+    } catch (error) {
+      console.error('Error batch deleting courses:', error);
+      throw error;
+    }
+  }
+
+  @Post('debug/test-status')
+  async testStatus(@Body() data: any): Promise<any> {
+    // Log the incoming data
+    console.log('Test status received:', data);
+    
+    // Try to convert the status string using our transform
+    if (data.status && typeof data.status === 'string') {
+      const lowercaseStatus = data.status.toLowerCase();
+      console.log('Lowercase status:', lowercaseStatus);
+      
+      // Check if it's a valid value
+      const validValues = Object.values(CourseStatus);
+      console.log('Valid status values:', validValues);
+      console.log('Is valid status:', validValues.includes(lowercaseStatus));
+      
+      // Create a new course DTO and see what happens
+      const dto = new CreateCourseDto();
+      dto.title = 'Test Course';
+      dto.code = 'TEST';
+      dto.status = data.status;
+      
+      console.log('DTO after assignment:', dto);
+    }
+    
+    return { 
+      receivedStatus: data.status,
+      validStatusValues: Object.values(CourseStatus)
+    };
   }
 } 
