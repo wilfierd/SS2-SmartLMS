@@ -4,6 +4,7 @@ import './StudentDashboard.css';
 import Sidebar from '../common/Sidebar';
 import Header from  '../common/Header';
 import AuthContext from '../../context/AuthContext';
+import CourseRecommendations from '../recommendations/CourseRecommendations';
 import axios from 'axios';
 
 const StudentDashboard = () => {
@@ -190,6 +191,9 @@ const StudentDashboard = () => {
                   <h2>My Courses</h2>
                   <a href="#" className="browse-courses-btn">Browse More Courses</a>
                 </div>
+
+                {/* Course Recommendations */}
+                <CourseRecommendations limit={3} />
                 
                 <div className="courses-grid">
                   {enrolledCourses.map(course => (

@@ -4043,6 +4043,71 @@ app.post('/api/courses/:courseId/assignments', authenticateToken, authorize(['in
   // Serve uploaded submission files
   app.use('/uploads/submissions', express.static(path.join(__dirname, 'uploads', 'submissions')));
 
+
+// <<================== RECOMMENDATION ROUTES ==================>>
+const recommendationService = require('./routes/recommendation-routes');
+
+/**
+ * @route GET /api/recommendations
+ * @desc Get personalized course recommendations for current student
+ * @access Private (Student only)
+ */
+// app.get('/api/recommendations', authenticateToken, async (req, res) => {
+//   // Role check
+//   if (req.user.role !== 'student') {
+//     return res.status(403).json({ message: 'Access denied. Students only.' });
+//   }
+  
+//   try {
+//     const studentId = req.user.id;
+//     const limit = parseInt(req.query.limit) || 3;
+    
+//     const recommendations = await recommendationService.getRecommendations(studentId, limit);
+    
+//     // If recommendations include course IDs, fetch the full course details
+//     if (recommendations.length > 0 && !recommendations[0].error) {
+//       const courseIds = recommendations.map(rec => rec.course_id);
+      
+//       // Get course details from database
+//       const [courses] = await pool.query(`
+//         SELECT c.*, 
+//                u.first_name, u.last_name, 
+//                d.name as department_name
+//         FROM courses c
+//         LEFT JOIN users u ON c.instructor_id = u.id
+//         LEFT JOIN departments d ON c.department_id = d.id
+//         WHERE c.id IN (?)
+//       `, [courseIds]);
+      
+//       // Map course details to recommendations
+//       const enrichedRecommendations = recommendations.map(rec => {
+//         const courseDetails = courses.find(c => c.id === rec.course_id) || {};
+//         return {
+//           ...rec,
+//           courseDetails: {
+//             id: courseDetails.id,
+//             title: courseDetails.title || rec.title,
+//             description: courseDetails.description || rec.description,
+//             instructor: courseDetails.first_name && courseDetails.last_name ? 
+//               `${courseDetails.first_name} ${courseDetails.last_name}` : 'Unknown',
+//             department: courseDetails.department_name,
+//             thumbnail: courseDetails.thumbnail_url
+//           }
+//         };
+//       });
+      
+//       res.json(enrichedRecommendations);
+//     } else {
+//       res.json(recommendations);
+//     }
+//   } catch (error) {
+//     console.error('Error fetching recommendations:', error);
+//     res.status(500).json({ message: 'Server error', error: error.message });
+//   }
+// });
+
+app.use('/api/recommendations', recommendationService);
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
