@@ -298,6 +298,579 @@ const CourseDetail = () => {
               )}
             </div>
           </div>
+
+            {showAddLessonModal && (
+            <div className="modal-overlay" onClick={() => setShowAddLessonModal(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>Add New Lesson</h2>
+                    <button className="close-btn" onClick={() => setShowAddLessonModal(false)}>×</button>
+                </div>
+                
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    // Add your lesson creation logic here
+                    // Example API call:
+                    // createLesson(lessonFormData).then(() => {
+                    //   setShowAddLessonModal(false);
+                    //   fetchLessons();
+                    // });
+                    notification.info("This feature is still being implemented");
+                    setShowAddLessonModal(false);
+                }}>
+                    <div className="form-group">
+                    <label htmlFor="lessonTitle">Lesson Title*</label>
+                    <input
+                        type="text"
+                        id="lessonTitle"
+                        name="title"
+                        value={lessonFormData.title}
+                        onChange={(e) => setLessonFormData({...lessonFormData, title: e.target.value})}
+                        placeholder="Enter lesson title"
+                        required
+                    />
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="lessonDescription">Description</label>
+                    <textarea
+                        id="lessonDescription"
+                        name="description"
+                        value={lessonFormData.description}
+                        onChange={(e) => setLessonFormData({...lessonFormData, description: e.target.value})}
+                        placeholder="Enter a description for this lesson"
+                        rows="4"
+                    ></textarea>
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="lessonOrder">Order</label>
+                    <input
+                        type="number"
+                        id="lessonOrder"
+                        name="order"
+                        value={lessonFormData.order}
+                        onChange={(e) => setLessonFormData({...lessonFormData, order: e.target.value})}
+                        min="1"
+                    />
+                    <small>The order in which this lesson appears in the course</small>
+                    </div>
+                    
+                    <div className="form-actions">
+                    <button type="button" className="cancel-btn" onClick={() => setShowAddLessonModal(false)}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="submit-btn">
+                        Create Lesson
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+            )}
+
+            {showAddSessionModal && (
+            <div className="modal-overlay" onClick={() => setShowAddSessionModal(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>Add New Session</h2>
+                    <button className="close-btn" onClick={() => setShowAddSessionModal(false)}>×</button>
+                </div>
+                
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    // Add your session creation logic here
+                    notification.info("This feature is still being implemented");
+                    setShowAddSessionModal(false);
+                }}>
+                    <div className="form-group">
+                    <label htmlFor="sessionTitle">Session Title*</label>
+                    <input
+                        type="text"
+                        id="sessionTitle"
+                        name="title"
+                        value={sessionFormData.title}
+                        onChange={(e) => setSessionFormData({...sessionFormData, title: e.target.value})}
+                        placeholder="Enter session title"
+                        required
+                    />
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="lessonSelect">Lesson*</label>
+                    <select
+                        id="lessonSelect"
+                        name="lessonId"
+                        value={sessionFormData.lessonId || ''}
+                        onChange={(e) => setSessionFormData({...sessionFormData, lessonId: e.target.value})}
+                        required
+                    >
+                        <option value="">Select a lesson</option>
+                        {lessons.map(lesson => (
+                        <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                        ))}
+                    </select>
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="contentType">Content Type*</label>
+                    <select
+                        id="contentType"
+                        name="contentType"
+                        value={sessionFormData.contentType}
+                        onChange={(e) => setSessionFormData({...sessionFormData, contentType: e.target.value})}
+                        required
+                    >
+                        <option value="document">Document</option>
+                        <option value="video">Video</option>
+                        <option value="quiz">Quiz</option>
+                        <option value="assignment">Assignment</option>
+                    </select>
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="sessionDescription">Description</label>
+                    <textarea
+                        id="sessionDescription"
+                        name="description"
+                        value={sessionFormData.description}
+                        onChange={(e) => setSessionFormData({...sessionFormData, description: e.target.value})}
+                        placeholder="Enter a description for this session"
+                        rows="3"
+                    ></textarea>
+                    </div>
+                    
+                    {sessionFormData.contentType === 'video' && (
+                    <div className="form-group">
+                        <label htmlFor="videoUrl">Video URL</label>
+                        <input
+                        type="url"
+                        id="videoUrl"
+                        name="videoUrl"
+                        value={sessionFormData.videoUrl}
+                        onChange={(e) => setSessionFormData({...sessionFormData, videoUrl: e.target.value})}
+                        placeholder="Enter YouTube or video URL"
+                        />
+                    </div>
+                    )}
+                    
+                    {sessionFormData.contentType === 'document' && (
+                    <div className="form-group">
+                        <label htmlFor="sessionContent">Content</label>
+                        <textarea
+                        id="sessionContent"
+                        name="content"
+                        value={sessionFormData.content}
+                        onChange={(e) => setSessionFormData({...sessionFormData, content: e.target.value})}
+                        placeholder="Enter content or instructions"
+                        rows="6"
+                        ></textarea>
+                    </div>
+                    )}
+                    
+                    <div className="form-group">
+                    <label htmlFor="sessionFiles">Upload Files (Optional)</label>
+                    <input
+                        type="file"
+                        id="sessionFiles"
+                        name="files"
+                        multiple
+                        onChange={(e) => setSessionFormData({...sessionFormData, files: e.target.files})}
+                    />
+                    <small>You can upload multiple files as materials for this session</small>
+                    </div>
+                    
+                    <div className="form-actions">
+                    <button type="button" className="cancel-btn" onClick={() => setShowAddSessionModal(false)}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="submit-btn">
+                        Create Session
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+            )}
+
+            {showAssessmentModal && (
+            <div className="modal-overlay" onClick={() => setShowAssessmentModal(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>Create Assessment</h2>
+                    <button className="close-btn" onClick={() => setShowAssessmentModal(false)}>×</button>
+                </div>
+                
+                <div className="assessment-options">
+                    <div className="option-title">Select Assessment Type:</div>
+                    
+                    <div className="options-grid">
+                    <div className="assessment-option" onClick={() => {
+                        setAssessmentType('quiz');
+                        setShowAssessmentModal(false);
+                        setShowQuizModal(true);
+                    }}>
+                        <div className="option-icon">🧩</div>
+                        <div className="option-name">Quiz</div>
+                        <div className="option-desc">Create a practice quiz with automatic grading</div>
+                    </div>
+                    
+                    <div className="assessment-option" onClick={() => {
+                        setAssessmentType('assignment');
+                        setShowAssessmentModal(false);
+                        setShowAssignmentModal(true);
+                    }}>
+                        <div className="option-icon">📝</div>
+                        <div className="option-name">Assignment</div>
+                        <div className="option-desc">Create an assignment with file submissions</div>
+                    </div>
+                    
+                    <div className="assessment-option" onClick={() => {
+                        setAssessmentType('test');
+                        setShowAssessmentModal(false);
+                        setShowTestModal(true);
+                    }}>
+                        <div className="option-icon">📊</div>
+                        <div className="option-name">Test</div>
+                        <div className="option-desc">Create a graded test with time limits</div>
+                    </div>
+                    </div>
+                    
+                    <div className="modal-footer">
+                    <button className="cancel-btn" onClick={() => setShowAssessmentModal(false)}>
+                        Cancel
+                    </button>
+                    </div>
+                </div>
+                </div>
+            </div>
+            )}
+
+            {showQuizModal && (
+            <div className="modal-overlay" onClick={() => setShowQuizModal(false)}>
+                <div className="modal-content quiz-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>Create Quiz</h2>
+                    <button className="close-btn" onClick={() => setShowQuizModal(false)}>×</button>
+                </div>
+                
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    notification.info("Quiz creation feature is still being implemented");
+                    setShowQuizModal(false);
+                }}>
+                    {/* Basic Quiz Info */}
+                    <div className="form-section">
+                    <h3 className="section-title">Quiz Information</h3>
+                    
+                    <div className="form-group">
+                        <label htmlFor="quizTitle">Quiz Title*</label>
+                        <input
+                        type="text"
+                        id="quizTitle"
+                        name="title"
+                        placeholder="Enter quiz title"
+                        required
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label htmlFor="lessonSelect">Lesson*</label>
+                        <select
+                        id="lessonSelect"
+                        name="lessonId"
+                        required
+                        >
+                        <option value="">Select a lesson</option>
+                        {lessons.map(lesson => (
+                            <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                        ))}
+                        </select>
+                    </div>
+                    
+                    <div className="form-row">
+                        <div className="form-group">
+                        <label htmlFor="timeLimit">Time Limit (minutes)</label>
+                        <input
+                            type="number"
+                            id="timeLimit"
+                            name="timeLimit"
+                            min="1"
+                            placeholder="30"
+                        />
+                        </div>
+                        
+                        <div className="form-group">
+                        <label htmlFor="passingScore">Passing Score (%)</label>
+                        <input
+                            type="number"
+                            id="passingScore"
+                            name="passingScore"
+                            min="0"
+                            max="100"
+                            placeholder="70"
+                        />
+                        </div>
+                    </div>
+                    </div>
+                    
+                    {/* This would normally have questions UI, simplified for now */}
+                    <div className="form-section">
+                    <h3 className="section-title">Questions</h3>
+                    <p className="placeholder-text">Question creation UI will appear here</p>
+                    </div>
+                    
+                    <div className="form-actions">
+                    <button type="button" className="cancel-btn" onClick={() => setShowQuizModal(false)}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="submit-btn">
+                        Create Quiz
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+            )}
+
+            {showAssignmentModal && (
+            <div className="modal-overlay" onClick={() => setShowAssignmentModal(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>Create Assignment</h2>
+                    <button className="close-btn" onClick={() => setShowAssignmentModal(false)}>×</button>
+                </div>
+                
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    notification.info("Assignment creation feature is still being implemented");
+                    setShowAssignmentModal(false);
+                }}>
+                    <div className="form-group">
+                    <label htmlFor="assignmentTitle">Assignment Title*</label>
+                    <input
+                        type="text"
+                        id="assignmentTitle"
+                        name="title"
+                        placeholder="Enter assignment title"
+                        required
+                    />
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="lessonSelect">Lesson*</label>
+                    <select
+                        id="lessonSelect"
+                        name="lessonId"
+                        required
+                    >
+                        <option value="">Select a lesson</option>
+                        {lessons.map(lesson => (
+                        <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                        ))}
+                    </select>
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="assignmentDescription">Description*</label>
+                    <textarea
+                        id="assignmentDescription"
+                        name="description"
+                        placeholder="Enter assignment description and instructions"
+                        rows="4"
+                        required
+                    ></textarea>
+                    </div>
+                    
+                    <div className="form-row">
+                    <div className="form-group">
+                        <label htmlFor="maxPoints">Maximum Points*</label>
+                        <input
+                        type="number"
+                        id="maxPoints"
+                        name="maxPoints"
+                        min="1"
+                        placeholder="100"
+                        required
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label htmlFor="dueDate">Due Date*</label>
+                        <input
+                        type="datetime-local"
+                        id="dueDate"
+                        name="dueDate"
+                        required
+                        />
+                    </div>
+                    </div>
+                    
+                    <div className="form-row">
+                    <div className="form-group">
+                        <label htmlFor="allowedFileTypes">Allowed File Types</label>
+                        <input
+                        type="text"
+                        id="allowedFileTypes"
+                        name="allowedFileTypes"
+                        placeholder="pdf,docx,jpg,png"
+                        />
+                        <small>Comma-separated list of allowed file extensions</small>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label htmlFor="maxFileSize">Max File Size (MB)</label>
+                        <input
+                        type="number"
+                        id="maxFileSize"
+                        name="maxFileSize"
+                        min="1"
+                        placeholder="5"
+                        />
+                    </div>
+                    </div>
+                    
+                    <div className="form-group checkbox-group">
+                    <label>
+                        <input
+                        type="checkbox"
+                        name="allowLateSubmissions"
+                        />
+                        Allow late submissions
+                    </label>
+                    </div>
+                    
+                    <div className="form-actions">
+                    <button type="button" className="cancel-btn" onClick={() => setShowAssignmentModal(false)}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="submit-btn">
+                        Create Assignment
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+            )}
+
+            {showTestModal && (
+            <div className="modal-overlay" onClick={() => setShowTestModal(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>Create Test</h2>
+                    <button className="close-btn" onClick={() => setShowTestModal(false)}>×</button>
+                </div>
+                
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    notification.info("Test creation feature is still being implemented");
+                    setShowTestModal(false);
+                }}>
+                    {/* Form content similar to Quiz but with additional test settings */}
+                    <div className="form-group">
+                    <label htmlFor="testTitle">Test Title*</label>
+                    <input
+                        type="text"
+                        id="testTitle"
+                        name="title"
+                        placeholder="Enter test title"
+                        required
+                    />
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="lessonSelect">Lesson*</label>
+                    <select
+                        id="lessonSelect"
+                        name="lessonId"
+                        required
+                    >
+                        <option value="">Select a lesson</option>
+                        {lessons.map(lesson => (
+                        <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                        ))}
+                    </select>
+                    </div>
+                    
+                    <div className="form-group">
+                    <label htmlFor="testDescription">Description</label>
+                    <textarea
+                        id="testDescription"
+                        name="description"
+                        placeholder="Enter test description"
+                        rows="3"
+                    ></textarea>
+                    </div>
+                    
+                    <div className="form-row">
+                    <div className="form-group">
+                        <label htmlFor="timeLimit">Time Limit (minutes)*</label>
+                        <input
+                        type="number"
+                        id="timeLimit"
+                        name="timeLimit"
+                        min="1"
+                        placeholder="60"
+                        required
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label htmlFor="passingScore">Passing Score (%)*</label>
+                        <input
+                        type="number"
+                        id="passingScore"
+                        name="passingScore"
+                        min="0"
+                        max="100"
+                        placeholder="70"
+                        required
+                        />
+                    </div>
+                    </div>
+                    
+                    <div className="form-section">
+                    <h3 className="section-title">Test Settings</h3>
+                    
+                    <div className="form-group checkbox-group">
+                        <label>
+                        <input type="checkbox" name="randomizeQuestions" />
+                        Randomize questions
+                        </label>
+                    </div>
+                    
+                    <div className="form-group checkbox-group">
+                        <label>
+                        <input type="checkbox" name="showAnswers" />
+                        Show answers after completion
+                        </label>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label htmlFor="maxAttempts">Maximum Attempts</label>
+                        <input
+                        type="number"
+                        id="maxAttempts"
+                        name="maxAttempts"
+                        min="1"
+                        placeholder="1"
+                        />
+                        <small>Leave at 1 for a single attempt test</small>
+                    </div>
+                    </div>
+                    
+                    <div className="form-actions">
+                    <button type="button" className="cancel-btn" onClick={() => setShowTestModal(false)}>
+                        Cancel
+                    </button>
+                    <button type="submit" className="submit-btn">
+                        Create Test
+                    </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+            )}
           
           {/* Course Navigation Tabs */}
           <div className="course-tabs">

@@ -1044,6 +1044,31 @@ ALTER TABLE quiz_questions MODIFY COLUMN question_type VARCHAR(200);
 ALTER TABLE assignments ADD COLUMN allowed_file_types TEXT;
 ALTER TABLE assignments ADD COLUMN max_file_size VARCHAR(10);
 
+CREATE TABLE IF NOT EXISTS student_feedback (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  student_id INT NOT NULL,
+  instructor_id INT NOT NULL,
+  feedback TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_feedback (course_id, student_id)
+);
+
+CREATE TABLE IF NOT EXISTS student_activity (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT NOT NULL,
+  course_id INT NOT NULL,
+  activity_type VARCHAR(50) NOT NULL,
+  activity_data JSON,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);
+
 -- ALTER TABLE enrollments 
 -- ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST,
 -- DROP COLUMN completion_status;

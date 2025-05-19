@@ -1,4 +1,4 @@
-// src/components/course/CourseStatistics.js
+// src/components/course/CourseStatistics.js - Using Real Data
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import config from '../../config';
@@ -6,48 +6,58 @@ import notification from '../../utils/notification';
 import './CourseStatistics.css';
 
 const CourseStatistics = ({ courseId, auth }) => {
-  const [statistics, setStatistics] = useState({
-    enrollmentStats: {
-      totalStudents: 0,
-      activeStudents: 0,
-      completionRate: 0
-    },
-    quizStats: {
-      total: 0,
-      averageScore: 0,
-      highestScore: 0,
-      lowestScore: 0,
-      distribution: []
-    },
-    testStats: {
-      total: 0,
-      averageScore: 0,
-      passingRate: 0,
-      distribution: []
-    },
-    assignmentStats: {
-      total: 0,
-      submitted: 0,
-      graded: 0,
-      averageScore: 0,
-      onTimeSubmissionRate: 0
-    }
-  });
+  const [students, setStudents] = useState([]);
+  const [quizzes, setQuizzes] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [tests, setTests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const API_URL = config.apiUrl;
 
-  // Fetch statistics data
+  // Fetch all needed data
   useEffect(() => {
-    const fetchCourseStatistics = async () => {
+    const fetchAllData = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
-        const response = await axios.get(`${API_URL}/courses/${courseId}/statistics`, {
+        // Fetch enrolled students
+        const studentsPromise = axios.get(`${API_URL}/courses/${courseId}/students`, {
           headers: { Authorization: `Bearer ${auth.token}` }
         });
-        setStatistics(response.data);
+        
+        // Fetch quizzes
+        const quizzesPromise = axios.get(`${API_URL}/courses/${courseId}/quizzes`, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+        
+        // Fetch tests
+        const testsPromise = axios.get(`${API_URL}/courses/${courseId}/tests`, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        }).catch(() => ({ data: [] })); // Fallback if endpoint doesn't exist
+        
+        // Fetch assignments
+        const assignmentsPromise = axios.get(`${API_URL}/courses/${courseId}/assignments`, {
+          headers: { Authorization: `Bearer ${auth.token}` }
+        });
+        
+        // Wait for all data to load
+        const [studentsRes, quizzesRes, testsRes, assignmentsRes] = await Promise.all([
+          studentsPromise,
+          quizzesPromise,
+          testsPromise,
+          assignmentsPromise
+        ]);
+        
+        setStudents(studentsRes.data);
+        setQuizzes(quizzesRes.data);
+        setTests(Array.isArray(testsRes.data) ? testsRes.data : []);
+        setAssignments(assignmentsRes.data);
+        
       } catch (error) {
-        console.error('Error fetching course statistics:', error);
+        console.error('Error fetching course data:', error);
+        setError(error.message || "Failed to load course data");
         notification.error('Failed to load course statistics');
       } finally {
         setIsLoading(false);
@@ -55,14 +65,124 @@ const CourseStatistics = ({ courseId, auth }) => {
     };
 
     if (courseId && auth.token) {
-      fetchCourseStatistics();
+      fetchAllData();
     }
   }, [courseId, auth.token, API_URL]);
+  
+  // Calculate statistics from fetched data
+  const calculateStatistics = () => {
+    // Enrollment stats
+    const totalStudents = students.length;
+    
+    // Calculate active students (enrolled in last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activeStudents = students.filter(student => {
+      const enrollmentDate = new Date(student.enrollment_date);
+      return enrollmentDate >= thirtyDaysAgo;
+    }).length;
+    
+    // Completion rate - estimate based on active students and assignments completed
+    let completionRate = 0;
+    if (totalStudents > 0) {
+      // Simple estimation: % of active students compared to total
+      completionRate = Math.round((activeStudents / totalStudents) * 100);
+    }
+    
+    // Quiz stats
+    const quizScores = quizzes.flatMap(quiz => 
+      (quiz.attempts || []).map(attempt => attempt.score || 0)
+    );
+    
+    const averageQuizScore = quizScores.length > 0 
+      ? Math.round(quizScores.reduce((sum, score) => sum + score, 0) / quizScores.length)
+      : 0;
+      
+    const highestQuizScore = quizScores.length > 0 
+      ? Math.max(...quizScores)
+      : 0;
+      
+    const lowestQuizScore = quizScores.length > 0 
+      ? Math.min(...quizScores)
+      : 0;
+    
+    // Assignment stats  
+    const totalAssignments = assignments.length;
+    const submittedAssignments = assignments.filter(a => a.submission).length;
+    const gradedAssignments = assignments.filter(a => a.submission && a.submission.is_graded).length;
+    
+    const assignmentScores = assignments
+      .filter(a => a.submission && a.submission.is_graded)
+      .map(a => a.submission.grade);
+      
+    const averageAssignmentScore = assignmentScores.length > 0
+      ? Math.round(assignmentScores.reduce((sum, score) => sum + score, 0) / assignmentScores.length)
+      : 0;
+    
+    // On-time submission rate
+    const onTimeSubmissions = assignments
+      .filter(a => a.submission && !a.submission.is_late)
+      .length;
+      
+    const onTimeRate = submittedAssignments > 0
+      ? Math.round((onTimeSubmissions / submittedAssignments) * 100)
+      : 0;
+    
+    // Create quiz distribution
+    const distribution = calculateDistribution(quizScores);
+    
+    return {
+      enrollmentStats: {
+        totalStudents,
+        activeStudents,
+        completionRate
+      },
+      quizStats: {
+        total: quizzes.length,
+        averageScore: averageQuizScore,
+        highestScore: highestQuizScore,
+        lowestScore: lowestQuizScore,
+        distribution
+      },
+      assignmentStats: {
+        total: totalAssignments,
+        submitted: submittedAssignments,
+        graded: gradedAssignments,
+        averageScore: averageAssignmentScore,
+        onTimeSubmissionRate: onTimeRate
+      }
+    };
+  };
+  
+  // Calculate distribution for chart
+  const calculateDistribution = (scores) => {
+    // Define score ranges
+    const ranges = [
+      { range: '0-59', min: 0, max: 59, count: 0 },
+      { range: '60-69', min: 60, max: 69, count: 0 },
+      { range: '70-79', min: 70, max: 79, count: 0 },
+      { range: '80-89', min: 80, max: 89, count: 0 },
+      { range: '90-100', min: 90, max: 100, count: 0 }
+    ];
+    
+    // Count scores in each range
+    scores.forEach(score => {
+      for (const range of ranges) {
+        if (score >= range.min && score <= range.max) {
+          range.count++;
+          break;
+        }
+      }
+    });
+    
+    return ranges;
+  };
 
   // Render a distribution chart
   const renderDistribution = (distribution, title) => {
     if (!distribution || distribution.length === 0) {
-      return <div className="no-data">No data available</div>;
+      return <div className="no-data">No distribution data available</div>;
     }
     
     const maxCount = Math.max(...distribution.map(item => item.count));
@@ -78,7 +198,7 @@ const CourseStatistics = ({ courseId, auth }) => {
                 <div 
                   className="bar-inner" 
                   style={{ 
-                    height: `${(item.count / maxCount) * 100}%`,
+                    height: maxCount > 0 ? `${(item.count / maxCount) * 100}%` : '1%',
                     backgroundColor: getBarColor(item.range)
                   }}
                 ></div>
@@ -105,11 +225,21 @@ const CourseStatistics = ({ courseId, auth }) => {
     return <div className="loading-spinner">Loading statistics...</div>;
   }
 
+  // Calculate statistics from real data
+  const statistics = calculateStatistics();
+
   return (
     <div className="course-statistics-container">
       <div className="statistics-header">
         <h2>Course Statistics & Analytics</h2>
       </div>
+      
+      {error && (
+        <div className="statistics-error">
+          <p>There was an issue loading some course data: {error}</p>
+          <p>Some statistics may be incomplete or unavailable.</p>
+        </div>
+      )}
       
       <div className="statistics-grid">
         <div className="statistics-card enrollment-stats">
@@ -126,7 +256,7 @@ const CourseStatistics = ({ courseId, auth }) => {
               </div>
               <div className="stat-item">
                 <div className="stat-value">{statistics.enrollmentStats.completionRate}%</div>
-                <div className="stat-label">Completion Rate</div>
+                <div className="stat-label">Est. Completion Rate</div>
               </div>
             </div>
             
@@ -137,31 +267,6 @@ const CourseStatistics = ({ courseId, auth }) => {
                   className="progress-fill" 
                   style={{ width: `${statistics.enrollmentStats.completionRate}%` }}
                 ></div>
-              </div>
-            </div>
-            
-            <div className="activity-stat">
-              <div className="activity-label">Student Activity Last 7 Days</div>
-              <div className="activity-chart">
-                {/* Placeholder for activity chart - in real implementation, would be a line/bar chart */}
-                <div className="activity-data">
-                  <div className="activity-day" style={{ height: '60%' }}></div>
-                  <div className="activity-day" style={{ height: '80%' }}></div>
-                  <div className="activity-day" style={{ height: '40%' }}></div>
-                  <div className="activity-day" style={{ height: '90%' }}></div>
-                  <div className="activity-day" style={{ height: '70%' }}></div>
-                  <div className="activity-day" style={{ height: '50%' }}></div>
-                  <div className="activity-day" style={{ height: '85%' }}></div>
-                </div>
-                <div className="activity-labels">
-                  <span>M</span>
-                  <span>T</span>
-                  <span>W</span>
-                  <span>T</span>
-                  <span>F</span>
-                  <span>S</span>
-                  <span>S</span>
-                </div>
               </div>
             </div>
           </div>
@@ -186,28 +291,6 @@ const CourseStatistics = ({ courseId, auth }) => {
             </div>
             
             {renderDistribution(statistics.quizStats.distribution, 'Quiz Score Distribution')}
-          </div>
-        </div>
-        
-        <div className="statistics-card test-stats">
-          <h3>Test Performance</h3>
-          <div className="stats-body">
-            <div className="stat-row">
-              <div className="stat-item">
-                <div className="stat-value">{statistics.testStats.total}</div>
-                <div className="stat-label">Total Tests</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-value">{statistics.testStats.averageScore}%</div>
-                <div className="stat-label">Average Score</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-value">{statistics.testStats.passingRate}%</div>
-                <div className="stat-label">Passing Rate</div>
-              </div>
-            </div>
-            
-            {renderDistribution(statistics.testStats.distribution, 'Test Score Distribution')}
           </div>
         </div>
         
@@ -236,38 +319,8 @@ const CourseStatistics = ({ courseId, auth }) => {
                 <div className="meter-value">{statistics.assignmentStats.onTimeSubmissionRate}%</div>
               </div>
             </div>
-            
-            <div className="assignment-completion">
-              <div className="completion-title">Assignment Completion Status</div>
-              <div className="completion-chart">
-                <div className="completion-segment submitted" style={{ width: `${(statistics.assignmentStats.submitted / statistics.assignmentStats.total) * 100}%` }}></div>
-                <div className="completion-segment graded" style={{ width: `${(statistics.assignmentStats.graded / statistics.assignmentStats.total) * 100}%` }}></div>
-                <div className="completion-segment pending" style={{ width: `${((statistics.assignmentStats.submitted - statistics.assignmentStats.graded) / statistics.assignmentStats.total) * 100}%` }}></div>
-                <div className="completion-segment not-submitted" style={{ width: `${((statistics.assignmentStats.total - statistics.assignmentStats.submitted) / statistics.assignmentStats.total) * 100}%` }}></div>
-              </div>
-              <div className="completion-legend">
-                <div className="legend-item">
-                  <div className="legend-color graded"></div>
-                  <div className="legend-label">Graded</div>
-                </div>
-                <div className="legend-item">
-                  <div className="legend-color pending"></div>
-                  <div className="legend-label">Submitted, Not Graded</div>
-                </div>
-                <div className="legend-item">
-                  <div className="legend-color not-submitted"></div>
-                  <div className="legend-label">Not Submitted</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="download-report">
-        <button className="download-btn">
-          <span className="download-icon">📊</span> Export Full Report
-        </button>
       </div>
     </div>
   );
