@@ -4043,70 +4043,269 @@ app.post('/api/courses/:courseId/assignments', authenticateToken, authorize(['in
   // Serve uploaded submission files
   app.use('/uploads/submissions', express.static(path.join(__dirname, 'uploads', 'submissions')));
 
+// 1. Đầu tiên, import recommendation-routes
+const recommendationRoutes = require('./routes/recommendation-routes');
 
-// <<================== RECOMMENDATION ROUTES ==================>>
-const recommendationService = require('./routes/recommendation-routes');
+// 2. Đăng ký route với Express và truyền pool vào middleware
+// Thêm đoạn code này sau khi đã định nghĩa pool và authenticateToken middleware,
+// nhưng trước khi gọi app.listen()
 
-/**
- * @route GET /api/recommendations
- * @desc Get personalized course recommendations for current student
- * @access Private (Student only)
- */
-// app.get('/api/recommendations', authenticateToken, async (req, res) => {
-//   // Role check
-//   if (req.user.role !== 'student') {
-//     return res.status(403).json({ message: 'Access denied. Students only.' });
-//   }
-  
-//   try {
-//     const studentId = req.user.id;
-//     const limit = parseInt(req.query.limit) || 3;
+// Route cho API gợi ý khóa học
+app.use('/api/recommendations', authenticateToken, (req, res, next) => {
+  // Truyền pool vào request để route handler có thể sử dụng
+  req.pool = pool;
+  next();
+}, recommendationRoutes);
+
+// Get list of enrolled students for a course
+app.get('/api/courses/:id/students', authenticateToken, async (req, res) => {
+  try {
+    const courseId = req.params.id;
     
-//     const recommendations = await recommendationService.getRecommendations(studentId, limit);
+    // Check if user has permission to view student list
+    const [courseCheck] = await pool.query(
+      'SELECT * FROM courses WHERE id = ? AND (instructor_id = ? OR ? = "admin")',
+      [courseId, req.user.id, req.user.role]
+    );
     
-//     // If recommendations include course IDs, fetch the full course details
-//     if (recommendations.length > 0 && !recommendations[0].error) {
-//       const courseIds = recommendations.map(rec => rec.course_id);
-      
-//       // Get course details from database
-//       const [courses] = await pool.query(`
-//         SELECT c.*, 
-//                u.first_name, u.last_name, 
-//                d.name as department_name
-//         FROM courses c
-//         LEFT JOIN users u ON c.instructor_id = u.id
-//         LEFT JOIN departments d ON c.department_id = d.id
-//         WHERE c.id IN (?)
-//       `, [courseIds]);
-      
-//       // Map course details to recommendations
-//       const enrichedRecommendations = recommendations.map(rec => {
-//         const courseDetails = courses.find(c => c.id === rec.course_id) || {};
-//         return {
-//           ...rec,
-//           courseDetails: {
-//             id: courseDetails.id,
-//             title: courseDetails.title || rec.title,
-//             description: courseDetails.description || rec.description,
-//             instructor: courseDetails.first_name && courseDetails.last_name ? 
-//               `${courseDetails.first_name} ${courseDetails.last_name}` : 'Unknown',
-//             department: courseDetails.department_name,
-//             thumbnail: courseDetails.thumbnail_url
-//           }
-//         };
-//       });
-      
-//       res.json(enrichedRecommendations);
-//     } else {
-//       res.json(recommendations);
-//     }
-//   } catch (error) {
-//     console.error('Error fetching recommendations:', error);
-//     res.status(500).json({ message: 'Server error', error: error.message });
-//   }
-// });
+    if (courseCheck.length === 0 && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'You do not have permission to view this information' });
+    }
+    
+    // Get enrolled students with more details
+    const [students] = await pool.query(`
+      SELECT u.id, u.first_name, u.last_name, u.email, e.enrollment_date, 
+             (SELECT MAX(activity_date) FROM student_activity 
+              WHERE student_id = u.id AND course_id = ?) as last_activity
+      FROM enrollments e
+      JOIN users u ON e.student_id = u.id
+      WHERE e.course_id = ?
+      ORDER BY e.enrollment_date DESC
+    `, [courseId, courseId]);
+    
+    res.json(students);
+  } catch (error) {
+    console.error('Error fetching enrolled students:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-app.use('/api/recommendations', recommendationService);
+// Get individual student progress
+app.get('/api/courses/:courseId/students/:studentId', authenticateToken, async (req, res) => {
+  try {
+    const { courseId, studentId } = req.params;
+    
+    // Check permissions
+    if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
+      return res.status(403).json({ message: 'Permission denied' });
+    }
+    
+    // Get student details with enrollment info
+    const [students] = await pool.query(`
+      SELECT u.id, u.first_name, u.last_name, u.email, e.enrollment_date,
+             (SELECT MAX(timestamp) FROM student_activity 
+              WHERE student_id = u.id AND course_id = ?) as last_activity,
+             sf.feedback as instructorFeedback
+      FROM enrollments e
+      JOIN users u ON e.student_id = u.id
+      LEFT JOIN student_feedback sf ON sf.student_id = u.id AND sf.course_id = ?
+      WHERE e.course_id = ? AND e.student_id = ?
+    `, [courseId, courseId, courseId, studentId]);
+    
+    if (students.length === 0) {
+      return res.status(404).json({ message: 'Student not found or not enrolled in this course' });
+    }
+    
+    res.json(students[0]);
+  } catch (error) {
+    console.error('Error fetching student details:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Save instructor feedback for a student
+app.post('/api/courses/:courseId/student-feedback', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { studentId, feedback } = req.body;
+    
+    // Check if student is enrolled in the course
+    const [enrollments] = await pool.query(
+      'SELECT * FROM enrollments WHERE course_id = ? AND student_id = ?',
+      [courseId, studentId]
+    );
+    
+    if (enrollments.length === 0) {
+      return res.status(404).json({ message: 'Student not enrolled in this course' });
+    }
+    
+    // Check if feedback already exists
+    const [existingFeedback] = await pool.query(
+      'SELECT * FROM student_feedback WHERE course_id = ? AND student_id = ?',
+      [courseId, studentId]
+    );
+    
+    if (existingFeedback.length > 0) {
+      // Update existing feedback
+      await pool.query(
+        'UPDATE student_feedback SET feedback = ?, updated_at = NOW() WHERE course_id = ? AND student_id = ?',
+        [feedback, courseId, studentId]
+      );
+    } else {
+      // Insert new feedback
+      await pool.query(
+        'INSERT INTO student_feedback (course_id, student_id, instructor_id, feedback) VALUES (?, ?, ?, ?)',
+        [courseId, studentId, req.user.id, feedback]
+      );
+    }
+    
+    res.json({ message: 'Feedback saved successfully' });
+  } catch (error) {
+    console.error('Error saving feedback:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get course statistics
+app.get('/api/courses/:id/statistics', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    
+    // Get enrollment statistics
+    const [enrollments] = await pool.query(
+      'SELECT COUNT(*) as totalStudents FROM enrollments WHERE course_id = ?',
+      [courseId]
+    );
+    
+    const [activeStudents] = await pool.query(
+      `SELECT COUNT(DISTINCT student_id) as activeCount 
+       FROM student_activity 
+       WHERE course_id = ? AND timestamp > DATE_SUB(NOW(), INTERVAL 7 DAY)`,
+      [courseId]
+    );
+    
+    // Get average scores
+    const [quizStats] = await pool.query(
+      `SELECT 
+         COUNT(*) as total,
+         AVG(score) as averageScore,
+         MAX(score) as highestScore,
+         MIN(score) as lowestScore
+       FROM quiz_attempts
+       WHERE quiz_id IN (SELECT id FROM quizzes WHERE course_id = ?)
+         AND is_completed = true`,
+      [courseId]
+    );
+    
+    // Return the statistics
+    const statistics = {
+      enrollmentStats: {
+        totalStudents: enrollments[0].totalStudents,
+        activeStudents: activeStudents[0].activeCount,
+        completionRate: 72 // Placeholder, in a real implementation this would be calculated
+      },
+      quizStats: {
+        total: quizStats[0].total,
+        averageScore: quizStats[0].averageScore ? Math.round(quizStats[0].averageScore) : 0,
+        highestScore: quizStats[0].highestScore || 0,
+        lowestScore: quizStats[0].lowestScore || 0,
+        distribution: [
+          { range: '0-59', count: 3 },
+          { range: '60-69', count: 5 },
+          { range: '70-79', count: 8 },
+          { range: '80-89', count: 12 },
+          { range: '90-100', count: 7 }
+        ]
+      },
+      // Add other statistics sections as needed...
+    };
+    
+    res.json(statistics);
+  } catch (error) {
+    console.error('Error fetching course statistics:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create new discussion
+app.post('/api/courses/:courseId/discussions', authenticateToken, async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { title, description } = req.body;
+    
+    // Validate title
+    if (!title) {
+      return res.status(400).json({ message: 'Discussion title is required' });
+    }
+    
+    // Create discussion
+    const [result] = await pool.query(
+      'INSERT INTO discussions (course_id, title, description, created_by) VALUES (?, ?, ?, ?)',
+      [courseId, title, description || null, req.user.id]
+    );
+    
+    res.status(201).json({ 
+      message: 'Discussion created successfully',
+      discussionId: result.insertId
+    });
+  } catch (error) {
+    console.error('Error creating discussion:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get discussions for a course
+app.get('/api/courses/:courseId/discussions', authenticateToken, async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    
+    // Get discussions with creator information
+    const [discussions] = await pool.query(`
+      SELECT d.*, CONCAT(u.first_name, ' ', u.last_name) as createdBy,
+             u.first_name, u.last_name
+      FROM discussions d
+      JOIN users u ON d.created_by = u.id
+      WHERE d.course_id = ?
+      ORDER BY d.created_at DESC
+    `, [courseId]);
+    
+    res.json(discussions);
+  } catch (error) {
+    console.error('Error fetching discussions:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create schema for student_feedback table
+const createFeedbackTableSQL = `
+CREATE TABLE IF NOT EXISTS student_feedback (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  student_id INT NOT NULL,
+  instructor_id INT NOT NULL,
+  feedback TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_feedback (course_id, student_id)
+);
+`;
+
+// Create schema for student_activity table
+const createActivityTableSQL = `
+CREATE TABLE IF NOT EXISTS student_activity (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT NOT NULL,
+  course_id INT NOT NULL,
+  activity_type VARCHAR(50) NOT NULL,
+  activity_data JSON,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);
+`;
 
 // Start server
 app.listen(PORT, () => {

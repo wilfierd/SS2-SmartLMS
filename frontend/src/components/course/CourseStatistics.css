@@ -1,0 +1,380 @@
+/* src/components/course/CourseStatistics.css */
+.course-statistics-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.statistics-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.statistics-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.statistics-card {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.statistics-card h3 {
+    margin: 0;
+    padding: 15px 20px;
+    background-color: #f5f7fa;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 16px;
+    color: #333;
+}
+
+.stats-body {
+    padding: 20px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3498db;
+    margin-bottom: 5px;
+}
+
+.enrollment-stats .stat-value {
+    color: #2ecc71;
+}
+
+.quiz-stats .stat-value {
+    color: #3498db;
+}
+
+.test-stats .stat-value {
+    color: #9b59b6;
+}
+
+.assignment-stats .stat-value {
+    color: #e67e22;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #555;
+}
+
+/* Progress bar */
+.progress-container {
+    margin-bottom: 20px;
+}
+
+.progress-label {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    height: 12px;
+    background-color: #e0e0e0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #2ecc71;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+/* Activity chart */
+.activity-stat {
+    margin-top: 20px;
+}
+
+.activity-label {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.activity-chart {
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-data {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.activity-day {
+    width: 12%;
+    background-color: #3498db;
+    border-radius: 3px 3px 0 0;
+}
+
+.activity-labels {
+    display: flex;
+    justify-content: space-between;
+}
+
+.activity-labels span {
+    width: 12%;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Distribution chart */
+.distribution-chart {
+    margin-top: 20px;
+}
+
+.chart-title {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.chart-bars {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 150px;
+}
+
+.chart-bar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 14%;
+}
+
+.bar-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.bar-outer {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.bar-inner {
+    width: 100%;
+    background-color: #3498db;
+    border-radius: 3px 3px 0 0;
+    min-height: 1px;
+}
+
+.bar-count {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* On-time submission meter */
+.on-time-stat {
+    margin: 20px 0;
+}
+
+.on-time-label {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.on-time-meter {
+    height: 24px;
+    background-color: #f1f1f1;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    background-color: #e67e22;
+    border-radius: 12px;
+}
+
+.meter-value {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Assignment completion chart */
+.assignment-completion {
+    margin-top: 20px;
+}
+
+.completion-title {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.completion-chart {
+    height: 30px;
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.completion-segment {
+    height: 100%;
+}
+
+.completion-segment.graded {
+    background-color: #2ecc71;
+}
+
+.completion-segment.pending {
+    background-color: #f39c12;
+}
+
+.completion-segment.not-submitted {
+    background-color: #e0e0e0;
+}
+
+.completion-legend {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+    margin-bottom: 5px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 5px;
+}
+
+.legend-color.graded {
+    background-color: #2ecc71;
+}
+
+.legend-color.pending {
+    background-color: #f39c12;
+}
+
+.legend-color.not-submitted {
+    background-color: #e0e0e0;
+}
+
+.legend-label {
+    font-size: 12px;
+    color: #666;
+}
+
+/* No data */
+.no-data {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+/* Download button */
+.download-report {
+    padding: 0 20px 20px 20px;
+    text-align: right;
+}
+
+.download-btn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+}
+
+.download-btn:hover {
+    background-color: #2980b9;
+}
+
+.download-icon {
+    margin-right: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .statistics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .stat-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .chart-bars {
+        overflow-x: auto;
+        padding-bottom: 10px;
+        justify-content: flex-start;
+    }
+
+    .chart-bar-container {
+        min-width: 60px;
+    }
+
+    .completion-legend {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

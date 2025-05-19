@@ -1,0 +1,345 @@
+.enrolled-students-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.students-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.students-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.student-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.search-box input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 250px;
+    font-size: 14px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-group select {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    font-size: 14px;
+}
+
+.students-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.students-table th,
+.students-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.students-table th {
+    background-color: #f5f7fa;
+    font-weight: 600;
+    color: #333;
+    position: sticky;
+    top: 0;
+}
+
+.students-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Progress bar */
+.progress-bar-small {
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100px;
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #3498db;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.feedback-btn,
+.view-details-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.feedback-btn:hover,
+.view-details-btn:hover {
+    background-color: #f0f0f0;
+}
+
+/* Empty state */
+.empty-list-message {
+    padding: 30px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+/* Student Detail Tabs */
+.student-detail-tabs {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.student-tab {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 15px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.student-tab:hover {
+    color: #3498db;
+}
+
+.student-tab.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+}
+
+/* Student Progress Details */
+.student-progress-summary {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.progress-stat {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3498db;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #555;
+}
+
+/* Activity History */
+.activity-history {
+    margin-top: 30px;
+}
+
+.activity-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.history-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.history-item {
+    padding: 15px;
+    border-left: 3px solid #3498db;
+    background-color: #f9f9f9;
+    margin-bottom: 10px;
+}
+
+.history-date {
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.history-event {
+    color: #333;
+    font-size: 14px;
+}
+
+.history-meta {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.score-value {
+    font-weight: 600;
+    color: #2ecc71;
+}
+
+.score-value.low {
+    color: #e74c3c;
+}
+
+.score-value.medium {
+    color: #f39c12;
+}
+
+/* Assessments Section */
+.assessments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.assessment-card {
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+}
+
+.assessment-header {
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f5f7fa;
+}
+
+.assessment-title {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.assessment-type {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    margin-right: 8px;
+    color: white;
+}
+
+.assessment-type.quiz {
+    background-color: #3498db;
+}
+
+.assessment-type.test {
+    background-color: #9b59b6;
+}
+
+.assessment-type.assignment {
+    background-color: #e67e22;
+}
+
+.assessment-body {
+    padding: 15px;
+}
+
+.assessment-attempts {
+    margin-top: 10px;
+}
+
+.attempt-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.attempt-date {
+    color: #666;
+    font-size: 12px;
+}
+
+.attempt-score {
+    font-weight: 600;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .students-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .student-filters {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    .search-box input {
+        width: 100%;
+    }
+
+    .filter-group {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .students-table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    .student-progress-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .assessments-grid {
+        grid-template-columns: 1fr;
+    }
+}

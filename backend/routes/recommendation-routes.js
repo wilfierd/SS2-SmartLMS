@@ -1,11 +1,11 @@
-// recommendation-routes.js
+// backend/routes/recommendation-routes.js
 const express = require('express');
 const router = express.Router();
 const recommendationService = require('../services/recommendation-service');
-const authenticateToken = require('../middleware/auth'); // middleware xác thực
 
-
-router.get('/', authenticateToken, async (req, res) => {
+// Route để lấy gợi ý khóa học cho sinh viên hiện tại
+router.get('/', async (req, res) => {
+  // Kiểm tra quyền - chỉ sinh viên mới được phép sử dụng tính năng này
   if (req.user.role !== 'student') {
     return res.status(403).json({ message: 'Access denied. Students only.' });
   }
@@ -14,12 +14,15 @@ router.get('/', authenticateToken, async (req, res) => {
     const studentId = req.user.id;
     const limit = parseInt(req.query.limit) || 3;
     
+    // Gọi service để lấy gợi ý
     const recommendations = await recommendationService.getRecommendations(studentId, limit);
     
+    // Nếu có gợi ý và không có lỗi, lấy thêm thông tin chi tiết về khóa học
     if (recommendations.length > 0 && !recommendations[0].error) {
       const courseIds = recommendations.map(rec => rec.course_id);
 
-      const [courses] = await pool.query(`
+      // Sử dụng pool từ request object (được truyền vào từ middleware)
+      const [courses] = await req.pool.query(`
         SELECT c.*, 
                u.first_name, u.last_name, 
                d.name as department_name
@@ -29,6 +32,7 @@ router.get('/', authenticateToken, async (req, res) => {
         WHERE c.id IN (?)
       `, [courseIds]);
 
+      // Kết hợp dữ liệu gợi ý với thông tin chi tiết khóa học
       const enriched = recommendations.map(rec => {
         const course = courses.find(c => c.id === rec.course_id) || {};
         return {

@@ -1,0 +1,465 @@
+/* src/components/course/DiscussionForum.css */
+.discussion-forum-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.forum-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.forum-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.create-discussion-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.create-discussion-btn:hover {
+    background-color: #2980b9;
+}
+
+.btn-icon {
+    margin-right: 5px;
+    font-size: 16px;
+}
+
+.forum-content {
+    display: flex;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Discussion list sidebar */
+.discussion-list {
+    width: 300px;
+    border-right: 1px solid #e0e0e0;
+    background-color: #f9f9f9;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.discussion-list-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #efefef;
+}
+
+.discussion-list-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.discussion-count {
+    font-size: 13px;
+    color: #666;
+    background-color: #e0e0e0;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.discussions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.discussion-item {
+    padding: 15px;
+    border-bottom: 1px solid #efefef;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.discussion-item:hover {
+    background-color: #f0f0f0;
+}
+
+.discussion-item.active {
+    background-color: #e6f7ff;
+    border-left: 3px solid #3498db;
+    padding-left: 12px;
+}
+
+.discussion-item-title {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.discussion-item-meta {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+}
+
+.empty-discussions {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.start-discussion-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin-top: 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Posts container */
+.posts-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.discussion-header {
+    margin-bottom: 20px;
+}
+
+.discussion-header h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.discussion-description {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    border-left: 3px solid #3498db;
+}
+
+.loading-posts,
+.select-discussion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    color: #666;
+    font-style: italic;
+}
+
+.posts-list {
+    margin-bottom: 20px;
+}
+
+.post-thread {
+    margin-bottom: 30px;
+}
+
+.post-item {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #e0e0e0;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.post-author {
+    font-weight: 500;
+    color: #333;
+}
+
+.post-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.post-content {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    white-space: pre-line;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.reply-btn {
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.reply-btn:hover {
+    background-color: #e6f7ff;
+}
+
+.post-replies {
+    margin-left: 30px;
+    padding-left: 15px;
+    border-left: 2px solid #e0e0e0;
+}
+
+.reply-item {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #e0e0e0;
+}
+
+.empty-posts {
+    text-align: center;
+    color: #666;
+    padding: 30px 0;
+}
+
+/* Reply form */
+.reply-form {
+    margin-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 20px;
+}
+
+.replying-to {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #e6f7ff;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #333;
+}
+
+.cancel-reply-btn {
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    padding: 3px 8px;
+    font-size: 13px;
+    border-radius: 3px;
+}
+
+.cancel-reply-btn:hover {
+    background-color: #cce6ff;
+}
+
+.reply-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    resize: vertical;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.reply-form textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.post-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    float: right;
+    transition: background-color 0.2s;
+}
+
+.post-btn:hover {
+    background-color: #2980b9;
+}
+
+.post-btn:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #3498db;
+    color: white;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.close-btn:hover {
+    opacity: 1;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
+    gap: 10px;
+}
+
+.cancel-btn {
+    background-color: #f1f1f1;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 20px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.cancel-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.submit-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background-color: #2980b9;
+}
+
+.submit-btn:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .forum-content {
+        flex-direction: column;
+    }
+
+    .discussion-list {
+        width: 100%;
+        max-height: 300px;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .posts-container {
+        max-height: none;
+    }
+}

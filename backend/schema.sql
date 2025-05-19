@@ -1044,6 +1044,105 @@ ALTER TABLE quiz_questions MODIFY COLUMN question_type VARCHAR(200);
 ALTER TABLE assignments ADD COLUMN allowed_file_types TEXT;
 ALTER TABLE assignments ADD COLUMN max_file_size VARCHAR(10);
 
+-- ALTER TABLE enrollments 
+-- ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST,
+-- DROP COLUMN completion_status;
 
+-- -- UPDATE
+-- -- Add test quiz attempts and scores
+-- -- First create some quizzes
+-- INSERT INTO quizzes (course_id, lesson_id, title, description, time_limit_minutes, passing_score, is_test)
+-- VALUES
+-- ((SELECT id FROM courses WHERE code = 'CS101'),
+--  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'CS101') LIMIT 1),
+--  'Programming Basics Quiz', 'Test your understanding of programming fundamentals', 30, 70, false),
+ 
+-- ((SELECT id FROM courses WHERE code = 'WD101'),
+--  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'WD101') LIMIT 1),
+--  'HTML & CSS Quiz', 'Test your understanding of web fundamentals', 30, 70, false),
+ 
+-- ((SELECT id FROM courses WHERE code = 'DB101'),
+--  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'DB101') LIMIT 1),
+--  'Database Concepts Quiz', 'Test your understanding of database concepts', 30, 70, false);
+
+-- -- Add quiz attempts for students
+-- INSERT INTO quiz_attempts (quiz_id, student_id, start_time, end_time, score, passed, is_completed)
+-- VALUES
+-- -- Student 1
+-- ((SELECT id FROM quizzes WHERE title = 'Programming Basics Quiz'),
+--  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
+--  '2023-02-01 10:00:00', '2023-02-01 10:25:00', 85, true, true),
+ 
+-- ((SELECT id FROM quizzes WHERE title = 'HTML & CSS Quiz'),
+--  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
+--  '2023-03-01 14:00:00', '2023-03-01 14:28:00', 78, true, true),
+
+-- -- Student 2
+-- ((SELECT id FROM quizzes WHERE title = 'Programming Basics Quiz'),
+--  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
+--  '2023-02-05 11:00:00', '2023-02-05 11:22:00', 92, true, true),
+ 
+-- ((SELECT id FROM quizzes WHERE title = 'Database Concepts Quiz'),
+--  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
+--  '2023-02-20 13:00:00', '2023-02-20 13:27:00', 88, true, true),
+
+-- -- Student 3
+-- ((SELECT id FROM quizzes WHERE title = 'HTML & CSS Quiz'),
+--  (SELECT id FROM users WHERE email = 'teststudent3@example.com'),
+--  '2023-03-15 09:00:00', '2023-03-15 09:24:00', 95, true, true);
+
+-- -- Add some assignments
+-- INSERT INTO assignments (course_id, lesson_id, title, description, max_points, due_date, allow_late_submissions)
+-- VALUES
+-- ((SELECT id FROM courses WHERE code = 'CS101'),
+--  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'CS101') LIMIT 1),
+--  'Programming Basics Assignment', 'Create a simple program demonstrating variables and control flow', 
+--  100, '2023-02-15 23:59:59', true),
+ 
+-- ((SELECT id FROM courses WHERE code = 'WD101'),
+--  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'WD101') LIMIT 1),
+--  'Personal Portfolio Page', 'Create a personal portfolio page using HTML and CSS', 
+--  100, '2023-03-15 23:59:59', false),
+ 
+-- ((SELECT id FROM courses WHERE code = 'DB101'),
+--  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'DB101') LIMIT 1),
+--  'Database Design Assignment', 'Design a normalized database schema for a given scenario', 
+--  100, '2023-02-28 23:59:59', false);
+
+-- -- Mock assignment submissions (without actual files)
+-- INSERT INTO assignment_submissions (assignment_id, student_id, file_path, file_type, file_size, submission_date, is_late, grade, feedback, graded_by)
+-- VALUES
+-- -- Student 1
+-- ((SELECT id FROM assignments WHERE title = 'Programming Basics Assignment'),
+--  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
+--  '/mock/path/student1_programming.py', 'py', 2500,
+--  '2023-02-14 10:00:00', false, 88, 'Good work! Clear variable names and logic.', 
+--  (SELECT id FROM users WHERE email = 'john.smith@lms.com')),
+ 
+-- ((SELECT id FROM assignments WHERE title = 'Personal Portfolio Page'),
+--  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
+--  '/mock/path/student1_portfolio.zip', 'zip', 15000,
+--  '2023-03-14 22:00:00', false, 85, 'Nice design! Could improve mobile responsiveness.', 
+--  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com')),
+
+-- -- Student 2
+-- ((SELECT id FROM assignments WHERE title = 'Programming Basics Assignment'),
+--  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
+--  '/mock/path/student2_programming.py', 'py', 3200,
+--  '2023-02-15 09:00:00', false, 95, 'Excellent work! Well-structured and efficient code.', 
+--  (SELECT id FROM users WHERE email = 'john.smith@lms.com')),
+ 
+-- ((SELECT id FROM assignments WHERE title = 'Database Design Assignment'),
+--  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
+--  '/mock/path/student2_db_design.pdf', 'pdf', 5000,
+--  '2023-02-25 14:30:00', false, 92, 'Very well normalized schema with clear relationships.', 
+--  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com')),
+
+-- -- Student 3
+-- ((SELECT id FROM assignments WHERE title = 'Personal Portfolio Page'),
+--  (SELECT id FROM users WHERE email = 'teststudent3@example.com'),
+--  '/mock/path/student3_portfolio.zip', 'zip', 18000,
+--  '2023-03-10 12:45:00', false, 98, 'Outstanding work! Creative design and well-structured code.', 
+--  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com'));
 
 

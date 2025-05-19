@@ -1,69 +1,98 @@
-// recommendation-service.js
-// Simple service to integrate Python recommendation model with Express
+// backend/services/recommendation-service.js
+// Service để gọi script Python và xử lý kết quả
 
 const { spawn } = require('child_process');
 const path = require('path');
 
 /**
- * Get course recommendations for a student by calling the Python script
- * @param {number} studentId - The student's ID
- * @param {number} limit - Maximum number of recommendations
- * @returns {Promise<Array>} - Array of recommended courses
+ * Lấy gợi ý khóa học cho sinh viên bằng cách gọi script Python
+ * @param {number} studentId - ID của sinh viên
+ * @param {number} limit - Số lượng gợi ý tối đa
+ * @returns {Promise<Array>} - Mảng các khóa học được gợi ý
  */
 function getRecommendations(studentId, limit = 3) {
   return new Promise((resolve, reject) => {
-    // Path to Python script (adjust as needed)
-    const scriptPath = path.join(__dirname, '..', 'ai', 'recommend.py');
+    // Đường dẫn đến script Python
+    const scriptPath = path.join(__dirname, '..', '..', 'ai', 'recommend.py');
     
-    // Spawn Python process
-    const pythonProcess = spawn('python3', [scriptPath, studentId, limit]);
+    // Đường dẫn đến file model
+    const modelPath = path.join(__dirname, '..', '..', 'ai', 'recommendation_model.pkl');
+    
+    console.log(`Getting recommendations for student: ${studentId}`);
+    console.log(`Script path: ${scriptPath}`);
+    console.log(`Model path: ${modelPath}`);
+    
+    // Chạy script Python
+    const pythonProcess = spawn('python3', [scriptPath, studentId, limit, modelPath]);
     
     let output = '';
     let errorOutput = '';
     
-    // Collect output
+    // Thu thập output
     pythonProcess.stdout.on('data', (data) => {
       output += data.toString();
     });
     
-    // Collect error output
+    // Thu thập lỗi
     pythonProcess.stderr.on('data', (data) => {
       errorOutput += data.toString();
+      console.error(`Python error: ${data.toString()}`);
     });
     
-    // Handle process completion
+    // Xử lý khi process kết thúc
     pythonProcess.on('close', (code) => {
       if (code !== 0) {
         console.error(`Python script exited with code ${code}`);
         console.error(`Error output: ${errorOutput}`);
-        return reject(new Error(`Failed to get recommendations: ${errorOutput}`));
+        // Trả về object lỗi để frontend có thể hiển thị
+        return resolve([{ error: `Failed to get recommendations: ${errorOutput}` }]);
       }
       
       try {
-        // Try to parse the output as JSON
-        // Note: This assumes the Python script writes JSON to stdout
-        // If your script doesn't do this, you'll need to modify the output parsing
+        // Phân tích output thành JSON
         const recommendations = parseRecommendationsFromOutput(output);
         resolve(recommendations);
       } catch (error) {
         console.error('Error parsing recommendations:', error);
         console.error('Raw output:', output);
-        reject(new Error('Failed to parse recommendations'));
+        resolve([{ error: 'Failed to parse recommendations' }]);
       }
     });
   });
 }
 
 /**
- * Parse recommendations from Python script output
- * This is a simple implementation - adjust based on your Python script's output format
+ * Phân tích kết quả từ script Python
+ * Hàm này tìm kiếm JSON đánh dấu bằng các marker
  */
 function parseRecommendationsFromOutput(output) {
-  // If the Python script outputs proper JSON, use this
-  // return JSON.parse(output);
-  
-  // For the current implementation, we'll parse the formatted text output
-  // This is a very basic parser - you may need to improve it
+  try {
+    // Tìm JSON giữa các marker
+    const startMarker = 'RECOMMENDATION_START_JSON';
+    const endMarker = 'RECOMMENDATION_END_JSON';
+    
+    const startIndex = output.indexOf(startMarker) + startMarker.length;
+    const endIndex = output.indexOf(endMarker);
+    
+    if (startIndex > 0 && endIndex > startIndex) {
+      const jsonString = output.substring(startIndex, endIndex).trim();
+      return JSON.parse(jsonString);
+    }
+    
+    // Nếu không tìm thấy marker, sử dụng phương pháp phân tích text cũ
+    return parseTextRecommendations(output);
+  } catch (error) {
+    console.error('Error parsing JSON recommendations:', error);
+    // Fallback sang phân tích text
+    return parseTextRecommendations(output);
+  }
+}
+
+/**
+ * Phương pháp phân tích text dự phòng
+ */
+function parseTextRecommendations(output) {
+  // Phân tích output định dạng text
   const recommendations = [];
   const lines = output.split('\n');
   
@@ -71,12 +100,12 @@ function parseRecommendationsFromOutput(output) {
   
   for (const line of lines) {
     if (line.match(/^\d+\.\s/)) {
-      // New recommendation item
+      // Mục gợi ý mới
       if (currentRec) {
         recommendations.push(currentRec);
       }
       
-      // Extract course title and ID
+      // Trích xuất tiêu đề và ID khóa học
       const match = line.match(/^(\d+)\.\s(.+)\s\(ID:\s(\d+),\sScore:\s([\d.]+)/);
       if (match) {
         currentRec = {
@@ -86,24 +115,24 @@ function parseRecommendationsFromOutput(output) {
         };
       }
     } else if (line.match(/^\s+Reason:/)) {
-      // Extract reason
+      // Trích xuất lý do
       if (currentRec) {
         currentRec.reason = line.replace(/^\s+Reason:\s/, '');
       }
     } else if (line.match(/^\s+Description:/)) {
-      // Extract description
+      // Trích xuất mô tả
       if (currentRec) {
         currentRec.description = line.replace(/^\s+Description:\s/, '');
       }
     }
   }
   
-  // Add the last recommendation if any
+  // Thêm gợi ý cuối cùng nếu có
   if (currentRec) {
     recommendations.push(currentRec);
   }
   
-  return recommendations;
+  return recommendations.length > 0 ? recommendations : [{ error: 'No recommendations found' }];
 }
 
 module.exports = {
