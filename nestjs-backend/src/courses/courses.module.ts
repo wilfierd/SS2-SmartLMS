@@ -4,6 +4,7 @@ import { Course } from './entities/course.entity';
 import { CourseModule } from './entities/course-module.entity';
 import { Lesson } from './entities/lesson.entity';
 import { LessonMaterial } from './entities/lesson-material.entity';
+import { Assignment } from './entities/assignment.entity';
 import { CoursesService } from './courses.service';
 import { CourseModulesService } from './course-modules.service';
 import { LessonsService } from './lessons.service';
@@ -17,7 +18,7 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Course, CourseModule, Lesson, LessonMaterial]),
+    TypeOrmModule.forFeature([Course, CourseModule, Lesson, LessonMaterial, Assignment]),
     DepartmentsModule,
     UsersModule,
     forwardRef(() => EnrollmentsModule),

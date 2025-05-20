@@ -25,6 +25,10 @@ export class CreateLessonDto {
   content?: string;
 
   @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @IsOptional()
   @IsNumber()
   @Type(() => Number)
   durationMinutes?: number;

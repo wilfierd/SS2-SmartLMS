@@ -29,12 +29,28 @@ export class CourseModulesController {
     @Body() createCourseModuleDto: CreateCourseModuleDto,
     @Request() req,
   ) {
-    return this.courseModulesService.create(
-      +courseId,
-      createCourseModuleDto,
-      req.user.id,
-      req.user.role,
-    );
+    console.log('Creating module for courseId:', courseId);
+    console.log('Request body:', JSON.stringify(createCourseModuleDto));
+    console.log('User:', JSON.stringify(req.user));
+    
+    try {
+      const result = await this.courseModulesService.create(
+        +courseId,
+        createCourseModuleDto,
+        req.user.id,
+        req.user.role,
+      );
+      
+      console.log('Module created successfully:', JSON.stringify(result));
+      
+      return {
+        message: 'Module created successfully',
+        moduleId: result.id
+      };
+    } catch (error) {
+      console.error('Error creating module:', error);
+      throw error;
+    }
   }
 
   @Get()

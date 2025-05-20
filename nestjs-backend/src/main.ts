@@ -1,12 +1,16 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as passport from 'passport';
+import * as express from 'express';
+import { join } from 'path';
+import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
   
   app.use(passport.initialize());
@@ -51,6 +55,26 @@ async function bootstrap() {
       'status'
     ],
   });
+  
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = join(__dirname, '..', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  // Create subdirectories for different upload types
+  const lessonUploadsDir = join(uploadsDir, 'lessons');
+  if (!fs.existsSync(lessonUploadsDir)) {
+    fs.mkdirSync(lessonUploadsDir, { recursive: true });
+  }
+  
+  const assignmentUploadsDir = join(uploadsDir, 'assignments');
+  if (!fs.existsSync(assignmentUploadsDir)) {
+    fs.mkdirSync(assignmentUploadsDir, { recursive: true });
+  }
+  
+  // Setup static file serving for uploads
+  app.use('/uploads', express.static(uploadsDir));
   
   // Start the server on port 5000
   const port = 5000; // Default port
