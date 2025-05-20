@@ -37,12 +37,25 @@ export class AssignmentsController {
   async createAssignment(
     @Param('courseId', ParseIntPipe) courseId: number,
     @Param('lessonId', ParseIntPipe) lessonId: number,
-    @Body() createAssignmentDto: CreateAssignmentDto,
+    @Body() requestBody: any,
     @Request() req: any,
   ) {
+    // Map snake_case to camelCase properties
+    const createAssignmentDto = {
+      lessonId: lessonId,
+      title: requestBody.title,
+      description: requestBody.description,
+      maxPoints: requestBody.max_points || requestBody.maxPoints,
+      dueDate: requestBody.due_date || requestBody.dueDate,
+      allowedFileTypes: requestBody.allowed_file_types || requestBody.allowedFileTypes,
+      maxFileSize: requestBody.max_file_size || requestBody.maxFileSize,
+      allowLateSubmissions: requestBody.allow_late_submissions || requestBody.allowLateSubmissions
+    };
+
+    console.log('Creating assignment with data:', JSON.stringify(createAssignmentDto));
     return this.assignmentsService.createAssignment(
       courseId, 
-      { ...createAssignmentDto, lessonId }, 
+      createAssignmentDto, 
       req.user.userId
     );
   }

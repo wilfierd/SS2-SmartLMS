@@ -530,12 +530,25 @@ export class CoursesController {
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
   async createAssignment(
     @Param('courseId') courseId: string,
-    @Body() createAssignmentDto: CreateAssignmentDto,
+    @Body() requestBody: any,
     @Request() req,
   ) {
+    // Map snake_case to camelCase properties
+    const createAssignmentDto = {
+      lessonId: requestBody.lesson_id,
+      title: requestBody.title,
+      description: requestBody.description,
+      maxPoints: requestBody.max_points,
+      dueDate: requestBody.due_date,
+      allowedFileTypes: requestBody.allowed_file_types,
+      maxFileSize: requestBody.max_file_size,
+      allowLateSubmissions: requestBody.allow_late_submissions
+    };
+    
     // Log incoming data for debugging
     console.log('Creating assignment for course:', courseId);
-    console.log('DTO:', JSON.stringify(createAssignmentDto));
+    console.log('Request body:', JSON.stringify(requestBody));
+    console.log('Mapped DTO:', JSON.stringify(createAssignmentDto));
     
     try {
       const { 
@@ -646,6 +659,58 @@ export class CoursesController {
       };
     } catch (error) {
       console.error('Error creating assignment:', error);
+      throw error;
+    }
+  }
+
+  @Get(':courseId/assignments')
+  @UseGuards(JwtAuthGuard)
+  async getAssignmentsForCourse(@Param('courseId') courseId: string, @Request() req) {
+    try {
+      console.log(`Fetching assignments for course: ${courseId}`);
+      
+      // Query assignments using raw SQL like in Express
+      const assignments = await this.dataSource.query(
+        `SELECT a.*, cm.title as lesson_title
+         FROM assignments a
+         JOIN course_modules cm ON a.lesson_id = cm.id
+         WHERE a.course_id = ?
+         ORDER BY a.due_date ASC`,
+        [courseId]
+      );
+      
+      console.log(`Found ${assignments.length} assignments`);
+      
+      // For students, include submission status
+      if (req.user.role === UserRole.STUDENT) {
+        const studentId = req.user.userId;
+        
+        // Get submission status for each assignment
+        for (let assignment of assignments) {
+          const submissions = await this.dataSource.query(
+            `SELECT * FROM assignment_submissions 
+             WHERE assignment_id = ? AND student_id = ?
+             ORDER BY submission_date DESC LIMIT 1`,
+            [assignment.id, studentId]
+          );
+          
+          if (submissions.length > 0) {
+            assignment.submission = {
+              id: submissions[0].id,
+              date: submissions[0].submission_date,
+              isLate: submissions[0].is_late,
+              grade: submissions[0].grade,
+              status: submissions[0].grade ? 'graded' : 'submitted'
+            };
+          } else {
+            assignment.submission = null;
+          }
+        }
+      }
+      
+      return assignments;
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
       throw error;
     }
   }

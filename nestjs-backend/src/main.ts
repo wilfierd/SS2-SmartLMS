@@ -35,9 +35,12 @@ async function bootstrap() {
   
   // Define global validation pipe
   app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
+    whitelist: false,
     transform: true,
-    forbidNonWhitelisted: true,
+    forbidNonWhitelisted: false,
+    transformOptions: {
+      enableImplicitConversion: true
+    }
   }));
   
   // Enable CORS
