@@ -18,7 +18,7 @@ export class Quiz {
   @Column({ name: 'course_id' })
   courseId: number;
 
-  @Column({ name: 'lesson_id' })
+  @Column({ name: 'lesson_id', nullable: true })
   lessonId: number;
 
   @ManyToOne(() => Course)
@@ -35,16 +35,17 @@ export class Quiz {
   @Column({ name: 'passing_score', default: 70 })
   passingScore: number;
 
-  @Column({ name: 'is_test', default: false })
-  isTest: boolean;
+  get isTest(): boolean {
+    return this.timeLimitMinutes > 45;
+  }
 
-  @Column({ name: 'show_answers', default: true })
+  @Column({ name: 'show_answers', default: true, nullable: true })
   showAnswers: boolean;
 
-  @Column({ name: 'allow_retake', default: true })
+  @Column({ name: 'allow_retake', default: true, nullable: true })
   allowRetake: boolean;
 
-  @Column({ name: 'randomize_questions', default: false })
+  @Column({ name: 'randomize_questions', default: false, nullable: true })
   randomizeQuestions: boolean;
 
   @OneToMany(() => QuizQuestion, question => question.quiz)

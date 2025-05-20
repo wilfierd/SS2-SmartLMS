@@ -48,8 +48,9 @@ export class QuizzesService {
       throw new NotFoundException(`Quiz with ID ${id} not found`);
     }
 
-    // For students, remove correct answers unless it's a practice quiz and showAnswers is true
-    if (userRole === UserRole.STUDENT && !(quiz.isTest === false && quiz.showAnswers)) {
+    // For students, remove correct answers unless it's a practice quiz (determined by time limit)
+    // and showAnswers is true
+    if (userRole === UserRole.STUDENT && !(quiz.timeLimitMinutes <= 45 && quiz.showAnswers)) {
       // Hide correct answers for multiple choice questions and fill-in-blank answers
       quiz.questions.forEach(question => {
         if (question.options) {
@@ -69,7 +70,7 @@ export class QuizzesService {
     // Check if user is instructor of the course
     await this.coursesService.checkInstructorAccess(createQuizDto.courseId, instructorId);
 
-    // Create quiz
+    // Create quiz without isTest field since it doesn't exist in the database
     const quizEntity = this.quizRepository.create({
       courseId: createQuizDto.courseId,
       lessonId: createQuizDto.lessonId,
@@ -77,7 +78,7 @@ export class QuizzesService {
       description: createQuizDto.description,
       timeLimitMinutes: createQuizDto.timeLimitMinutes || 30,
       passingScore: createQuizDto.passingScore || 70,
-      isTest: createQuizDto.isTest || false,
+      // isTest field removed since it doesn't exist in database
       showAnswers: createQuizDto.showAnswers !== false
     });
     

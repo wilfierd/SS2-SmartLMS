@@ -1,5 +1,5 @@
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateCourseModuleDto {
   @IsNotEmpty()
@@ -14,6 +14,19 @@ export class CreateCourseModuleDto {
   @IsNumber()
   @Type(() => Number)
   orderIndex?: number;
+  
+  // Add transformation from 'order' to 'orderIndex' for compatibility
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @Transform(({ value, obj }) => {
+    // If value exists and orderIndex is not set, use this value for orderIndex
+    if (value !== undefined && obj.orderIndex === undefined) {
+      obj.orderIndex = value;
+    }
+    return undefined; // Remove 'order' property from the validated object
+  })
+  order?: number;
 
   @IsOptional()
   @IsBoolean()

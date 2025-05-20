@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { QuizzesController } from './quizzes.controller';
+import { QuizzesController, TestsController } from './quizzes.controller';
 import { QuizzesService } from './quizzes.service';
 import { Quiz } from './entities/quiz.entity';
 import { QuizQuestion } from './entities/quiz-question.entity';
@@ -22,7 +22,7 @@ import { CoursesModule } from '../../courses/courses.module';
     ]),
     CoursesModule
   ],
-  controllers: [QuizzesController],
+  controllers: [QuizzesController, TestsController],
   providers: [QuizzesService],
   exports: [QuizzesService]
 })
