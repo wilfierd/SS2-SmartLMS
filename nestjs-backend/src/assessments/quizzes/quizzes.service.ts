@@ -48,10 +48,10 @@ export class QuizzesService {
       throw new NotFoundException(`Quiz with ID ${id} not found`);
     }
 
-    // For students, remove correct answers unless it's a practice quiz (determined by time limit)
-    // and showAnswers is true
-    if (userRole === UserRole.STUDENT && !(quiz.timeLimitMinutes <= 45 && quiz.showAnswers)) {
-      // Hide correct answers for multiple choice questions and fill-in-blank answers
+    // For students, remove correct answers for tests (longer time limit)
+    // showAnswers is removed from database, so we only check time limit to determine if answers should be shown
+    if (userRole === UserRole.STUDENT && quiz.timeLimitMinutes > 45) {
+      // Hide correct answers for multiple choice questions and fill-in-blank answers for tests
       quiz.questions.forEach(question => {
         if (question.options) {
           question.options.forEach(option => {
@@ -70,16 +70,15 @@ export class QuizzesService {
     // Check if user is instructor of the course
     await this.coursesService.checkInstructorAccess(createQuizDto.courseId, instructorId);
 
-    // Create quiz without isTest field since it doesn't exist in the database
+    // Create quiz with only the fields that exist in the database
     const quizEntity = this.quizRepository.create({
       courseId: createQuizDto.courseId,
       lessonId: createQuizDto.lessonId,
       title: createQuizDto.title,
       description: createQuizDto.description,
       timeLimitMinutes: createQuizDto.timeLimitMinutes || 30,
-      passingScore: createQuizDto.passingScore || 70,
-      // isTest field removed since it doesn't exist in database
-      showAnswers: createQuizDto.showAnswers !== false
+      passingScore: createQuizDto.passingScore || 70
+      // Remove fields that don't exist in the database
     });
     
     // Then save it to get an actual quiz object with ID
@@ -290,14 +289,20 @@ export class QuizzesService {
     for (let i = 0; i < questions.length; i++) {
       const questionData = questions[i];
       
-      // Create question
+      // Make sure we have the required questionText
+      if (!questionData.questionText) {
+        // Use a default question text to prevent DB errors
+        questionData.questionText = 'Default question text';
+      }
+      
+      // Create question with proper data - notice that question_text needs to be explicitly provided
+      // as it doesn't have a default value in the database
       const question = this.questionRepository.create({
         quizId,
         questionText: questionData.questionText,
-        questionType: questionData.questionType,
+        questionType: questionData.questionType || 'multiple_choice',
         points: questionData.points || 1,
-        orderIndex: i,
-        imageData: questionData.imageData,
+        orderIndex: i
       });
       
       await this.questionRepository.save(question);

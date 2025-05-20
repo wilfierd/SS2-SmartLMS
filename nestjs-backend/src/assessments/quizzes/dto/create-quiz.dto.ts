@@ -64,13 +64,11 @@ export class CreateQuizDto {
   @IsNumber()
   passingScore?: number;
 
+  // Virtual field to determine if this is a test or quiz
+  // Used by controllers, not directly saved to DB
   @IsOptional()
   @IsBoolean()
   isTest?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  showAnswers?: boolean = true;
 
   @ValidateNested({ each: true })
   @Type(() => QuizQuestionDto)

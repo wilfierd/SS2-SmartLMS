@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Quiz } from './quiz.entity';
 import { QuestionOption } from './question-option.entity';
 import { FillInAnswer } from './fill-in-answer.entity';
@@ -31,9 +31,6 @@ export class QuizQuestion {
   })
   questionType: QuestionType;
 
-  @Column({ nullable: true, name: 'image_data', type: 'text' })
-  imageData: string;
-
   @Column({ default: 1 })
   points: number;
 
@@ -45,10 +42,4 @@ export class QuizQuestion {
 
   @OneToOne(() => FillInAnswer, answer => answer.question)
   fillInAnswer: FillInAnswer;
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
 } 

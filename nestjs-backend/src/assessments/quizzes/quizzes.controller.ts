@@ -46,6 +46,8 @@ export class QuizzesController {
     createQuizDto.courseId = +courseId;
     // Set as a quiz (shorter time limit)
     createQuizDto.timeLimitMinutes = createQuizDto.timeLimitMinutes || 30;
+    // Explicitly set as not a test
+    createQuizDto.isTest = false;
     
     return this.quizzesService.create(
       createQuizDto,
@@ -172,6 +174,8 @@ export class TestsController {
     createQuizDto.courseId = +courseId;
     // Set longer time limit to indicate it's a test
     createQuizDto.timeLimitMinutes = createQuizDto.timeLimitMinutes || 60;
+    // Explicitly set as a test
+    createQuizDto.isTest = true;
     
     return this.quizzesService.create(
       createQuizDto,
