@@ -57,52 +57,8 @@ export class CourseModulesController {
   @UseGuards(JwtAuthGuard)
   async findAll(@Param('courseId') courseId: string, @Request() req) {
     try {
-      // This implementation follows the Express.js pattern more closely
       const modules = await this.courseModulesService.findByCourseWithLessons(+courseId);
-      
-      if (!modules || modules.length === 0) {
-        return [];
-      }
-      
-      // Format the response like Express does
-      const formattedModules = modules.map(module => {
-        // Process lessons from concatenated strings
-        let lessons = [];
-        
-        if (module.lesson_ids) {
-          const ids = module.lesson_ids.split(',');
-          const titles = module.lesson_titles ? module.lesson_titles.split(',') : [];
-          const descriptions = module.lesson_descriptions ? module.lesson_descriptions.split(',') : [];
-          const contentTypes = module.lesson_content_types ? module.lesson_content_types.split(',') : [];
-          const contents = module.lesson_contents ? module.lesson_contents.split(',') : [];
-          const durations = module.lesson_durations ? module.lesson_durations.split(',') : [];
-          const orderIndexes = module.lesson_order_indexes ? module.lesson_order_indexes.split(',') : [];
-          const isPublishedArray = module.lesson_is_published ? module.lesson_is_published.split(',') : [];
-          
-          lessons = ids.map((id, index) => ({
-            id: parseInt(id),
-            title: titles[index] || '',
-            description: descriptions[index] || null,
-            contentType: contentTypes[index] || 'text',
-            content: contents[index] || null,
-            durationMinutes: durations[index] ? parseInt(durations[index]) : null,
-            orderIndex: orderIndexes[index] ? parseInt(orderIndexes[index]) : 0,
-            isPublished: isPublishedArray[index] === '1',
-            materials: [] // We'll need a separate query for materials if needed
-          }));
-        }
-        
-        return {
-          id: module.id,
-          title: module.title,
-          description: module.description,
-          orderIndex: module.order_index,
-          isPublished: module.is_published === 1,
-          lessons: lessons
-        };
-      });
-      
-      return formattedModules;
+      return modules; // The modules are now properly formatted with full lesson content
     } catch (error) {
       console.error('Error fetching course modules:', error);
       throw error;

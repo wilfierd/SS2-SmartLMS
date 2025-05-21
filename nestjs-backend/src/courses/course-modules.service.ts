@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CourseModule } from './entities/course-module.entity';
+import { Lesson } from './entities/lesson.entity';
+import { LessonMaterial } from './entities/lesson-material.entity';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
 import { UpdateCourseModuleDto } from './dto/update-course-module.dto';
 import { CoursesService } from './courses.service';
@@ -12,6 +14,10 @@ export class CourseModulesService {
   constructor(
     @InjectRepository(CourseModule)
     private courseModulesRepository: Repository<CourseModule>,
+    @InjectRepository(Lesson)
+    private lessonsRepository: Repository<Lesson>,
+    @InjectRepository(LessonMaterial)
+    private lessonMaterialsRepository: Repository<LessonMaterial>,
     private coursesService: CoursesService,
   ) {}
 
@@ -103,23 +109,66 @@ export class CourseModulesService {
     return module.courseId;
   }
 
-  async findByCourseWithLessons(courseId: number): Promise<any> {
-    // Raw query to match Express implementation
-    return this.courseModulesRepository.query(`
-      SELECT m.*, 
-             GROUP_CONCAT(l.id) as lesson_ids, 
-             GROUP_CONCAT(l.title) as lesson_titles,
-             GROUP_CONCAT(l.description) as lesson_descriptions,
-             GROUP_CONCAT(l.content_type) as lesson_content_types,
-             GROUP_CONCAT(l.content) as lesson_contents,
-             GROUP_CONCAT(l.duration_minutes) as lesson_durations,
-             GROUP_CONCAT(l.order_index) as lesson_order_indexes,
-             GROUP_CONCAT(l.is_published) as lesson_is_published
-      FROM course_modules m
-      LEFT JOIN lessons l ON m.id = l.module_id
-      WHERE m.course_id = ?
-      GROUP BY m.id
-      ORDER BY m.order_index ASC
-    `, [courseId]);
+  async findByCourseWithLessons(courseId: number): Promise<any[]> {
+    // First, get all modules for the course
+    const modules = await this.courseModulesRepository.find({
+      where: { courseId },
+      order: { orderIndex: 'ASC' },
+    });
+    
+    // If no modules are found, return empty array
+    if (!modules || modules.length === 0) {
+      return [];
+    }
+    
+    // For each module, get its lessons
+    const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+      // Get all lessons for this module
+      const lessons = await this.lessonsRepository.find({
+        where: { moduleId: module.id },
+        order: { orderIndex: 'ASC' },
+      });
+      
+      // For each lesson, get its materials
+      const lessonsWithMaterials = await Promise.all(lessons.map(async (lesson) => {
+        const materials = await this.lessonMaterialsRepository.find({
+          where: { lessonId: lesson.id }
+        });
+        
+        // Format the materials to match Express response
+        const formattedMaterials = materials.map(material => ({
+          id: material.id,
+          title: material.title,
+          filePath: material.filePath,
+          externalUrl: material.externalUrl,
+          materialType: material.materialType
+        }));
+        
+        // Return the lesson with its materials
+        return {
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.description,
+          contentType: lesson.contentType,
+          content: lesson.content, // Full content without truncation
+          durationMinutes: lesson.durationMinutes,
+          orderIndex: lesson.orderIndex,
+          isPublished: lesson.isPublished,
+          materials: formattedMaterials
+        };
+      }));
+      
+      // Return the module with its lessons and materials
+      return {
+        id: module.id,
+        title: module.title,
+        description: module.description,
+        orderIndex: module.orderIndex,
+        isPublished: module.isPublished,
+        lessons: lessonsWithMaterials
+      };
+    }));
+    
+    return modulesWithLessons;
   }
 } 

@@ -58,13 +58,14 @@ export class LessonsService {
     return this.lessonsRepository.find({
       where: { moduleId },
       order: { orderIndex: 'ASC' },
+      relations: ['materials']
     });
   }
 
   async findOne(id: number): Promise<Lesson> {
     const lesson = await this.lessonsRepository.findOne({
       where: { id },
-      relations: ['module', 'module.course'],
+      relations: ['module', 'module.course', 'materials'],
     });
     
     if (!lesson) {
