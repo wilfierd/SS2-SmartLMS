@@ -60,7 +60,40 @@ export class VirtualSessionsService {
         throw new BadRequestException('Session date and start time are required');
       }
       session.status = SessionStatus.SCHEDULED;
-      session.sessionDate = new Date(sessionDate);
+      
+      try {
+        // Handle date format flexibly - try to parse the date string
+        let parsedDate: Date;
+        
+        // Try ISO format first
+        if (/^\d{4}-\d{2}-\d{2}/.test(sessionDate)) {
+          parsedDate = new Date(sessionDate);
+        } 
+        // Try MM/DD/YYYY format
+        else if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(sessionDate)) {
+          const [month, day, year] = sessionDate.split('/');
+          parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        }
+        // Try DD/MM/YYYY format 
+        else if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(sessionDate)) {
+          const [day, month, year] = sessionDate.split('/');
+          parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        }
+        else {
+          // Default to current date if parse fails
+          parsedDate = new Date(sessionDate);
+        }
+        
+        if (isNaN(parsedDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        
+        session.sessionDate = parsedDate;
+      } catch (error) {
+        this.logger.error(`Error parsing session date: ${sessionDate}`, error);
+        throw new BadRequestException('Invalid date format. Please use YYYY-MM-DD format.');
+      }
+      
       session.startTime = startTime;
       // Only set endTime if it's provided
       if (endTime) {
@@ -316,30 +349,29 @@ export class VirtualSessionsService {
       const currentTime = now.toTimeString().split(' ')[0];
 
       // Find scheduled sessions that should be active (past start time)
-      const scheduledSessions = await this.virtualSessionRepository.find({
-        where: {
-          status: SessionStatus.SCHEDULED,
-          // Use appropriate custom query for date/time comparison based on your database
-          // This is a simplified example - you may need to use raw queries or QueryBuilder for this
-        }
-      });
+      const scheduledSessions = await this.virtualSessionRepository.createQueryBuilder('session')
+        .where('session.status = :status', { status: SessionStatus.SCHEDULED })
+        .andWhere('(session.sessionDate < :currentDate OR (session.sessionDate = :currentDate AND session.startTime <= :currentTime))',
+          { currentDate, currentTime })
+        .getMany();
 
       if (scheduledSessions.length > 0) {
         this.logger.log(`Starting ${scheduledSessions.length} scheduled sessions`);
         
         for (const session of scheduledSessions) {
           session.status = SessionStatus.ACTIVE;
+          session.actualStartTime = now;
           await this.virtualSessionRepository.save(session);
         }
       }
 
       // Find active sessions that should be completed (past end time)
-      const activeSessions = await this.virtualSessionRepository.find({
-        where: {
-          status: SessionStatus.ACTIVE,
-          // Use appropriate custom query for date/time comparison based on your database
-        }
-      });
+      const activeSessions = await this.virtualSessionRepository.createQueryBuilder('session')
+        .where('session.status = :status', { status: SessionStatus.ACTIVE })
+        .andWhere('session.endTime IS NOT NULL')
+        .andWhere('(session.sessionDate < :currentDate OR (session.sessionDate = :currentDate AND session.endTime <= :currentTime))',
+          { currentDate, currentTime })
+        .getMany();
 
       if (activeSessions.length > 0) {
         this.logger.log(`Completing ${activeSessions.length} active sessions past end time`);
@@ -351,13 +383,12 @@ export class VirtualSessionsService {
         }
       }
 
-      // Find active sessions from past days and complete them
-      const pastActiveSessions = await this.virtualSessionRepository.find({
-        where: {
-          status: SessionStatus.ACTIVE,
-          // Use appropriate custom query for date/time comparison based on your database
-        }
-      });
+      // Find active sessions from past days and complete them if they've been active for more than 24 hours
+      const pastActiveSessions = await this.virtualSessionRepository.createQueryBuilder('session')
+        .where('session.status = :status', { status: SessionStatus.ACTIVE })
+        .andWhere('session.actualStartTime IS NOT NULL')
+        .andWhere('session.actualStartTime < :dayAgo', { dayAgo: new Date(now.getTime() - 24 * 60 * 60 * 1000) }) // 24 hours ago
+        .getMany();
 
       if (pastActiveSessions.length > 0) {
         this.logger.log(`Completing ${pastActiveSessions.length} outdated active sessions`);
@@ -368,8 +399,11 @@ export class VirtualSessionsService {
           await this.virtualSessionRepository.save(session);
         }
       }
+
+      return { message: 'Session statuses updated successfully' };
     } catch (error) {
       this.logger.error('Error updating session statuses', error.stack);
+      throw new Error(`Failed to update session statuses: ${error.message}`);
     }
   }
 

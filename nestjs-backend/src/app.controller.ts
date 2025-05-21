@@ -24,6 +24,15 @@ export class AppController {
     };
   }
 
+  @Get('api/status')
+  getApiStatus() {
+    return {
+      status: 'OK',
+      message: 'API is running',
+      time: new Date().toISOString(),
+    };
+  }
+
   @Get('/instructors')
   @UseGuards(JwtAuthGuard)
   async getInstructors() {

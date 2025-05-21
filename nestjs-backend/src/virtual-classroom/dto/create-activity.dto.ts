@@ -4,8 +4,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateActivityDto {
   @ApiProperty({ description: 'ID of the virtual session' })
   @IsNumber()
-  @IsNotEmpty()
-  sessionId: number;
+  @IsOptional()
+  sessionId?: number;
 
   @ApiProperty({ description: 'Action performed in the session (join, leave, chat, etc)' })
   @IsString()

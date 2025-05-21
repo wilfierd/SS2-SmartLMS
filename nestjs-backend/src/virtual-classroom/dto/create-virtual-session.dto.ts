@@ -71,7 +71,7 @@ export class CreateVirtualSessionDto {
   description?: string;
 
   @ApiPropertyOptional({ description: 'Date of the session (YYYY-MM-DD)' })
-  @IsDateString()
+  @IsString()
   @IsOptional()
   sessionDate?: string;
 
