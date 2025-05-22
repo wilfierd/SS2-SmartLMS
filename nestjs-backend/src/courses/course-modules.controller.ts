@@ -57,8 +57,77 @@ export class CourseModulesController {
   @UseGuards(JwtAuthGuard)
   async findAll(@Param('courseId') courseId: string, @Request() req) {
     try {
-      const modules = await this.courseModulesService.findByCourseWithLessons(+courseId);
-      return modules; // The modules are now properly formatted with full lesson content
+      console.log(`Getting modules for course ${courseId}`);
+      
+      // Use direct SQL to match server.js
+      const connection = await this.courseModulesService.getConnection();
+      
+      // Get all modules for the course
+      const modules = await connection.query(`
+        SELECT * FROM course_modules
+        WHERE course_id = ?
+        ORDER BY order_index ASC
+      `, [courseId]);
+      
+      // For each module, get its lessons with materials
+      const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+        const lessons = await connection.query(`
+          SELECT l.*, GROUP_CONCAT(lm.id) as material_ids, 
+                GROUP_CONCAT(lm.title) as material_titles, 
+                GROUP_CONCAT(lm.file_path) as material_paths, 
+                GROUP_CONCAT(lm.external_url) as material_urls,
+                GROUP_CONCAT(lm.material_type) as material_types
+          FROM lessons l
+          LEFT JOIN lesson_materials lm ON l.id = lm.lesson_id
+          WHERE l.module_id = ?
+          GROUP BY l.id
+          ORDER BY l.order_index ASC
+        `, [module.id]);
+        
+        // Format lessons and materials
+        const formattedLessons = lessons.map(lesson => {
+          let materials = [];
+          
+          if (lesson.material_ids) {
+            const ids = lesson.material_ids.split(',');
+            const titles = lesson.material_titles ? lesson.material_titles.split(',') : [];
+            const paths = lesson.material_paths ? lesson.material_paths.split(',') : [];
+            const urls = lesson.material_urls ? lesson.material_urls.split(',') : [];
+            const types = lesson.material_types ? lesson.material_types.split(',') : [];
+            
+            materials = ids.map((id, index) => ({
+              id,
+              title: titles[index] || '',
+              filePath: paths[index] || null,
+              externalUrl: urls[index] || null,
+              materialType: types[index] || 'document'
+            }));
+          }
+          
+          return {
+            id: lesson.id,
+            title: lesson.title,
+            description: lesson.description,
+            contentType: lesson.content_type,
+            content: lesson.content,
+            durationMinutes: lesson.duration_minutes,
+            orderIndex: lesson.order_index,
+            isPublished: lesson.is_published === 1,
+            materials
+          };
+        });
+        
+        return {
+          id: module.id,
+          title: module.title,
+          description: module.description,
+          orderIndex: module.order_index,
+          isPublished: module.is_published === 1,
+          lessons: formattedLessons
+        };
+      }));
+      
+      return modulesWithLessons;
     } catch (error) {
       console.error('Error fetching course modules:', error);
       throw error;
