@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, ParseIntPipe, Query, Request, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, ParseIntPipe, Query, Request, UseGuards, BadRequestException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -47,9 +47,40 @@ export class VirtualClassroomController {
   @ApiBody({ type: CreateVirtualSessionDto })
   async createSessionExpress(
     @Body() createDto: CreateVirtualSessionDto,
-    @User('id') userId: number
+    @Request() req
   ) {
-    return this.sessionsService.create(userId, createDto);
+    try {
+      console.log('User from request:', req.user);
+      // Ensure we have a valid userId, try multiple possible properties
+      const userId = req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        console.error('No valid userId found in request user object:', req.user);
+        throw new BadRequestException('User ID is required');
+      }
+      
+      console.log('Using userId for instructor_id:', userId);
+      
+      // Create the session
+      const session = await this.sessionsService.create(userId, createDto);
+      
+      // Get the session with related entities
+      const sessionWithRelations = await this.sessionsService.findOne(session.id, userId, req.user?.role);
+      
+      console.log('Session created successfully, returning:', {
+        message: 'Session created successfully',
+        session: sessionWithRelations
+      });
+      
+      // Structure response to match server.js implementation
+      return {
+        message: 'Session created successfully',
+        session: sessionWithRelations
+      };
+    } catch (error) {
+      console.error('Error creating virtual session:', error);
+      throw new BadRequestException(error.message || 'Failed to create session');
+    }
   }
 
   @Get('virtual-classroom/sessions')

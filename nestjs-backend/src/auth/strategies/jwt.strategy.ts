@@ -15,11 +15,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
     });
-  }
-
-  async validate(payload: any) {
+  }  async validate(payload: any) {
+    console.log('JWT payload:', payload);
     return {
-      userId: payload.sub,
+      userId: payload.sub || payload.userId,
+      id: payload.sub || payload.userId, // Add id property to match Express implementation
       email: payload.email,
       role: payload.role,
     };

@@ -22,10 +22,10 @@ export class VirtualSessionsService {
     @InjectRepository(SessionRegistration)
     private readonly registrationRepository: Repository<SessionRegistration>,
     private readonly coursesService: CoursesService
-  ) {}
-
-  async create(instructorId: number, createDto: CreateVirtualSessionDto): Promise<VirtualSession> {
+  ) {}  async create(instructorId: number, createDto: CreateVirtualSessionDto): Promise<VirtualSession> {
     const { courseId, title, description, startNow, sessionDate, startTime, endTime, maxParticipants, isRecorded, password } = createDto;
+
+    console.log(`Creating virtual session with instructorId: ${instructorId}, title: ${title}, courseId: ${courseId}`);
 
     // Verify the course exists
     await this.coursesService.findOne(courseId);
@@ -39,10 +39,12 @@ export class VirtualSessionsService {
       roomId,
       description,
       courseId,
-      instructorId,
+      instructorId, // Ensure instructor_id is set properly
       maxParticipants: maxParticipants || 30,
       isRecorded: isRecorded !== undefined ? isRecorded : true
     });
+
+    console.log(`Session entity created with instructor_id: ${instructorId}, session.instructorId: ${session.instructorId}`);
 
     // Handle password if provided
     if (password) {
@@ -205,7 +207,6 @@ export class VirtualSessionsService {
 
     return sessionsWithEnrollment;
   }
-
   async findOne(id: number, userId?: number, userRole?: string): Promise<SessionDetailsResponseDto> {
     const session = await this.virtualSessionRepository.findOne({
       where: { id },
@@ -215,6 +216,13 @@ export class VirtualSessionsService {
     if (!session) {
       throw new NotFoundException(`Virtual session with ID ${id} not found`);
     }
+
+    console.log('FindOne - session loaded:', {
+      id: session.id,
+      roomId: session.roomId,
+      course: session.course ? { id: session.course.id, title: session.course.title } : null,
+      instructor: session.instructor ? { id: session.instructor.id, name: `${session.instructor.firstName} ${session.instructor.lastName}` } : null
+    });
 
     let enrollmentStatus: RegistrationStatus | undefined;
 
@@ -250,8 +258,20 @@ export class VirtualSessionsService {
       status: p.status
     }));
 
-    // Build the response
-    const baseResponse = this.mapToResponseDto(session, enrollmentStatus);
+    // Create a new object with all the necessary properties explicitly assigned
+    const sessionWithExactFormat = {
+      ...session,
+      courseTitle: session.course ? session.course.title : '',
+      instructorName: session.instructor ? `${session.instructor.firstName} ${session.instructor.lastName}` : 'Unknown'
+    };
+
+    // Convert to response DTO using the updated session object
+    const baseResponse = this.mapToResponseDto(sessionWithExactFormat, enrollmentStatus);
+    
+    console.log('FindOne - returning response with course and instructor details:', {
+      courseTitle: baseResponse.courseTitle,
+      instructorName: baseResponse.instructorName
+    });
     
     return {
       ...baseResponse,
@@ -412,8 +432,18 @@ export class VirtualSessionsService {
     // and return session IDs the student is eligible to view
     return [1, 2, 3]; // Return some IDs to avoid empty array issues in tests
   }
-
   private mapToResponseDto(session: VirtualSession, enrollmentStatus?: RegistrationStatus): SessionResponseDto {
+    // Log the session object before mapping
+    console.log('mapToResponseDto - source session:', {
+      id: session.id,
+      title: session.title,
+      roomId: session.roomId,
+      courseId: session.courseId,
+      courseTitle: session.courseTitle || (session.course?.title),
+      instructorId: session.instructorId,
+      instructorName: session.instructorName || (session.instructor ? `${session.instructor.firstName} ${session.instructor.lastName}` : 'Unknown')
+    });
+    
     const responseDto: SessionResponseDto = {
       id: session.id,
       title: session.title,
@@ -426,9 +456,9 @@ export class VirtualSessionsService {
       actualStartTime: session.actualStartTime,
       actualEndTime: session.actualEndTime,
       courseId: session.courseId,
-      courseTitle: session.course?.title || '',
+      courseTitle: session.courseTitle || (session.course?.title || ''),
       instructorId: session.instructorId,
-      instructorName: session.instructor?.firstName + ' ' + session.instructor?.lastName || 'Unknown',
+      instructorName: session.instructorName || (session.instructor ? `${session.instructor.firstName} ${session.instructor.lastName}` : 'Unknown'),
       isRecorded: session.isRecorded,
       recordingUrl: session.recordingUrl,
       enrollmentStatus: enrollmentStatus,
@@ -440,4 +470,4 @@ export class VirtualSessionsService {
 
     return responseDto;
   }
-} 
+}
