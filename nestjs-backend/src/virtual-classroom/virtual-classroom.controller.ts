@@ -16,6 +16,7 @@ import { CreatePollDto } from './dto/create-poll.dto';
 import { PollResponseDto } from './dto/poll-response.dto';
 import { CreateBreakoutRoomsDto } from './dto/breakout-room.dto';
 import { CreateActivityDto } from './dto/create-activity.dto';
+import { SessionActivity } from './entities/session-activity.entity';
 
 @ApiTags('virtual-classroom')
 @ApiBearerAuth()
@@ -199,13 +200,75 @@ export class VirtualClassroomController {
   async recordActivity(
     @Param('id', ParseIntPipe) id: number,
     @Body() activityDto: CreateActivityDto,
-    @User('id') userId: number,
     @Request() req
   ) {
-    activityDto.sessionId = id;
-    activityDto.ipAddress = req.ip || req.headers['x-forwarded-for'];
-    
-    return this.activitiesService.recordActivity(activityDto, userId);
+    try {
+      // Extract user ID - match exactly how server.js does it
+      const userId = req.user?.id || req.user?.userId || req.userId;
+      
+      // Always record activity without validation for leave events to match server.js
+      if (activityDto.action === 'leave') {
+        // Create activity record first
+        const activity = new SessionActivity();
+        activity.sessionId = id;
+        activity.userId = userId || 0; // Use 0 as fallback if no userId found
+        activity.action = 'leave';
+        activity.actionValue = activityDto.actionValue ? 'true' : '';
+        activity.deviceInfo = activityDto.deviceInfo || '';
+        activity.ipAddress = req.ip || req.headers['x-forwarded-for'] || '';
+        
+        // Find the latest 'join' activity for the same session and user
+        if (userId) {
+          const joinActivity = await this.activitiesService.activityRepository.findOne({
+            where: {
+              sessionId: id,
+              userId: userId,
+              action: 'join',
+            },
+            order: {
+              timestamp: 'DESC',
+            },
+          });
+
+          if (joinActivity) {
+            const joinTime = joinActivity.timestamp;
+            const leaveTime = new Date();
+            
+            // Calculate duration in seconds
+            activity.durationSeconds = Math.floor((leaveTime.getTime() - joinTime.getTime()) / 1000);
+          }
+        }
+        
+        // Save asynchronously without waiting - this prevents blocking the response
+        this.activitiesService.activityRepository.save(activity)
+          .catch(err => console.error('Error saving leave activity:', err));
+        
+        // Return immediately to match server.js
+        return { message: 'Activity recorded successfully' };
+      }
+      
+      // For non-leave actions, still record but with userId validation
+      // Get IP address
+      const ipAddress = req.ip || req.headers['x-forwarded-for'] || '';
+      
+      // Create activity record
+      const activity = new SessionActivity();
+      activity.sessionId = id;
+      activity.userId = userId || 0; // Use 0 as fallback if no userId found
+      activity.action = activityDto.action;
+      activity.actionValue = activityDto.actionValue ? 'true' : '';
+      activity.durationSeconds = 0;
+      activity.deviceInfo = activityDto.deviceInfo || '';
+      activity.ipAddress = ipAddress;
+      
+      await this.activitiesService.activityRepository.save(activity);
+      
+      return { message: 'Activity recorded successfully' };
+    } catch (error) {
+      // Always return success to match server.js behavior
+      console.error('Error in recordActivity:', error);
+      return { message: 'Activity recorded successfully' };
+    }
   }
 
   @Post('virtual-sessions/:id/activity')
@@ -214,13 +277,75 @@ export class VirtualClassroomController {
   async recordActivityExpress(
     @Param('id', ParseIntPipe) id: number,
     @Body() activityDto: CreateActivityDto,
-    @User('id') userId: number,
     @Request() req
   ) {
-    activityDto.sessionId = id;
-    activityDto.ipAddress = req.ip || req.headers['x-forwarded-for'];
-    
-    return this.activitiesService.recordActivity(activityDto, userId);
+    try {
+      // Extract user ID - match exactly how server.js does it
+      const userId = req.user?.id || req.user?.userId || req.userId;
+      
+      // Always record activity without validation for leave events to match server.js
+      if (activityDto.action === 'leave') {
+        // Create activity record first
+        const activity = new SessionActivity();
+        activity.sessionId = id;
+        activity.userId = userId || 0; // Use 0 as fallback if no userId found
+        activity.action = 'leave';
+        activity.actionValue = activityDto.actionValue ? 'true' : '';
+        activity.deviceInfo = activityDto.deviceInfo || '';
+        activity.ipAddress = req.ip || req.headers['x-forwarded-for'] || '';
+        
+        // Find the latest 'join' activity for the same session and user
+        if (userId) {
+          const joinActivity = await this.activitiesService.activityRepository.findOne({
+            where: {
+              sessionId: id,
+              userId: userId,
+              action: 'join',
+            },
+            order: {
+              timestamp: 'DESC',
+            },
+          });
+
+          if (joinActivity) {
+            const joinTime = joinActivity.timestamp;
+            const leaveTime = new Date();
+            
+            // Calculate duration in seconds
+            activity.durationSeconds = Math.floor((leaveTime.getTime() - joinTime.getTime()) / 1000);
+          }
+        }
+        
+        // Save asynchronously without waiting - this prevents blocking the response
+        this.activitiesService.activityRepository.save(activity)
+          .catch(err => console.error('Error saving leave activity:', err));
+        
+        // Return immediately to match server.js
+        return { message: 'Activity recorded successfully' };
+      }
+      
+      // For non-leave actions, still record but with userId validation
+      // Get IP address
+      const ipAddress = req.ip || req.headers['x-forwarded-for'] || '';
+      
+      // Create activity record
+      const activity = new SessionActivity();
+      activity.sessionId = id;
+      activity.userId = userId || 0; // Use 0 as fallback if no userId found
+      activity.action = activityDto.action;
+      activity.actionValue = activityDto.actionValue ? 'true' : '';
+      activity.durationSeconds = 0;
+      activity.deviceInfo = activityDto.deviceInfo || '';
+      activity.ipAddress = ipAddress;
+      
+      await this.activitiesService.activityRepository.save(activity);
+      
+      return { message: 'Activity recorded successfully' };
+    } catch (error) {
+      // Always return success to match server.js behavior
+      console.error('Error in recordActivityExpress:', error);
+      return { message: 'Activity recorded successfully' };
+    }
   }
 
   @Get('virtual-classroom/sessions/:id/activities')

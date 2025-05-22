@@ -14,7 +14,7 @@ export class SessionActivitiesService {
 
   constructor(
     @InjectRepository(SessionActivity)
-    private readonly activityRepository: Repository<SessionActivity>,
+    public readonly activityRepository: Repository<SessionActivity>,
     @InjectRepository(VirtualSession)
     private readonly sessionRepository: Repository<VirtualSession>,
     @InjectRepository(SessionRegistration)
@@ -51,6 +51,12 @@ export class SessionActivitiesService {
 
     // Create activity record
     const activity = new SessionActivity();
+    
+    // Ensure sessionId is not undefined
+    if (createActivityDto.sessionId === undefined) {
+      throw new Error('Session ID is required for recording activity');
+    }
+    
     activity.sessionId = createActivityDto.sessionId;
     activity.userId = userId;
     activity.action = createActivityDto.action;
