@@ -18,7 +18,7 @@ export class EnrollmentsController {
   async enrollInCourse(
     @Request() req,
     @Body() enrollCourseDto: EnrollCourseDto,
-  ): Promise<EnrollmentResponseDto> {
+  ): Promise<any> {
     return this.enrollmentsService.enrollStudent(req.user.userId, enrollCourseDto);
   }
 
@@ -38,7 +38,7 @@ export class EnrollmentsController {
   @Roles(UserRole.STUDENT)
   async getMyEnrolledCourses(
     @Request() req,
-  ): Promise<EnrollmentResponseDto[]> {
+  ): Promise<any[]> {
     return this.enrollmentsService.findStudentEnrollments(req.user.userId);
   }
 

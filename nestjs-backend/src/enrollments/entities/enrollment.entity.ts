@@ -26,7 +26,8 @@ export class Enrollment {
   @Column({
     type: 'enum',
     enum: CompletionStatus,
-    default: CompletionStatus.NOT_STARTED
+    default: CompletionStatus.NOT_STARTED,
+    name: 'completion_status'
   })
   completionStatus: CompletionStatus;
 

@@ -8,9 +8,12 @@ import * as passport from 'passport';
 import * as express from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
   const configService = app.get(ConfigService);
   
   app.use(passport.initialize());
@@ -78,6 +81,9 @@ async function bootstrap() {
   
   // Setup static file serving for uploads
   app.use('/uploads', express.static(uploadsDir));
+  
+  // Apply global exception filter
+  app.useGlobalFilters(new AllExceptionsFilter());
   
   // Start the server on port 5000
   const port = 5000; // Default port

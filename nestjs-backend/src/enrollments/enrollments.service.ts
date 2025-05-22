@@ -18,44 +18,47 @@ export class EnrollmentsService {
     private coursesService: CoursesService,
   ) {}
 
-  async enrollStudent(studentId: number, dto: EnrollCourseDto): Promise<EnrollmentResponseDto> {
-    // Check if course exists
-    const course = await this.coursesService.findOne(dto.courseId);
-    if (!course) {
-      throw new NotFoundException('Course not found');
+  async enrollStudent(studentId: number, dto: EnrollCourseDto): Promise<any> {
+    try {
+      // Validate courseId
+      if (!dto.courseId) {
+        throw new BadRequestException('Course ID is required');
+      }
+
+      // Check if course exists
+      const course = await this.coursesService.findOne(dto.courseId);
+      if (!course) {
+        throw new NotFoundException('Course not found');
+      }
+
+      // Check if student is already enrolled
+      const existingEnrollment = await this.enrollmentsRepository.findOne({
+        where: {
+          studentId,
+          courseId: dto.courseId,
+        },
+      });
+
+      if (existingEnrollment) {
+        throw new BadRequestException('You are already enrolled in this course');
+      }
+
+      // Check if course requires enrollment key
+      if (course.enrollmentKey && course.enrollmentKey !== dto.enrollmentKey) {
+        throw new ForbiddenException('Invalid enrollment key');
+      }
+
+      // Enroll the student using a direct SQL query that mirrors server.js
+      await this.enrollmentsRepository.query(
+        'INSERT INTO enrollments (student_id, course_id, completion_status) VALUES (?, ?, ?)',
+        [studentId, dto.courseId, 'not_started']
+      );
+      
+      return { message: 'Successfully enrolled in course' };
+    } catch (error) {
+      this.logger.error(`Error enrolling in course: ${error.message}`, error.stack);
+      throw error;
     }
-
-    // Check if course requires enrollment key
-    if (course.enrollmentKey && course.enrollmentKey !== dto.enrollmentKey) {
-      throw new ForbiddenException('Invalid enrollment key');
-    }
-
-    // Check if student is already enrolled
-    const existingEnrollment = await this.enrollmentsRepository.findOne({
-      where: {
-        studentId,
-        courseId: dto.courseId,
-      },
-    });
-
-    if (existingEnrollment) {
-      throw new BadRequestException('You are already enrolled in this course');
-    }
-
-    // Create enrollment
-    const enrollment = this.enrollmentsRepository.create({
-      studentId,
-      courseId: dto.courseId,
-      completionStatus: CompletionStatus.NOT_STARTED,
-    });
-
-    const savedEnrollment = await this.enrollmentsRepository.save(enrollment);
-    
-    // Get course with instructor for response
-    const courseWithInstructor = await this.coursesService.findCourseWithDetailsById(dto.courseId);
-    
-    // Format response
-    return this.formatEnrollmentResponse(savedEnrollment, courseWithInstructor);
   }
 
   async leaveCourse(studentId: number, courseId: number): Promise<void> {
@@ -73,18 +76,40 @@ export class EnrollmentsService {
     await this.enrollmentsRepository.remove(enrollment);
   }
 
-  async findStudentEnrollments(studentId: number): Promise<EnrollmentResponseDto[]> {
-    const enrollments = await this.enrollmentsRepository.find({
-      where: { studentId },
-      relations: ['course', 'course.instructor'],
-    });
-
-    return Promise.all(
-      enrollments.map(async (enrollment) => {
-        const course = await this.coursesService.findOne(enrollment.courseId);
-        return this.formatEnrollmentResponse(enrollment, course);
-      })
-    );
+  async findStudentEnrollments(studentId: number): Promise<any[]> {
+    try {
+      // Use a raw SQL query that matches server.js
+      const enrollments = await this.enrollmentsRepository.query(`
+        SELECT c.*, 
+               u.first_name, u.last_name, 
+               e.enrollment_date, e.completion_status
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        JOIN users u ON c.instructor_id = u.id
+        WHERE e.student_id = ?
+        ORDER BY e.enrollment_date DESC
+      `, [studentId]);
+      
+      // Format the response to match server.js
+      return enrollments.map(course => ({
+        id: course.id,
+        code: course.code,
+        title: course.title,
+        instructor: `${course.first_name} ${course.last_name}`,
+        instructorId: course.instructor_id,
+        department: course.department_id,
+        description: course.description,
+        startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
+        endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
+        status: course.status ? (course.status.charAt(0).toUpperCase() + course.status.slice(1)) : 'Draft',
+        thumbnail: course.thumbnail_url,
+        enrollmentDate: course.enrollment_date,
+        completionStatus: course.completion_status
+      }));
+    } catch (error) {
+      this.logger.error(`Error fetching enrolled courses: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   async findEnrolledStudentsByCourse(courseId: number, instructorId?: number): Promise<any[]> {
