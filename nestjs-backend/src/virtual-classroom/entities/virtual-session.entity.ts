@@ -72,6 +72,10 @@ export class VirtualSession {
   @JoinColumn({ name: 'course_id' })
   course: Course;
 
+  // Virtual properties needed for mapping response correctly
+  courseTitle?: string;
+  instructorName?: string;
+
   @OneToMany(() => SessionRegistration, registration => registration.session)
   registrations: SessionRegistration[];
 
@@ -92,4 +96,4 @@ export class VirtualSession {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}

@@ -103,11 +103,10 @@ export class CourseModulesService {
           throw new ForbiddenException('You can only update modules of your own courses');
         }
       }
-      
-      // Build SQL update query manually
+        // Build SQL update query manually
       let query = 'UPDATE course_modules SET ';
-      const params = [];
-      const setClauses = [];
+      const params: any[] = [];
+      const setClauses: string[] = [];
       
       if (updateCourseModuleDto.title !== undefined) {
         setClauses.push('title = ?');

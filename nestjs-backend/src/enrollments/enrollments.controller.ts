@@ -2,7 +2,7 @@ import { Controller, Post, Delete, Get, Param, Body, UseGuards, Request, ParseIn
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '../users/entities/user.entity';
+import { UserRole } from '../common/enums/user-role.enum';
 import { EnrollmentsService } from './enrollments.service';
 import { EnrollCourseDto } from './dto/enroll-course.dto';
 import { EnrollmentResponseDto } from './dto/enrollment-response.dto';
@@ -32,10 +32,7 @@ export class EnrollmentsController {
     await this.enrollmentsService.leaveCourse(req.user.userId, courseId);
     return { message: 'Successfully left the course' };
   }
-
   @Get('my-courses')
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.STUDENT)
   async getMyEnrolledCourses(
     @Request() req,
   ): Promise<any[]> {

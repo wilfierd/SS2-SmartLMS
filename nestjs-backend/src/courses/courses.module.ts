@@ -12,6 +12,8 @@ import { CoursesController } from './courses.controller';
 import { CourseModulesController } from './course-modules.controller';
 import { LessonsController } from './lessons.controller';
 import { LessonMaterialsController } from './lesson-materials.controller';
+import { StudentManagementController } from './student-management.controller';
+import { CourseStatisticsController } from './statistics.controller';
 import { DepartmentsModule } from '../departments/departments.module';
 import { UsersModule } from '../users/users.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
@@ -27,12 +29,13 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
     CoursesService,
     CourseModulesService,
     LessonsService
-  ],
-  controllers: [
+  ],  controllers: [
     CoursesController,
     CourseModulesController,
     LessonsController,
-    LessonMaterialsController
+    LessonMaterialsController,
+    StudentManagementController,
+    CourseStatisticsController
   ],
   exports: [
     CoursesService,

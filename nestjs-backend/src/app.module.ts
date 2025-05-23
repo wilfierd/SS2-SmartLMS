@@ -8,12 +8,16 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CoursesModule } from './courses/courses.module';
+import { CourseExtensionsModule } from './courses/course-extensions.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { VirtualClassroomModule } from './virtual-classroom/virtual-classroom.module';
 import { MailerModule } from './mailer/mailer.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AssessmentsModule } from './assessments/assessments.module';
+import { ApiExtensionsModule } from './api-extensions.module';
+import { CoursesApiModule } from './courses-api.module';
+import { EnrollmentsApiModule } from './enrollments-api.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -44,12 +48,16 @@ import configuration from './config/configuration';
     UsersModule,
     AuthModule,
     CoursesModule,
+    CourseExtensionsModule,
     DepartmentsModule,
     EnrollmentsModule,
     VirtualClassroomModule,
     MailerModule,
     UploadsModule,
     AssessmentsModule,
+    ApiExtensionsModule,
+    CoursesApiModule,
+    EnrollmentsApiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
