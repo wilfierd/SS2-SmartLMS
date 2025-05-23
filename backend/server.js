@@ -1370,12 +1370,9 @@ app.delete('/api/enrollments/leave/:courseId', authenticateToken, authorize(['st
   }
 });
 
-// VIRTUAL SESSIONS ROUTES
+// <============== VIRTUAL SESSIONS ROUTES ================>>
 
-// Add these routes to your server.js file, using the same pattern as your other API endpoints
-// Replace the router.get('/virtual-sessions'...) routes with these app.get versions
-
-/**
+/*
  * @route GET /api/virtual-sessions
  * @desc Get virtual sessions with filtering
  * @access Private
@@ -2550,2285 +2547,1496 @@ app.get('/api/virtual-sessions', authenticateToken, async (req, res) => {
     }
   });
 
-  // Add these routes to the server.js file
-
 // =============== COURSE DETAILS ENDPOINTS ================= //
 
-// Get course details including modules and lessons
+// Get course details with basic information
 app.get('/api/courses/:id/detail', authenticateToken, async (req, res) => {
-    try {
-      const courseId = req.params.id;
-      
-      // Get course info
-      const [courses] = await pool.query(`
-        SELECT c.*, 
-               u.first_name, u.last_name, 
-               d.name as department_name
-        FROM courses c
-        LEFT JOIN users u ON c.instructor_id = u.id
-        LEFT JOIN departments d ON c.department_id = d.id
-        WHERE c.id = ?
-      `, [courseId]);
-      
-      if (courses.length === 0) {
-        return res.status(404).json({ message: 'Course not found' });
-      }
-      
-      const course = courses[0];
-      
-      // Format the course data
-      const formattedCourse = {
-        id: course.id,
-        code: course.code,
-        title: course.title,
-        instructor: `${course.first_name} ${course.last_name}`,
-        instructorId: course.instructor_id,
-        department: course.department_name,
-        departmentId: course.department_id,
-        description: course.description,
-        startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
-        endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
-        status: course.status.charAt(0).toUpperCase() + course.status.slice(1),
-        thumbnail: course.thumbnail_url,
-        isFeatured: course.is_featured === 1
-      };
-      
-      res.json(formattedCourse);
-    } catch (error) {
-      console.error('Error fetching course details:', error);
-      res.status(500).json({ message: 'Server error' });
+  try {
+    const courseId = req.params.id;
+    
+    // Get course info with instructor and department
+    const [courses] = await pool.query(`
+      SELECT c.*, 
+             u.first_name, u.last_name, 
+             d.name as department_name
+      FROM courses c
+      LEFT JOIN users u ON c.instructor_id = u.id
+      LEFT JOIN departments d ON c.department_id = d.id
+      WHERE c.id = ?
+    `, [courseId]);
+    
+    if (courses.length === 0) {
+      return res.status(404).json({ message: 'Course not found' });
     }
-  });
-  
-  // Get modules for a course
-  app.get('/api/courses/:id/modules', authenticateToken, async (req, res) => {
-    try {
-      const courseId = req.params.id;
+    
+    const course = courses[0];
+    
+    // Format response
+    const formattedCourse = {
+      id: course.id,
+      code: course.code,
+      title: course.title,
+      instructor: `${course.first_name} ${course.last_name}`,
+      instructorId: course.instructor_id,
+      department: course.department_name,
+      departmentId: course.department_id,
+      description: course.description,
+      startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
+      endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
+      status: course.status.charAt(0).toUpperCase() + course.status.slice(1),
+      thumbnail: course.thumbnail_url,
+      isFeatured: course.is_featured === 1
+    };
+    
+    res.json(formattedCourse);
+  } catch (error) {
+    console.error('Error fetching course details:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all modules and lessons for a course
+app.get('/api/courses/:id/modules', authenticateToken, async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    
+    // Get modules
+    const [modules] = await pool.query(`
+      SELECT * FROM course_modules
+      WHERE course_id = ?
+      ORDER BY order_index ASC
+    `, [courseId]);
+    
+    // Get lessons for each module
+    const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+      const [lessons] = await pool.query(`
+        SELECT l.*, GROUP_CONCAT(lm.id) as material_ids, GROUP_CONCAT(lm.title) as material_titles, 
+        GROUP_CONCAT(lm.file_path) as material_paths, GROUP_CONCAT(lm.external_url) as material_urls,
+        GROUP_CONCAT(lm.material_type) as material_types
+        FROM lessons l
+        LEFT JOIN lesson_materials lm ON l.id = lm.lesson_id
+        WHERE l.module_id = ?
+        GROUP BY l.id
+        ORDER BY l.order_index ASC
+      `, [module.id]);
       
-      // Get modules
-      const [modules] = await pool.query(`
-        SELECT * FROM course_modules
-        WHERE course_id = ?
-        ORDER BY order_index ASC
-      `, [courseId]);
-      
-      // Get lessons for each module
-      const modulesWithLessons = await Promise.all(modules.map(async (module) => {
-        const [lessons] = await pool.query(`
-          SELECT l.*, GROUP_CONCAT(lm.id) as material_ids, GROUP_CONCAT(lm.title) as material_titles, 
-          GROUP_CONCAT(lm.file_path) as material_paths, GROUP_CONCAT(lm.external_url) as material_urls,
-          GROUP_CONCAT(lm.material_type) as material_types
-          FROM lessons l
-          LEFT JOIN lesson_materials lm ON l.id = lm.lesson_id
-          WHERE l.module_id = ?
-          GROUP BY l.id
-          ORDER BY l.order_index ASC
-        `, [module.id]);
+      // Format lesson materials
+      const formattedLessons = lessons.map(lesson => {
+        let materials = [];
         
-        // Format lesson materials
-        const formattedLessons = lessons.map(lesson => {
-          let materials = [];
+        if (lesson.material_ids) {
+          const ids = lesson.material_ids.split(',');
+          const titles = lesson.material_titles.split(',');
+          const paths = lesson.material_paths.split(',');
+          const urls = lesson.material_urls.split(',');
+          const types = lesson.material_types.split(',');
           
-          if (lesson.material_ids) {
-            const ids = lesson.material_ids.split(',');
-            const titles = lesson.material_titles.split(',');
-            const paths = lesson.material_paths.split(',');
-            const urls = lesson.material_urls.split(',');
-            const types = lesson.material_types.split(',');
-            
-            materials = ids.map((id, index) => ({
-              id,
-              title: titles[index],
-              filePath: paths[index],
-              externalUrl: urls[index],
-              materialType: types[index]
-            }));
-          }
-          
-          return {
-            id: lesson.id,
-            title: lesson.title,
-            description: lesson.description,
-            contentType: lesson.content_type,
-            content: lesson.content,
-            durationMinutes: lesson.duration_minutes,
-            orderIndex: lesson.order_index,
-            isPublished: lesson.is_published === 1,
-            materials
-          };
-        });
+          materials = ids.map((id, index) => ({
+            id,
+            title: titles[index],
+            filePath: paths[index],
+            externalUrl: urls[index],
+            materialType: types[index]
+          }));
+        }
         
         return {
-          ...module,
-          lessons: formattedLessons
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.description,
+          contentType: lesson.content_type,
+          content: lesson.content,
+          durationMinutes: lesson.duration_minutes,
+          orderIndex: lesson.order_index,
+          isPublished: lesson.is_published === 1,
+          materials
         };
-      }));
-      
-      res.json(modulesWithLessons);
-    } catch (error) {
-      console.error('Error fetching course modules:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Get enrolled students for a course (instructor or admin only)
-  app.get('/api/courses/:id/students', authenticateToken, async (req, res) => {
-    try {
-      const courseId = req.params.id;
-      const userId = req.user.id;
-      
-      // Check if user is an admin or the instructor of the course
-      if (req.user.role !== 'admin') {
-        const [courseCheck] = await pool.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, userId]
-        );
-        
-        if (courseCheck.length === 0) {
-          return res.status(403).json({ message: 'You are not authorized to view this information' });
-        }
-      }
-      
-      // Get enrolled students
-      const [students] = await pool.query(`
-        SELECT u.id, u.email, u.first_name, u.last_name, e.enrollment_date, e.completion_status
-        FROM enrollments e
-        JOIN users u ON e.student_id = u.id
-        WHERE e.course_id = ?
-        ORDER BY e.enrollment_date DESC
-      `, [courseId]);
-      
-      res.json(students);
-    } catch (error) {
-      console.error('Error fetching enrolled students:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Create a new module
-  app.post('/api/courses/:id/modules', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    try {
-      const courseId = req.params.id;
-      const { title, description } = req.body;
-      const userId = req.user.id;
-      
-      // Validate input
-      if (!title) {
-        return res.status(400).json({ message: 'Module title is required' });
-      }
-      
-      // Check if user is an admin or the instructor of the course
-      if (req.user.role !== 'admin') {
-        const [courseCheck] = await pool.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, userId]
-        );
-        
-        if (courseCheck.length === 0) {
-          return res.status(403).json({ message: 'You can only add modules to your own courses' });
-        }
-      }
-      
-      // Get the next order index
-      const [orderResult] = await pool.query(
-        'SELECT MAX(order_index) as max_order FROM course_modules WHERE course_id = ?',
-        [courseId]
-      );
-      
-      const nextOrder = (orderResult[0].max_order || 0) + 1;
-      
-      // Insert the new module
-      const [result] = await pool.query(
-        'INSERT INTO course_modules (course_id, title, description, order_index, is_published) VALUES (?, ?, ?, ?, ?)',
-        [courseId, title, description || null, nextOrder, true]
-      );
-      
-      res.status(201).json({
-        message: 'Module created successfully',
-        moduleId: result.insertId
       });
-    } catch (error) {
-      console.error('Error creating module:', error);
-      res.status(500).json({ message: 'Server error' });
+      
+      return {
+        ...module,
+        lessons: formattedLessons
+      };
+    }));
+    
+    res.json(modulesWithLessons);
+  } catch (error) {
+    console.error('Error fetching course modules:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+  
+// Create a new module in a course
+app.post('/api/courses/:id/modules', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const { title, description } = req.body;
+    const userId = req.user.id;
+    
+    // Validate input
+    if (!title) {
+      return res.status(400).json({ message: 'Module title is required' });
     }
-  });
-  
-  // Configure storage for lesson materials
-  const lessonStorage = multer.diskStorage({
-    destination: function(req, file, cb) {
-      const courseId = req.params.id;
-      const dir = path.join(__dirname, 'uploads', 'lessons', courseId);
+    
+    // Check if user is instructor of this course or admin
+    if (req.user.role !== 'admin') {
+      const [courseCheck] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, userId]
+      );
       
-      // Create directory if it doesn't exist
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      if (courseCheck.length === 0) {
+        return res.status(403).json({ message: 'You can only add modules to your own courses' });
       }
-      
-      cb(null, dir);
-    },
-    filename: function(req, file, cb) {
-      // Create unique filename
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const ext = path.extname(file.originalname);
-      cb(null, 'lesson-' + uniqueSuffix + ext);
     }
-  });
-  
-  const lessonUpload = multer({ 
-    storage: lessonStorage,
-    limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for lesson materials
-  });
-  
-  // Create a new lesson with materials
-  app.post('/api/courses/:id/lessons', authenticateToken, authorize(['instructor', 'admin']), lessonUpload.array('materials', 10), async (req, res) => {
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
+    
+    // Get the next order index
+    const [orderResult] = await pool.query(
+      'SELECT MAX(order_index) as max_order FROM course_modules WHERE course_id = ?',
+      [courseId]
+    );
+    
+    const nextOrder = (orderResult[0].max_order || 0) + 1;
+    
+    // Insert the new module
+    const [result] = await pool.query(
+      'INSERT INTO course_modules (course_id, title, description, order_index, is_published) VALUES (?, ?, ?, ?, ?)',
+      [courseId, title, description || null, nextOrder, true]
+    );
+    
+    res.status(201).json({
+      message: 'Module created successfully',
+      moduleId: result.insertId
+    });
+  } catch (error) {
+    console.error('Error creating module:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create a new lesson with materials in a module
+app.post('/api/courses/:id/lessons', authenticateToken, authorize(['instructor', 'admin']), upload.array('materials', 10), async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    
+    const courseId = req.params.id;
+    const { title, description, content, contentType, moduleId, videoUrl } = req.body;
+    const userId = req.user.id;
+    
+    // Validate input
+    if (!title || !moduleId) {
+      return res.status(400).json({ message: 'Lesson title and module ID are required' });
+    }
+    
+    // Check if user is instructor of this course or admin
+    if (req.user.role !== 'admin') {
+      const [courseCheck] = await connection.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, userId]
+      );
       
-      const courseId = req.params.id;
-      const { title, description, content, contentType, moduleId, videoUrl } = req.body;
-      const userId = req.user.id;
-      
-      // Validate input
-      if (!title || !moduleId) {
-        return res.status(400).json({ message: 'Lesson title and module ID are required' });
+      if (courseCheck.length === 0) {
+        return res.status(403).json({ message: 'You can only add lessons to your own courses' });
       }
-      
-      // Check if user is an admin or the instructor of the course
-      if (req.user.role !== 'admin') {
-        const [courseCheck] = await connection.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, userId]
-        );
+    }
+    
+    // Verify the module belongs to the course
+    const [moduleCheck] = await connection.query(
+      'SELECT * FROM course_modules WHERE id = ? AND course_id = ?',
+      [moduleId, courseId]
+    );
+    
+    if (moduleCheck.length === 0) {
+      return res.status(404).json({ message: 'Module not found or does not belong to this course' });
+    }
+    
+    // Get the next order index
+    const [orderResult] = await connection.query(
+      'SELECT MAX(order_index) as max_order FROM lessons WHERE module_id = ?',
+      [moduleId]
+    );
+    
+    const nextOrder = (orderResult[0].max_order || 0) + 1;
+    
+    // Process video URL for video content type
+    let finalContent = content;
+    if (contentType === 'video' && videoUrl) {
+      finalContent = videoUrl;
+    }
+    
+    // Insert the lesson
+    const [lessonResult] = await connection.query(
+      `INSERT INTO lessons 
+       (module_id, title, description, content_type, content, order_index, is_published) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [moduleId, title, description || null, contentType, finalContent || null, nextOrder, true]
+    );
+    
+    const lessonId = lessonResult.insertId;
+    
+    // Process uploaded files as materials if any
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const filePath = `/uploads/lessons/${courseId}/${file.filename}`;
+        const fileExt = path.extname(file.originalname).toLowerCase();
         
-        if (courseCheck.length === 0) {
-          return res.status(403).json({ message: 'You can only add lessons to your own courses' });
+        // Determine material type based on file extension
+        let materialType = 'document'; // Default
+        if (['.jpg', '.jpeg', '.png', '.gif', '.svg'].includes(fileExt)) {
+          materialType = 'image';
+        } else if (['.mp4', '.avi', '.mov', '.wmv', '.flv'].includes(fileExt)) {
+          materialType = 'video';
+        } else if (['.mp3', '.wav', '.ogg'].includes(fileExt)) {
+          materialType = 'audio';
+        } else if (['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt'].includes(fileExt)) {
+          materialType = 'document';
         }
-      }
-      
-      // Verify the module belongs to the course
-      const [moduleCheck] = await connection.query(
-        'SELECT * FROM course_modules WHERE id = ? AND course_id = ?',
-        [moduleId, courseId]
-      );
-      
-      if (moduleCheck.length === 0) {
-        return res.status(404).json({ message: 'Module not found or does not belong to this course' });
-      }
-      
-      // Get the next order index
-      const [orderResult] = await connection.query(
-        'SELECT MAX(order_index) as max_order FROM lessons WHERE module_id = ?',
-        [moduleId]
-      );
-      
-      const nextOrder = (orderResult[0].max_order || 0) + 1;
-      
-      // Process video URL for video content type
-      let finalContent = content;
-      if (contentType === 'video' && videoUrl) {
-        finalContent = videoUrl;
-      }
-      
-      // Insert the lesson
-      const [lessonResult] = await connection.query(
-        `INSERT INTO lessons 
-         (module_id, title, description, content_type, content, order_index, is_published) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [moduleId, title, description || null, contentType, finalContent || null, nextOrder, true]
-      );
-      
-      const lessonId = lessonResult.insertId;
-      
-      // Process uploaded files as materials if any
-      if (req.files && req.files.length > 0) {
-        for (const file of req.files) {
-          const filePath = `/uploads/lessons/${courseId}/${file.filename}`;
-          const fileExt = path.extname(file.originalname).toLowerCase();
-          
-          // Determine material type based on file extension
-          let materialType = 'document'; // Default
-          if (['.jpg', '.jpeg', '.png', '.gif', '.svg'].includes(fileExt)) {
-            materialType = 'image';
-          } else if (['.mp4', '.avi', '.mov', '.wmv', '.flv'].includes(fileExt)) {
-            materialType = 'video';
-          } else if (['.mp3', '.wav', '.ogg'].includes(fileExt)) {
-            materialType = 'audio';
-          } else if (['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt'].includes(fileExt)) {
-            materialType = 'document';
-          }
-          
-          // Insert the material
-          await connection.query(
-            `INSERT INTO lesson_materials 
-             (lesson_id, title, file_path, material_type) 
-             VALUES (?, ?, ?, ?)`,
-            [lessonId, file.originalname, filePath, materialType]
-          );
-        }
-      }
-      
-      // If video URL is provided for non-video content type, add it as a material
-      if (videoUrl && contentType !== 'video') {
+        
+        // Insert the material
         await connection.query(
           `INSERT INTO lesson_materials 
-           (lesson_id, title, external_url, material_type) 
+           (lesson_id, title, file_path, material_type) 
            VALUES (?, ?, ?, ?)`,
-          [lessonId, 'Video Reference', videoUrl, 'video']
+          [lessonId, file.originalname, filePath, materialType]
         );
       }
-      
-      await connection.commit();
-      
-      res.status(201).json({
-        message: 'Lesson created successfully',
-        lessonId: lessonId
-      });
-    } catch (error) {
-      await connection.rollback();
-      console.error('Error creating lesson:', error);
-      res.status(500).json({ message: 'Server error' });
-    } finally {
-      connection.release();
     }
-  });
-  
-  // Update a module
-  app.put('/api/courses/:courseId/modules/:moduleId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    try {
-      const { courseId, moduleId } = req.params;
-      const { title, description, isPublished, orderIndex } = req.body;
-      const userId = req.user.id;
-      
-      // Check if user is an admin or the instructor of the course
-      if (req.user.role !== 'admin') {
-        const [courseCheck] = await pool.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, userId]
-        );
-        
-        if (courseCheck.length === 0) {
-          return res.status(403).json({ message: 'You can only modify your own courses' });
-        }
-      }
-      
-      // Update the module
-      const updateFields = [];
-      const values = [];
-      
-      if (title !== undefined) {
-        updateFields.push('title = ?');
-        values.push(title);
-      }
-      
-      if (description !== undefined) {
-        updateFields.push('description = ?');
-        values.push(description);
-      }
-      
-      if (isPublished !== undefined) {
-        updateFields.push('is_published = ?');
-        values.push(isPublished ? 1 : 0);
-      }
-      
-      if (orderIndex !== undefined) {
-        updateFields.push('order_index = ?');
-        values.push(orderIndex);
-      }
-      
-      if (updateFields.length === 0) {
-        return res.status(400).json({ message: 'No fields to update' });
-      }
-      
-      // Add moduleId and courseId to values
-      values.push(moduleId);
-      values.push(courseId);
-      
-      await pool.query(
-        `UPDATE course_modules SET ${updateFields.join(', ')}, updated_at = NOW() 
-         WHERE id = ? AND course_id = ?`,
-        values
-      );
-      
-      res.json({ message: 'Module updated successfully' });
-    } catch (error) {
-      console.error('Error updating module:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Update a lesson
-  app.put('/api/courses/:courseId/lessons/:lessonId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    try {
-      const { courseId, lessonId } = req.params;
-      const { title, description, content, contentType, isPublished, orderIndex } = req.body;
-      const userId = req.user.id;
-      
-      // Check if user is an admin or the instructor of the course
-      if (req.user.role !== 'admin') {
-        const [courseCheck] = await pool.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, userId]
-        );
-        
-        if (courseCheck.length === 0) {
-          return res.status(403).json({ message: 'You can only modify your own courses' });
-        }
-      }
-      
-      // Verify the lesson belongs to a module in this course
-      const [lessonCheck] = await pool.query(`
-        SELECT l.* 
-        FROM lessons l
-        JOIN course_modules cm ON l.module_id = cm.id
-        WHERE l.id = ? AND cm.course_id = ?
-      `, [lessonId, courseId]);
-      
-      if (lessonCheck.length === 0) {
-        return res.status(404).json({ message: 'Lesson not found or does not belong to this course' });
-      }
-      
-      // Update the lesson
-      const updateFields = [];
-      const values = [];
-      
-      if (title !== undefined) {
-        updateFields.push('title = ?');
-        values.push(title);
-      }
-      
-      if (description !== undefined) {
-        updateFields.push('description = ?');
-        values.push(description);
-      }
-      
-      if (content !== undefined) {
-        updateFields.push('content = ?');
-        values.push(content);
-      }
-      
-      if (contentType !== undefined) {
-        updateFields.push('content_type = ?');
-        values.push(contentType);
-      }
-      
-      if (isPublished !== undefined) {
-        updateFields.push('is_published = ?');
-        values.push(isPublished ? 1 : 0);
-      }
-      
-      if (orderIndex !== undefined) {
-        updateFields.push('order_index = ?');
-        values.push(orderIndex);
-      }
-      
-      if (updateFields.length === 0) {
-        return res.status(400).json({ message: 'No fields to update' });
-      }
-      
-      // Add lessonId to values
-      values.push(lessonId);
-      
-      await pool.query(
-        `UPDATE lessons SET ${updateFields.join(', ')}, updated_at = NOW() 
-         WHERE id = ?`,
-        values
-      );
-      
-      res.json({ message: 'Lesson updated successfully' });
-    } catch (error) {
-      console.error('Error updating lesson:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  // Delete a module
-  app.delete('/api/courses/:courseId/modules/:moduleId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
-      
-      const { courseId, moduleId } = req.params;
-      const userId = req.user.id;
-      
-      // Check if user is an admin or the instructor of the course
-      if (req.user.role !== 'admin') {
-        const [courseCheck] = await connection.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, userId]
-        );
-        
-        if (courseCheck.length === 0) {
-          return res.status(403).json({ message: 'You can only modify your own courses' });
-        }
-      }
-      
-      // Get all lessons in this module to delete their materials
-      const [lessons] = await connection.query(
-        'SELECT id FROM lessons WHERE module_id = ?',
-        [moduleId]
-      );
-      
-      // Delete lesson materials for each lesson
-      for (const lesson of lessons) {
-        await connection.query(
-          'DELETE FROM lesson_materials WHERE lesson_id = ?',
-          [lesson.id]
-        );
-      }
-      
-      // Delete lessons
+    
+    // If video URL is provided for non-video content type, add it as a material
+    if (videoUrl && contentType !== 'video') {
       await connection.query(
-        'DELETE FROM lessons WHERE module_id = ?',
-        [moduleId]
+        `INSERT INTO lesson_materials 
+         (lesson_id, title, external_url, material_type) 
+         VALUES (?, ?, ?, ?)`,
+        [lessonId, 'Video Reference', videoUrl, 'video']
       );
-      
-      // Delete the module
-      await connection.query(
-        'DELETE FROM course_modules WHERE id = ? AND course_id = ?',
-        [moduleId, courseId]
-      );
-      
-      await connection.commit();
-      
-      res.json({ message: 'Module deleted successfully' });
-    } catch (error) {
-      await connection.rollback();
-      console.error('Error deleting module:', error);
-      res.status(500).json({ message: 'Server error' });
-    } finally {
-      connection.release();
     }
-  });
-  
-  // Delete a lesson
-  app.delete('/api/courses/:courseId/lessons/:lessonId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
+    
+    await connection.commit();
+    
+    res.status(201).json({
+      message: 'Lesson created successfully',
+      lessonId: lessonId
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error creating lesson:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    connection.release();
+  }
+});
+
+app.put('/api/courses/:courseId/modules/:moduleId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  try {
+    const { courseId, moduleId } = req.params;
+    const { title, description, isPublished, orderIndex } = req.body;
+    const userId = req.user.id;
+    
+    // Check permissions
+    if (req.user.role !== 'admin') {
+      const [courseCheck] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, userId]
+      );
       
-      const { courseId, lessonId } = req.params;
-      const userId = req.user.id;
-      
-      // Check if user is an admin or the instructor of the course
-      if (req.user.role !== 'admin') {
-        const [courseCheck] = await connection.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, userId]
-        );
-        
-        if (courseCheck.length === 0) {
-          return res.status(403).json({ message: 'You can only modify your own courses' });
-        }
+      if (courseCheck.length === 0) {
+        return res.status(403).json({ message: 'You can only modify your own courses' });
       }
+    }
+    
+    // Update the module
+    const updateFields = [];
+    const values = [];
+    
+    if (title !== undefined) {
+      updateFields.push('title = ?');
+      values.push(title);
+    }
+    
+    if (description !== undefined) {
+      updateFields.push('description = ?');
+      values.push(description);
+    }
+    
+    if (isPublished !== undefined) {
+      updateFields.push('is_published = ?');
+      values.push(isPublished ? 1 : 0);
+    }
+    
+    if (orderIndex !== undefined) {
+      updateFields.push('order_index = ?');
+      values.push(orderIndex);
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({ message: 'No fields to update' });
+    }
+    
+    // Add moduleId and courseId to values
+    values.push(moduleId);
+    values.push(courseId);
+    
+    await pool.query(
+      `UPDATE course_modules SET ${updateFields.join(', ')}, updated_at = NOW() 
+       WHERE id = ? AND course_id = ?`,
+      values
+    );
+    
+    res.json({ message: 'Module updated successfully' });
+  } catch (error) {
+    console.error('Error updating module:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update Lesson
+app.put('/api/courses/:courseId/lessons/:lessonId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.params;
+    const { title, description, content, contentType, isPublished, orderIndex } = req.body;
+    const userId = req.user.id;
+    
+    // Check permissions
+    if (req.user.role !== 'admin') {
+      const [courseCheck] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, userId]
+      );
       
-      // Verify the lesson belongs to a module in this course
-      const [lessonCheck] = await connection.query(`
-        SELECT l.* 
-        FROM lessons l
-        JOIN course_modules cm ON l.module_id = cm.id
-        WHERE l.id = ? AND cm.course_id = ?
-      `, [lessonId, courseId]);
-      
-      if (lessonCheck.length === 0) {
-        return res.status(404).json({ message: 'Lesson not found or does not belong to this course' });
+      if (courseCheck.length === 0) {
+        return res.status(403).json({ message: 'You can only modify your own courses' });
       }
+    }
+    
+    // Verify the lesson belongs to a module in this course
+    const [lessonCheck] = await pool.query(`
+      SELECT l.* 
+      FROM lessons l
+      JOIN course_modules cm ON l.module_id = cm.id
+      WHERE l.id = ? AND cm.course_id = ?
+    `, [lessonId, courseId]);
+    
+    if (lessonCheck.length === 0) {
+      return res.status(404).json({ message: 'Lesson not found or does not belong to this course' });
+    }
+    
+    // Update the lesson
+    const updateFields = [];
+    const values = [];
+    
+    if (title !== undefined) {
+      updateFields.push('title = ?');
+      values.push(title);
+    }
+    
+    if (description !== undefined) {
+      updateFields.push('description = ?');
+      values.push(description);
+    }
+    
+    if (content !== undefined) {
+      updateFields.push('content = ?');
+      values.push(content);
+    }
+    
+    if (contentType !== undefined) {
+      updateFields.push('content_type = ?');
+      values.push(contentType);
+    }
+    
+    if (isPublished !== undefined) {
+      updateFields.push('is_published = ?');
+      values.push(isPublished ? 1 : 0);
+    }
+    
+    if (orderIndex !== undefined) {
+      updateFields.push('order_index = ?');
+      values.push(orderIndex);
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({ message: 'No fields to update' });
+    }
+    
+    // Add lessonId to values
+    values.push(lessonId);
+    
+    await pool.query(
+      `UPDATE lessons SET ${updateFields.join(', ')}, updated_at = NOW() 
+       WHERE id = ?`,
+      values
+    );
+    
+    res.json({ message: 'Lesson updated successfully' });
+  } catch (error) {
+    console.error('Error updating lesson:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete Module and Lessons
+app.delete('/api/courses/:courseId/modules/:moduleId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    
+    const { courseId, moduleId } = req.params;
+    const userId = req.user.id;
+    
+    // Check permissions
+    if (req.user.role !== 'admin') {
+      const [courseCheck] = await connection.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, userId]
+      );
       
-      // Delete lesson materials
+      if (courseCheck.length === 0) {
+        return res.status(403).json({ message: 'You can only modify your own courses' });
+      }
+    }
+    
+    // Get all lessons in this module to delete their materials
+    const [lessons] = await connection.query(
+      'SELECT id FROM lessons WHERE module_id = ?',
+      [moduleId]
+    );
+    
+    // Delete lesson materials for each lesson
+    for (const lesson of lessons) {
       await connection.query(
         'DELETE FROM lesson_materials WHERE lesson_id = ?',
-        [lessonId]
+        [lesson.id]
       );
-      
-      // Delete the lesson
-      await connection.query(
-        'DELETE FROM lessons WHERE id = ?',
-        [lessonId]
-      );
-      
-      await connection.commit();
-      
-      res.json({ message: 'Lesson deleted successfully' });
-    } catch (error) {
-      await connection.rollback();
-      console.error('Error deleting lesson:', error);
-      res.status(500).json({ message: 'Server error' });
-    } finally {
-      connection.release();
     }
-  });
-  
-  // Serve lesson materials
-  app.use('/uploads/lessons', express.static(path.join(__dirname, 'uploads', 'lessons')));
+    
+    // Delete lessons
+    await connection.query(
+      'DELETE FROM lessons WHERE module_id = ?',
+      [moduleId]
+    );
+    
+    // Delete the module
+    await connection.query(
+      'DELETE FROM course_modules WHERE id = ? AND course_id = ?',
+      [moduleId, courseId]
+    );
+    
+    await connection.commit();
+    
+    res.json({ message: 'Module deleted successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error deleting module:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    connection.release();
+  }
+});
 
-  // =============== ASSESSMENT ROUTES ===============
+// Delete Lesson
+app.delete('/api/courses/:courseId/lessons/:lessonId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    
+    const { courseId, lessonId } = req.params;
+    const userId = req.user.id;
+    
+    // Check permissions
+    if (req.user.role !== 'admin') {
+      const [courseCheck] = await connection.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, userId]
+      );
+      
+      if (courseCheck.length === 0) {
+        return res.status(403).json({ message: 'You can only modify your own courses' });
+      }
+    }
+    
+    // Verify the lesson belongs to a module in this course
+    const [lessonCheck] = await connection.query(`
+      SELECT l.* 
+      FROM lessons l
+      JOIN course_modules cm ON l.module_id = cm.id
+      WHERE l.id = ? AND cm.course_id = ?
+    `, [lessonId, courseId]);
+    
+    if (lessonCheck.length === 0) {
+      return res.status(404).json({ message: 'Lesson not found or does not belong to this course' });
+    }
+    
+    // Delete lesson materials
+    await connection.query(
+      'DELETE FROM lesson_materials WHERE lesson_id = ?',
+      [lessonId]
+    );
+    
+    // Delete the lesson
+    await connection.query(
+      'DELETE FROM lessons WHERE id = ?',
+      [lessonId]
+    );
+    
+    await connection.commit();
+    
+    res.json({ message: 'Lesson deleted successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error deleting lesson:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    connection.release();
+  }
+});
 
-// ============ ASSIGNMENT ROUTES ============
-
-/**
- * @route POST /api/courses/:courseId/assignments
- * @desc Create a new assignment
- * @access Private (instructors and admins only)
- */
+// <<================== Assignment Management =================>> 
 app.post('/api/courses/:courseId/assignments', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    try {
-      const courseId = req.params.courseId;
-      const { 
-        lesson_id, 
-        title, 
-        description, 
-        max_points, 
+  try {
+    const courseId = req.params.courseId;
+    const { 
+      lesson_id, 
+      title, 
+      description, 
+      instructions,
+      max_points, 
+      due_date,
+      allow_late_submissions
+    } = req.body;
+    
+    // Validation
+    if (!title || !due_date) {
+      return res.status(400).json({ message: 'Title and due date are required' });
+    }
+    
+    // For instructors, verify they teach this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, req.user.id]
+      );
+      
+      if (courses.length === 0) {
+        return res.status(403).json({ message: 'You can only create assignments for your own courses' });
+      }
+    }
+    
+    // Create assignment
+    const [result] = await pool.query(
+      `INSERT INTO assignments 
+       (course_id, lesson_id, title, description, instructions, max_points, due_date, allow_late_submissions)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        courseId,
+        lesson_id || null,
+        title,
+        description || null,
+        instructions || null,
+        max_points || 100,
         due_date,
-        allowed_file_types,
-        max_file_size,
-        allow_late_submissions
-      } = req.body;
+        allow_late_submissions || false
+      ]
+    );
+    
+    res.status(201).json({
+      message: 'Assignment created successfully',
+      assignmentId: result.insertId
+    });
+  } catch (error) {
+    console.error('Error creating assignment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get Course Assignments
+app.get('/api/courses/:courseId/assignments', authenticateToken, async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    
+    const [assignments] = await pool.query(
+      `SELECT a.*, l.title as lesson_title
+       FROM assignments a
+       LEFT JOIN lessons l ON a.lesson_id = l.id
+       WHERE a.course_id = ?
+       ORDER BY a.due_date ASC`,
+      [courseId]
+    );
+    
+    // For students, include submission status
+    if (req.user.role === 'student') {
+      const studentId = req.user.id;
       
-      // Validation
-      if (!title || !lesson_id || !due_date) {
-        return res.status(400).json({ message: 'Title, lesson, and due date are required' });
-      }
-      
-      // For instructors, verify they teach this course
-      if (req.user.role === 'instructor') {
-        const [courses] = await pool.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, req.user.id]
-        );
-        
-        if (courses.length === 0) {
-          return res.status(403).json({ message: 'You can only create assignments for your own courses' });
-        }
-      }
-      
-      // Create assignment
-      const [result] = await pool.query(
-        `INSERT INTO assignments 
-         (course_id, lesson_id, title, description, max_points, due_date, allowed_file_types, max_file_size, allow_late_submissions)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          courseId,
-          lesson_id,
-          title,
-          description || null,
-          max_points || 100,
-          due_date,
-          allowed_file_types || 'pdf,docx',
-          max_file_size || 5,
-          allow_late_submissions || false
-        ]
-      );
-      
-      res.status(201).json({
-        message: 'Assignment created successfully',
-        assignmentId: result.insertId
-      });
-    } catch (error) {
-      console.error('Error creating assignment:', error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    }
-  });
-  
-  /**
-   * @route GET /api/courses/:courseId/assignments
-   * @desc Get all assignments for a course
-   * @access Private
-   */
-  app.get('/api/courses/:courseId/assignments', authenticateToken, async (req, res) => {
-    try {
-      const courseId = req.params.courseId;
-      
-      const [assignments] = await pool.query(
-        `SELECT a.*, cm.title as lesson_title
-         FROM assignments a
-         JOIN course_modules cm ON a.lesson_id = cm.id
-         WHERE a.course_id = ?
-         ORDER BY a.due_date ASC`,
-        [courseId]
-      );
-      
-      // For students, include submission status
-      if (req.user.role === 'student') {
-        const studentId = req.user.id;
-        
-        // Get submission status for each assignment
-        for (let assignment of assignments) {
-          const [submissions] = await pool.query(
-            `SELECT * FROM assignment_submissions 
-             WHERE assignment_id = ? AND student_id = ?
-             ORDER BY submission_date DESC LIMIT 1`,
-            [assignment.id, studentId]
-          );
-          
-          if (submissions.length > 0) {
-            assignment.submission = {
-              id: submissions[0].id,
-              date: submissions[0].submission_date,
-              isLate: submissions[0].is_late,
-              grade: submissions[0].grade,
-              status: submissions[0].grade ? 'graded' : 'submitted'
-            };
-          } else {
-            assignment.submission = null;
-          }
-        }
-      }
-      
-      res.json(assignments);
-    } catch (error) {
-      console.error('Error fetching assignments:', error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    }
-  });
-  
-  /**
-   * @route GET /api/assignments/:id
-   * @desc Get a single assignment with details
-   * @access Private
-   */
-  app.get('/api/assignments/:id', authenticateToken, async (req, res) => {
-    try {
-      const assignmentId = req.params.id;
-      
-      const [assignments] = await pool.query(
-        `SELECT a.*, c.title as course_title, cm.title as lesson_title
-         FROM assignments a
-         JOIN courses c ON a.course_id = c.id
-         JOIN course_modules cm ON a.lesson_id = cm.id
-         WHERE a.id = ?`,
-        [assignmentId]
-      );
-      
-      if (assignments.length === 0) {
-        return res.status(404).json({ message: 'Assignment not found' });
-      }
-      
-      const assignment = assignments[0];
-      
-      // For students, include their submission if exists
-      if (req.user.role === 'student') {
-        const studentId = req.user.id;
-        
+      // Get submission status for each assignment
+      for (let assignment of assignments) {
         const [submissions] = await pool.query(
-          `SELECT * FROM assignment_submissions 
+          `SELECT * FROM submissions 
            WHERE assignment_id = ? AND student_id = ?
            ORDER BY submission_date DESC LIMIT 1`,
-          [assignmentId, studentId]
+          [assignment.id, studentId]
         );
         
         if (submissions.length > 0) {
-          assignment.submission = submissions[0];
+          assignment.submission = {
+            id: submissions[0].id,
+            date: submissions[0].submission_date,
+            grade: submissions[0].grade,
+            isGraded: submissions[0].is_graded === 1
+          };
         } else {
           assignment.submission = null;
         }
       }
-      
-      // For instructors, include all submissions
-      if (req.user.role === 'instructor' || req.user.role === 'admin') {
-        const [submissions] = await pool.query(
-          `SELECT s.*, CONCAT(u.first_name, ' ', u.last_name) as student_name
-           FROM assignment_submissions s
-           JOIN users u ON s.student_id = u.id
-           WHERE s.assignment_id = ?
-           ORDER BY s.submission_date DESC`,
-          [assignmentId]
-        );
-        
-        assignment.submissions = submissions;
-      }
-      
-      res.json(assignment);
-    } catch (error) {
-      console.error('Error fetching assignment:', error);
-      res.status(500).json({ message: 'Server error', details: error.message });
     }
-  });
-  
-  /**
-   * @route POST /api/assignments/:id/submit
-   * @desc Submit an assignment (for students)
-   * @access Private (students only)
-   */
-  app.post('/api/assignments/:id/submit', authenticateToken, authorize(['student']), upload.single('file'), async (req, res) => {
-    try {
-      const assignmentId = req.params.id;
+    
+    res.json(assignments);
+  } catch (error) {
+    console.error('Error fetching assignments:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get Assignment Details
+app.get('/api/assignments/:id', authenticateToken, async (req, res) => {
+  try {
+    const assignmentId = req.params.id;
+    
+    const [assignments] = await pool.query(
+      `SELECT a.*, c.title as course_title, l.title as lesson_title
+       FROM assignments a
+       JOIN courses c ON a.course_id = c.id
+       LEFT JOIN lessons l ON a.lesson_id = l.id
+       WHERE a.id = ?`,
+      [assignmentId]
+    );
+    
+    if (assignments.length === 0) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+    
+    const assignment = assignments[0];
+    
+    // For students, include their submission if exists
+    if (req.user.role === 'student') {
       const studentId = req.user.id;
-      const { comments } = req.body;
       
-      // Check if the file was uploaded
-      if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
+      const [submissions] = await pool.query(
+        `SELECT * FROM submissions 
+         WHERE assignment_id = ? AND student_id = ?
+         ORDER BY submission_date DESC LIMIT 1`,
+        [assignmentId, studentId]
+      );
+      
+      if (submissions.length > 0) {
+        assignment.submission = submissions[0];
+      } else {
+        assignment.submission = null;
       }
-      
-      // Get the assignment
-      const [assignments] = await pool.query(
-        'SELECT * FROM assignments WHERE id = ?',
+    }
+    
+    // For instructors, include all submissions
+    if (req.user.role === 'instructor' || req.user.role === 'admin') {
+      const [submissions] = await pool.query(
+        `SELECT s.*, CONCAT(u.first_name, ' ', u.last_name) as student_name
+         FROM submissions s
+         JOIN users u ON s.student_id = u.id
+         WHERE s.assignment_id = ?
+         ORDER BY s.submission_date DESC`,
         [assignmentId]
       );
       
-      if (assignments.length === 0) {
-        return res.status(404).json({ message: 'Assignment not found' });
-      }
-      
-      const assignment = assignments[0];
-      
-      // Check allowed file types
-      const allowedTypes = assignment.allowed_file_types.split(',');
-      const fileExt = req.file.originalname.split('.').pop().toLowerCase();
-      
-      if (!allowedTypes.includes(fileExt)) {
-        // Remove the uploaded file
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ 
-          message: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}` 
-        });
-      }
-      
-      // Check file size
-      const fileSizeInMB = req.file.size / (1024 * 1024);
-      if (fileSizeInMB > assignment.max_file_size) {
-        // Remove the uploaded file
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ 
-          message: `File too large. Maximum size: ${assignment.max_file_size} MB` 
-        });
-      }
-      
-      // Check if past due date
-      const now = new Date();
-      const dueDate = new Date(assignment.due_date);
-      const isLate = now > dueDate;
-      
-      // If late and late submissions not allowed
-      if (isLate && !assignment.allow_late_submissions) {
-        // Remove the uploaded file
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ message: 'Submission deadline has passed' });
-      }
-      
+      assignment.submissions = submissions;
+    }
+    
+    res.json(assignment);
+  } catch (error) {
+    console.error('Error fetching assignment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Submit Assignment (For Students)
+app.post('/api/assignments/:id/submit', authenticateToken, authorize(['student']), upload.single('file'), async (req, res) => {
+  try {
+    const assignmentId = req.params.id;
+    const studentId = req.user.id;
+    const { submission_text } = req.body;
+    
+    // Validate that either file or text is provided
+    if (!req.file && !submission_text) {
+      return res.status(400).json({ message: 'Either file or submission text is required' });
+    }
+    
+    // Get the assignment
+    const [assignments] = await pool.query(
+      'SELECT * FROM assignments WHERE id = ?',
+      [assignmentId]
+    );
+    
+    if (assignments.length === 0) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+    
+    const assignment = assignments[0];
+    
+    // Check if past due date
+    const now = new Date();
+    const dueDate = new Date(assignment.due_date);
+    const isLate = now > dueDate;
+    
+    // If late and late submissions not allowed
+    if (isLate && !assignment.allow_late_submissions) {
+      return res.status(400).json({ message: 'Submission deadline has passed' });
+    }
+    
+    // Setup file path if file was uploaded
+    let filePath = null;
+    if (req.file) {
       // Create submission directory if it doesn't exist
-      const submissionDir = path.join(__dirname, 'uploads', 'submissions', assignmentId);
+      const submissionDir = path.join(__dirname, 'uploads', 'submissions');
       if (!fs.existsSync(submissionDir)) {
         fs.mkdirSync(submissionDir, { recursive: true });
       }
       
-      // Generate unique filename with original extension
-      const uniqueFilename = `${studentId}_${Date.now()}.${fileExt}`;
-      const filePath = path.join(submissionDir, uniqueFilename);
+      // Generate unique filename
+      const uniqueFilename = `${studentId}_${Date.now()}_${req.file.originalname}`;
+      filePath = path.join(submissionDir, uniqueFilename);
       
       // Move file to proper location
       fs.renameSync(req.file.path, filePath);
       
       // DB path for storage
-      const dbFilePath = `/uploads/submissions/${assignmentId}/${uniqueFilename}`;
-      
-      // Save submission to database
-      const [result] = await pool.query(
-        `INSERT INTO assignment_submissions 
-         (assignment_id, student_id, file_path, file_type, file_size, comments, is_late)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          assignmentId,
-          studentId,
-          dbFilePath,
-          fileExt,
-          Math.round(req.file.size / 1024), // Size in KB
-          comments || null,
-          isLate
-        ]
-      );
-      
-      res.status(201).json({
-        message: 'Assignment submitted successfully',
-        submissionId: result.insertId,
-        isLate
-      });
-    } catch (error) {
-      console.error('Error submitting assignment:', error);
-      // Clean up file if it was uploaded
-      if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      res.status(500).json({ message: 'Server error', details: error.message });
-    }
-  });
-  
-  /**
-   * @route POST /api/submissions/:id/grade
-   * @desc Grade an assignment submission
-   * @access Private (instructors and admins only)
-   */
-  app.post('/api/submissions/:id/grade', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    try {
-      const submissionId = req.params.id;
-      const { grade, feedback } = req.body;
-      
-      if (grade === undefined || grade === null) {
-        return res.status(400).json({ message: 'Grade is required' });
-      }
-      
-      // Verify the submission exists
-      const [submissions] = await pool.query(
-        `SELECT s.*, a.course_id
-         FROM assignment_submissions s
-         JOIN assignments a ON s.assignment_id = a.id
-         WHERE s.id = ?`,
-        [submissionId]
-      );
-      
-      if (submissions.length === 0) {
-        return res.status(404).json({ message: 'Submission not found' });
-      }
-      
-      const submission = submissions[0];
-      
-      // For instructors, verify they teach this course
-      if (req.user.role === 'instructor') {
-        const [courses] = await pool.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [submission.course_id, req.user.id]
-        );
-        
-        if (courses.length === 0) {
-          return res.status(403).json({ message: 'You can only grade submissions for your own courses' });
-        }
-      }
-      
-      // Update the submission with grade
-      await pool.query(
-        `UPDATE assignment_submissions
-         SET grade = ?, feedback = ?, graded_by = ?, graded_at = NOW()
-         WHERE id = ?`,
-        [grade, feedback || null, req.user.id, submissionId]
-      );
-      
-      res.json({ message: 'Submission graded successfully' });
-    } catch (error) {
-      console.error('Error grading submission:', error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    }
-  });
-
-
-// discussion-routes.js
-// This file contains all routes for discussion forum functionality
-// Import required modules if using as a separate file:
-// const express = require('express');
-// const router = express.Router();
-// const pool = require('../path-to-your-db-connection');
-// const { authenticateToken, authorize } = require('../path-to-your-middleware');
-
-/**
- * ==============================================
- * DISCUSSION ROUTES
- * ==============================================
- */
-
-/**
- * @route GET /api/courses/:courseId/discussions
- * @desc Get all discussions for a course
- * @access Private (requires authentication)
- */
-app.get('/api/courses/:courseId/discussions', authenticateToken, async (req, res) => {
-  try {
-    const { courseId } = req.params;
-
-    // Add extensive logging
-    console.log('=============================================');
-    console.log('Discussion request received');
-    console.log('courseId:', courseId);
-    console.log('courseId type:', typeof courseId);
-    console.log('Parsed courseId:', parseInt(courseId));
-    console.log('isNaN check:', isNaN(parseInt(courseId)));
-    console.log('User:', req.user ? req.user.id : 'No user');
-    console.log('=============================================');
-    
-    // Ensure courseId is a valid number
-    const courseIdInt = parseInt(courseId);
-    if (isNaN(courseIdInt)) {
-      console.error(`Invalid courseId format: "${courseId}"`);
-      return res.status(400).json({ message: `Invalid course ID format: ${courseId}` });
+      filePath = `/uploads/submissions/${uniqueFilename}`;
     }
     
-    // Verify the course exists
-    const [courseRows] = await pool.query(
-      'SELECT id FROM courses WHERE id = ?',
-      [courseIdInt]
-    );
-    
-    if (courseRows.length === 0) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-    
-    // Get discussions with related data
-    const [discussions] = await pool.query(`
-      SELECT d.*, 
-             u.first_name, u.last_name, 
-             CONCAT(u.first_name, ' ', u.last_name) as createdBy,
-             (SELECT COUNT(*) FROM discussion_posts WHERE discussion_id = d.id) as post_count,
-             (SELECT MAX(created_at) FROM discussion_posts WHERE discussion_id = d.id) as last_activity
-      FROM discussions d
-      LEFT JOIN users u ON d.created_by = u.id
-      WHERE d.course_id = ?
-      ORDER BY d.is_locked ASC, IFNULL(last_activity, d.created_at) DESC
-    `, [courseIdInt]);
-    
-    return res.json(discussions);
-  } catch (error) {
-    console.error('Error fetching discussions:', error);
-    return res.status(500).json({ message: 'Error fetching discussions' });
-  }
-});
-
-/**
- * @route GET /api/courses/:courseId/discussions/:discussionId
- * @desc Get a single discussion with its posts
- * @access Private (requires authentication)
- */
-app.get('/api/courses/:courseId/discussions/:discussionId', authenticateToken, async (req, res) => {
-  try {
-    const { courseId, discussionId } = req.params;
-    
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt)) {
-      return res.status(400).json({ message: 'Invalid course or discussion ID' });
-    }
-    
-    // Get discussion details
-    const [discussions] = await pool.query(`
-      SELECT d.*, 
-             CONCAT(u.first_name, ' ', u.last_name) as createdBy,
-             u.first_name, u.last_name, u.email,
-             (SELECT COUNT(*) FROM discussion_posts WHERE discussion_id = d.id) as post_count
-      FROM discussions d
-      LEFT JOIN users u ON d.created_by = u.id
-      WHERE d.id = ? AND d.course_id = ?
-    `, [discussionIdInt, courseIdInt]);
-    
-    if (discussions.length === 0) {
-      return res.status(404).json({ message: 'Discussion not found' });
-    }
-    
-    // Get posts for the discussion
-    const [posts] = await pool.query(`
-      SELECT dp.*, 
-             CONCAT(u.first_name, ' ', u.last_name) as authorName,
-             u.first_name, u.last_name, u.email,
-             u.id as user_id,
-             (SELECT COUNT(*) 
-              FROM discussion_posts 
-              WHERE parent_post_id = dp.id) as reply_count
-      FROM discussion_posts dp
-      JOIN users u ON dp.user_id = u.id
-      WHERE dp.discussion_id = ?
-      ORDER BY 
-        CASE WHEN dp.parent_post_id IS NULL THEN dp.created_at ELSE 
-          (SELECT created_at FROM discussion_posts WHERE id = dp.parent_post_id) 
-        END ASC,
-        dp.parent_post_id ASC,
-        dp.created_at ASC
-    `, [discussionIdInt]);
-    
-    // Organize posts into threads
-    const discussion = discussions[0];
-    const formattedPosts = [];
-    const postMap = new Map();
-    
-    // First pass: collect all top-level posts and build a map
-    posts.forEach(post => {
-      post.replies = [];
-      postMap.set(post.id, post);
-      
-      if (post.parent_post_id === null) {
-        formattedPosts.push(post);
-      }
-    });
-    
-    // Second pass: organize replies
-    posts.forEach(post => {
-      if (post.parent_post_id !== null) {
-        const parentPost = postMap.get(post.parent_post_id);
-        if (parentPost) {
-          parentPost.replies.push(post);
-        } else {
-          // If parent doesn't exist, treat as top-level
-          formattedPosts.push(post);
-        }
-      }
-    });
-    
-    discussion.posts = formattedPosts;
-    
-    return res.json(discussion);
-  } catch (error) {
-    console.error('Error fetching discussion details:', error);
-    return res.status(500).json({ message: 'Error fetching discussion details' });
-  }
-});
-
-/**
- * @route POST /api/courses/:courseId/discussions
- * @desc Create a new discussion
- * @access Private (requires authentication)
- */
-app.post('/api/courses/:courseId/discussions', authenticateToken, async (req, res) => {
-  try {
-    const { courseId } = req.params;
-    const { title, description } = req.body;
-    const userId = req.user.id;
-    
-    // Validate input
-    if (!title || !title.trim()) {
-      return res.status(400).json({ message: 'Discussion title is required' });
-    }
-    
-    // Ensure courseId is a valid number
-    const courseIdInt = parseInt(courseId);
-    if (isNaN(courseIdInt)) {
-      return res.status(400).json({ message: 'Invalid course ID' });
-    }
-    
-    // Verify the course exists
-    const [courseRows] = await pool.query(
-      'SELECT id FROM courses WHERE id = ?',
-      [courseIdInt]
-    );
-    
-    if (courseRows.length === 0) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-    
-    // Create the discussion
+    // Save submission to database
     const [result] = await pool.query(
-      'INSERT INTO discussions (course_id, title, description, created_by) VALUES (?, ?, ?, ?)',
-      [courseIdInt, title.trim(), description ? description.trim() : null, userId]
-    );
-    
-    return res.status(201).json({
-      message: 'Discussion created successfully',
-      discussionId: result.insertId
-    });
-  } catch (error) {
-    console.error('Error creating discussion:', error);
-    return res.status(500).json({ message: 'Error creating discussion' });
-  }
-});
-
-/**
- * @route PUT /api/courses/:courseId/discussions/:discussionId
- * @desc Update a discussion
- * @access Private (instructors, admins, or the creator only)
- */
-app.put('/api/courses/:courseId/discussions/:discussionId', authenticateToken, async (req, res) => {
-  try {
-    const { courseId, discussionId } = req.params;
-    const { title, description, is_locked } = req.body;
-    const userId = req.user.id;
-    
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt)) {
-      return res.status(400).json({ message: 'Invalid course or discussion ID' });
-    }
-    
-    // Validate input
-    if (title !== undefined && !title.trim()) {
-      return res.status(400).json({ message: 'Discussion title cannot be empty' });
-    }
-    
-    // Get the discussion to check ownership
-    const [discussions] = await pool.query(
-      'SELECT * FROM discussions WHERE id = ? AND course_id = ?',
-      [discussionIdInt, courseIdInt]
-    );
-    
-    if (discussions.length === 0) {
-      return res.status(404).json({ message: 'Discussion not found' });
-    }
-    
-    const discussion = discussions[0];
-    
-    // Check permission - must be admin, instructor or the creator
-    const isInstructor = req.user.role === 'instructor';
-    const isAdmin = req.user.role === 'admin';
-    const isCreator = discussion.created_by === userId;
-    
-    if (!isAdmin && !isInstructor && !isCreator) {
-      return res.status(403).json({ message: 'You do not have permission to update this discussion' });
-    }
-    
-    // Build update query
-    const updates = {};
-    if (title !== undefined) updates.title = title.trim();
-    if (description !== undefined) updates.description = description ? description.trim() : null;
-    
-    // Only instructors and admins can lock/unlock discussions
-    if (is_locked !== undefined && (isInstructor || isAdmin)) {
-      updates.is_locked = is_locked ? 1 : 0;
-    }
-    
-    // If no updates, return early
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: 'No valid updates provided' });
-    }
-    
-    // Add updated_at timestamp
-    updates.updated_at = new Date();
-    
-    // Generate SQL query and params
-    const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-    const values = Object.values(updates);
-    
-    // Execute update
-    await pool.query(
-      `UPDATE discussions SET ${fields} WHERE id = ? AND course_id = ?`,
-      [...values, discussionIdInt, courseIdInt]
-    );
-    
-    return res.json({ 
-      message: 'Discussion updated successfully' 
-    });
-  } catch (error) {
-    console.error('Error updating discussion:', error);
-    return res.status(500).json({ message: 'Error updating discussion' });
-  }
-});
-
-/**
- * @route DELETE /api/courses/:courseId/discussions/:discussionId
- * @desc Delete a discussion
- * @access Private (instructors, admins, or the creator only)
- */
-app.delete('/api/courses/:courseId/discussions/:discussionId', authenticateToken, async (req, res) => {
-  try {
-    const { courseId, discussionId } = req.params;
-    const userId = req.user.id;
-    
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt)) {
-      return res.status(400).json({ message: 'Invalid course or discussion ID' });
-    }
-    
-    // Get the discussion to check ownership
-    const [discussions] = await pool.query(
-      'SELECT * FROM discussions WHERE id = ? AND course_id = ?',
-      [discussionIdInt, courseIdInt]
-    );
-    
-    if (discussions.length === 0) {
-      return res.status(404).json({ message: 'Discussion not found' });
-    }
-    
-    const discussion = discussions[0];
-    
-    // Check permission - must be admin, instructor or the creator
-    const isInstructor = req.user.role === 'instructor';
-    const isAdmin = req.user.role === 'admin';
-    const isCreator = discussion.created_by === userId;
-    
-    if (!isAdmin && !isInstructor && !isCreator) {
-      return res.status(403).json({ message: 'You do not have permission to delete this discussion' });
-    }
-    
-    // Start a transaction to delete discussion and all related posts
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
-      
-      // Delete all posts in the discussion first
-      await connection.query(
-        'DELETE FROM discussion_posts WHERE discussion_id = ?',
-        [discussionIdInt]
-      );
-      
-      // Delete the discussion
-      await connection.query(
-        'DELETE FROM discussions WHERE id = ? AND course_id = ?',
-        [discussionIdInt, courseIdInt]
-      );
-      
-      await connection.commit();
-      
-      return res.json({ message: 'Discussion deleted successfully' });
-    } catch (err) {
-      await connection.rollback();
-      throw err;
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error('Error deleting discussion:', error);
-    return res.status(500).json({ message: 'Error deleting discussion' });
-  }
-});
-
-/**
- * @route POST /api/courses/:courseId/discussions/:discussionId/lock
- * @desc Lock or unlock a discussion
- * @access Private (instructors and admins only)
- */
-app.post('/api/courses/:courseId/discussions/:discussionId/lock', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-  try {
-    const { courseId, discussionId } = req.params;
-    const { locked } = req.body;
-    
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt)) {
-      return res.status(400).json({ message: 'Invalid course or discussion ID' });
-    }
-    
-    // Validate input
-    if (locked === undefined) {
-      return res.status(400).json({ message: 'Locked status is required' });
-    }
-    
-    // Update the discussion
-    await pool.query(
-      'UPDATE discussions SET is_locked = ?, updated_at = NOW() WHERE id = ? AND course_id = ?',
-      [locked ? 1 : 0, discussionIdInt, courseIdInt]
-    );
-    
-    return res.json({ 
-      message: locked ? 'Discussion locked successfully' : 'Discussion unlocked successfully' 
-    });
-  } catch (error) {
-    console.error('Error updating discussion lock status:', error);
-    return res.status(500).json({ message: 'Error updating discussion lock status' });
-  }
-});
-
-/**
- * ==============================================
- * DISCUSSION POSTS ROUTES
- * ==============================================
- */
-
-/**
- * @route GET /api/courses/:courseId/discussions/:discussionId/posts
- * @desc Get all posts for a discussion
- * @access Private (requires authentication)
- */
-app.get('/api/courses/:courseId/discussions/:discussionId/posts', authenticateToken, async (req, res) => {
-  try {
-    const { courseId, discussionId } = req.params;
-    
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt)) {
-      return res.status(400).json({ message: 'Invalid course or discussion ID' });
-    }
-    
-    // Verify discussion exists and belongs to the course
-    const [discussions] = await pool.query(
-      'SELECT * FROM discussions WHERE id = ? AND course_id = ?',
-      [discussionIdInt, courseIdInt]
-    );
-    
-    if (discussions.length === 0) {
-      return res.status(404).json({ message: 'Discussion not found' });
-    }
-    
-    // Get all posts with author information
-    const [posts] = await pool.query(`
-      SELECT dp.*, 
-             CONCAT(u.first_name, ' ', u.last_name) as authorName,
-             u.first_name, u.last_name, u.email,
-             u.id as user_id
-      FROM discussion_posts dp
-      JOIN users u ON dp.user_id = u.id
-      WHERE dp.discussion_id = ?
-      ORDER BY 
-        CASE WHEN dp.parent_post_id IS NULL THEN dp.created_at ELSE 
-          (SELECT created_at FROM discussion_posts WHERE id = dp.parent_post_id) 
-        END ASC,
-        dp.parent_post_id ASC,
-        dp.created_at ASC
-    `, [discussionIdInt]);
-    
-    // Organize posts into threads
-    const formattedPosts = [];
-    const postMap = new Map();
-    
-    // First pass: collect all top-level posts and build a map
-    posts.forEach(post => {
-      post.replies = [];
-      postMap.set(post.id, post);
-      
-      if (post.parent_post_id === null) {
-        formattedPosts.push(post);
-      }
-    });
-    
-    // Second pass: organize replies
-    posts.forEach(post => {
-      if (post.parent_post_id !== null) {
-        const parentPost = postMap.get(post.parent_post_id);
-        if (parentPost) {
-          parentPost.replies.push(post);
-        } else {
-          // If parent doesn't exist, treat as top-level
-          formattedPosts.push(post);
-        }
-      }
-    });
-    
-    return res.json(formattedPosts);
-  } catch (error) {
-    console.error('Error fetching discussion posts:', error);
-    return res.status(500).json({ message: 'Error fetching discussion posts' });
-  }
-});
-
-/**
- * @route POST /api/courses/:courseId/discussions/:discussionId/posts
- * @desc Create a new post in a discussion
- * @access Private (requires authentication)
- */
-app.post('/api/courses/:courseId/discussions/:discussionId/posts', authenticateToken, async (req, res) => {
-  try {
-    const { courseId, discussionId } = req.params;
-    const { content, parentPostId } = req.body;
-    const userId = req.user.id;
-    
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt)) {
-      return res.status(400).json({ message: 'Invalid course or discussion ID' });
-    }
-    
-    // Validate input
-    if (!content || !content.trim()) {
-      return res.status(400).json({ message: 'Post content is required' });
-    }
-    
-    // Verify discussion exists, belongs to the course, and is not locked
-    const [discussions] = await pool.query(
-      'SELECT * FROM discussions WHERE id = ? AND course_id = ?',
-      [discussionIdInt, courseIdInt]
-    );
-    
-    if (discussions.length === 0) {
-      return res.status(404).json({ message: 'Discussion not found' });
-    }
-    
-    const discussion = discussions[0];
-    
-    // Check if discussion is locked
-    if (discussion.is_locked) {
-      return res.status(403).json({ message: 'This discussion is locked and cannot be replied to' });
-    }
-    
-    // If parentPostId is provided, verify it exists and belongs to the discussion
-    if (parentPostId) {
-      const parentPostIdInt = parseInt(parentPostId);
-      
-      if (isNaN(parentPostIdInt)) {
-        return res.status(400).json({ message: 'Invalid parent post ID' });
-      }
-      
-      const [parentPosts] = await pool.query(
-        'SELECT * FROM discussion_posts WHERE id = ? AND discussion_id = ?',
-        [parentPostIdInt, discussionIdInt]
-      );
-      
-      if (parentPosts.length === 0) {
-        return res.status(404).json({ message: 'Parent post not found' });
-      }
-    }
-    
-    // Create the post
-    const [result] = await pool.query(
-      `INSERT INTO discussion_posts 
-       (discussion_id, user_id, parent_post_id, content) 
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO submissions 
+       (assignment_id, student_id, submission_text, file_path, submission_date)
+       VALUES (?, ?, ?, ?, NOW())`,
       [
-        discussionIdInt, 
-        userId, 
-        parentPostId ? parseInt(parentPostId) : null, 
-        content.trim()
+        assignmentId,
+        studentId,
+        submission_text || null,
+        filePath
       ]
     );
     
-    // Get the created post with author information
-    const [posts] = await pool.query(`
-      SELECT dp.*, 
-             CONCAT(u.first_name, ' ', u.last_name) as authorName,
-             u.first_name, u.last_name, u.email,
-             u.id as user_id
-      FROM discussion_posts dp
-      JOIN users u ON dp.user_id = u.id
-      WHERE dp.id = ?
-    `, [result.insertId]);
-    
-    return res.status(201).json({ 
-      message: 'Post created successfully',
-      post: posts[0]
+    res.status(201).json({
+      message: 'Assignment submitted successfully',
+      submissionId: result.insertId,
+      isLate
     });
   } catch (error) {
-    console.error('Error creating discussion post:', error);
-    return res.status(500).json({ message: 'Error creating discussion post' });
+    console.error('Error submitting assignment:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-/**
- * @route PUT /api/courses/:courseId/discussions/:discussionId/posts/:postId
- * @desc Update a post in a discussion
- * @access Private (post author only)
- */
-app.put('/api/courses/:courseId/discussions/:discussionId/posts/:postId', authenticateToken, async (req, res) => {
+// Grade Submission (For Instructors)
+app.post('/api/submissions/:id/grade', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
   try {
-    const { courseId, discussionId, postId } = req.params;
-    const { content } = req.body;
-    const userId = req.user.id;
+    const submissionId = req.params.id;
+    const { grade, feedback } = req.body;
     
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    const postIdInt = parseInt(postId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt) || isNaN(postIdInt)) {
-      return res.status(400).json({ message: 'Invalid ID parameter' });
+    if (grade === undefined || grade === null) {
+      return res.status(400).json({ message: 'Grade is required' });
     }
     
-    // Validate input
-    if (!content || !content.trim()) {
-      return res.status(400).json({ message: 'Post content is required' });
-    }
-    
-    // Get post to check ownership
-    const [posts] = await pool.query(`
-      SELECT p.*, d.is_locked
-      FROM discussion_posts p
-      JOIN discussions d ON p.discussion_id = d.id
-      WHERE p.id = ? AND p.discussion_id = ? AND d.course_id = ?
-    `, [postIdInt, discussionIdInt, courseIdInt]);
-    
-    if (posts.length === 0) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-    
-    const post = posts[0];
-    
-    // Check if discussion is locked
-    if (post.is_locked) {
-      return res.status(403).json({ message: 'This discussion is locked and posts cannot be edited' });
-    }
-    
-    // Check if user is the post author
-    if (post.user_id !== userId) {
-      // Admin and instructors can also edit posts
-      const isInstructor = req.user.role === 'instructor';
-      const isAdmin = req.user.role === 'admin';
-      
-      if (!isAdmin && !isInstructor) {
-        return res.status(403).json({ message: 'You can only edit your own posts' });
-      }
-    }
-    
-    // Update the post
-    await pool.query(
-      'UPDATE discussion_posts SET content = ?, updated_at = NOW() WHERE id = ?',
-      [content.trim(), postIdInt]
+    // Verify the submission exists
+    const [submissions] = await pool.query(
+      `SELECT s.*, a.course_id
+       FROM submissions s
+       JOIN assignments a ON s.assignment_id = a.id
+       WHERE s.id = ?`,
+      [submissionId]
     );
     
-    return res.json({ message: 'Post updated successfully' });
-  } catch (error) {
-    console.error('Error updating discussion post:', error);
-    return res.status(500).json({ message: 'Error updating discussion post' });
-  }
-});
-
-/**
- * @route DELETE /api/courses/:courseId/discussions/:discussionId/posts/:postId
- * @desc Delete a post in a discussion
- * @access Private (post author, instructors, admins)
- */
-app.delete('/api/courses/:courseId/discussions/:discussionId/posts/:postId', authenticateToken, async (req, res) => {
-  try {
-    const { courseId, discussionId, postId } = req.params;
-    const userId = req.user.id;
-    
-    // Validate parameters
-    const courseIdInt = parseInt(courseId);
-    const discussionIdInt = parseInt(discussionId);
-    const postIdInt = parseInt(postId);
-    
-    if (isNaN(courseIdInt) || isNaN(discussionIdInt) || isNaN(postIdInt)) {
-      return res.status(400).json({ message: 'Invalid ID parameter' });
+    if (submissions.length === 0) {
+      return res.status(404).json({ message: 'Submission not found' });
     }
     
-    // Get post to check ownership
-    const [posts] = await pool.query(`
-      SELECT p.*, d.is_locked
-      FROM discussion_posts p
-      JOIN discussions d ON p.discussion_id = d.id
-      WHERE p.id = ? AND p.discussion_id = ? AND d.course_id = ?
-    `, [postIdInt, discussionIdInt, courseIdInt]);
+    const submission = submissions[0];
     
-    if (posts.length === 0) {
-      return res.status(404).json({ message: 'Post not found' });
-    }
-    
-    const post = posts[0];
-    
-    // Check if discussion is locked
-    if (post.is_locked) {
-      return res.status(403).json({ message: 'This discussion is locked and posts cannot be deleted' });
-    }
-    
-    // Check permissions
-    const isPostAuthor = post.user_id === userId;
-    const isInstructor = req.user.role === 'instructor';
-    const isAdmin = req.user.role === 'admin';
-    
-    if (!isPostAuthor && !isInstructor && !isAdmin) {
-      return res.status(403).json({ message: 'You do not have permission to delete this post' });
-    }
-    
-    // Start a transaction to handle deleting post and replies
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
-      
-      // Check if post has replies
-      const [replies] = await connection.query(
-        'SELECT id FROM discussion_posts WHERE parent_post_id = ?',
-        [postIdInt]
+    // For instructors, verify they teach this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [submission.course_id, req.user.id]
       );
       
-      if (replies.length > 0) {
-        // If post has replies, just update the content to indicate deletion
-        await connection.query(
-          "UPDATE discussion_posts SET content = '[This post has been deleted]', updated_at = NOW() WHERE id = ?",
-          [postIdInt]
-        );
-      } else {
-        // If no replies, delete the post
-        await connection.query(
-          'DELETE FROM discussion_posts WHERE id = ?',
-          [postIdInt]
-        );
+      if (courses.length === 0) {
+        return res.status(403).json({ message: 'You can only grade submissions for your own courses' });
       }
-      
-      await connection.commit();
-      
-      return res.json({ 
-        message: 'Post deleted successfully',
-        wasDeleted: replies.length === 0
-      });
-    } catch (err) {
-      await connection.rollback();
-      throw err;
-    } finally {
-      connection.release();
     }
+    
+    // Update the submission with grade
+    await pool.query(
+      `UPDATE submissions
+       SET grade = ?, feedback = ?, is_graded = TRUE, graded_by = ?, graded_at = NOW()
+       WHERE id = ?`,
+      [grade, feedback || null, req.user.id, submissionId]
+    );
+    
+    res.json({ message: 'Submission graded successfully' });
   } catch (error) {
-    console.error('Error deleting discussion post:', error);
-    return res.status(500).json({ message: 'Error deleting discussion post' });
+    console.error('Error grading submission:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.get('/api/courses/:courseId/discussions-test', authenticateToken, (req, res) => {
-  const { courseId } = req.params;
-  console.log('Test endpoint hit with courseId:', courseId);
-  
-  // No validation or database queries, just return success
-  return res.json({ 
-    success: true, 
-    message: 'Test endpoint works', 
-    courseId,
-    user: req.user ? { id: req.user.id, role: req.user.role } : 'Not authenticated'
-  });
-});
-  
-  // ============ QUIZ ROUTES ============
-  
-  /**
-   * @route POST /api/courses/:courseId/quizzes
-   * @desc Create a new quiz or test
-   * @access Private (instructors and admins only)
-   */
-  app.post('/api/courses/:courseId/:quizType', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
+// <<================= Quiz & Test Management ==================>>
+// Create Quiz/Test
+app.post('/api/courses/:courseId/quizzes', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    
+    const courseId = req.params.courseId;
+    const { 
+      title, 
+      description, 
+      lesson_id,
+      time_limit_minutes, 
+      passing_score,
+      max_attempts,
+      is_randomized,
+      start_date,
+      end_date,
+      questions
+    } = req.body;
+    
+    // Validation
+    if (!title || !questions || !Array.isArray(questions)) {
+      return res.status(400).json({ message: 'Title and questions array are required' });
+    }
+    
+    // For instructors, verify they teach this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await connection.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, req.user.id]
+      );
       
-      const courseId = req.params.courseId;
-      const quizType = req.params.quizType;
+      if (courses.length === 0) {
+        await connection.rollback();
+        return res.status(403).json({ message: 'You can only create quizzes for your own courses' });
+      }
+    }
+    
+    // Create the quiz
+    const [quizResult] = await connection.query(
+      `INSERT INTO quizzes 
+       (course_id, lesson_id, title, description, time_limit_minutes, passing_score, max_attempts, is_randomized, start_date, end_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        courseId,
+        lesson_id || null,
+        title,
+        description || null,
+        time_limit_minutes || 30,
+        passing_score || 70,
+        max_attempts || 1,
+        is_randomized ? 1 : 0,
+        start_date || null,
+        end_date || null
+      ]
+    );
+    
+    const quizId = quizResult.insertId;
+    
+    // Add questions
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
       
-      // Validate quiz type
-      if (quizType !== 'quizzes' && quizType !== 'tests') {
-        return res.status(400).json({ message: 'Invalid quiz type. Must be "quizzes" or "tests"' });
+      if (!question.question_text || !question.question_type) {
+        await connection.rollback();
+        return res.status(400).json({ message: `Question ${i+1} is missing text or type` });
       }
       
-      const isTest = quizType === 'tests';
-      
-      const { 
-        lesson_id, 
-        title, 
-        description, 
-        time_limit_minutes, 
-        passing_score,
-        questions 
-      } = req.body;
-      
-      // Validation
-      if (!title || !lesson_id || !questions || !Array.isArray(questions) || questions.length === 0) {
-        return res.status(400).json({ 
-          message: 'Title, lesson, and at least one question are required' 
-        });
-      }
-      
-      // For instructors, verify they teach this course
-      if (req.user.role === 'instructor') {
-        const [courses] = await connection.query(
-          'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
-          [courseId, req.user.id]
-        );
-        
-        if (courses.length === 0) {
-          await connection.rollback();
-          return res.status(403).json({ 
-            message: 'You can only create quizzes for your own courses' 
-          });
-        }
-      }
-      
-      // Create the quiz
-      const [quizResult] = await connection.query(
-        `INSERT INTO quizzes 
-         (course_id, lesson_id, title, description, time_limit_minutes, passing_score, is_test)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      const [questionResult] = await connection.query(
+        `INSERT INTO quiz_questions 
+         (quiz_id, question_text, question_type, points, order_index)
+         VALUES (?, ?, ?, ?, ?)`,
         [
-          courseId,
-          lesson_id,
-          title,
-          description || null,
-          time_limit_minutes || 30,
-          passing_score || 70,
-          isTest
+          quizId,
+          question.question_text,
+          question.question_type,
+          question.points || 1,
+          i
         ]
       );
       
-      const quizId = quizResult.insertId;
+      const questionId = questionResult.insertId;
       
-      // Add questions
-      for (let i = 0; i < questions.length; i++) {
-        const question = questions[i];
-        
-        // Validate question
-        if (!question.question_text || !question.question_type) {
+      // For multiple choice, add options
+      if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
+        if (!question.options || !Array.isArray(question.options)) {
           await connection.rollback();
-          return res.status(400).json({ 
-            message: `Question ${i+1} is missing text or type` 
-          });
+          return res.status(400).json({ message: `Question ${i+1} is missing options` });
         }
         
-        // Create question
-        const [questionResult] = await connection.query(
-          `INSERT INTO quiz_questions 
-           (quiz_id, question_text, question_type, image_data, points, order_index)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            quizId,
-            question.question_text,
-            question.question_type,
-            question.image || null,
-            question.points || 1,
-            i
-          ]
-        );
-        
-        const questionId = questionResult.insertId;
-        
-        // Handle different question types
-        if (question.question_type === 'multiple_choice') {
-          if (!question.options || !Array.isArray(question.options) || question.options.length === 0) {
-            await connection.rollback();
-            return res.status(400).json({ 
-              message: `Question ${i+1} has no options` 
-            });
-          }
+        for (let j = 0; j < question.options.length; j++) {
+          const option = question.options[j];
           
-          // Ensure at least one correct answer
-          const hasCorrectOption = question.options.some(option => option.isCorrect);
-          if (!hasCorrectOption) {
-            await connection.rollback();
-            return res.status(400).json({ 
-              message: `Question ${i+1} must have at least one correct answer` 
-            });
-          }
-          
-          // Add options
-          for (let j = 0; j < question.options.length; j++) {
-            const option = question.options[j];
-            if (option.text && option.text.trim() !== '') {
-              await connection.query(
-                `INSERT INTO question_options 
-                 (question_id, option_text, is_correct, order_index)
-                 VALUES (?, ?, ?, ?)`,
-                [
-                  questionId,
-                  option.text,
-                  option.isCorrect || false,
-                  j
-                ]
-              );
-            }
-          }
-        } else if (question.question_type === 'fill_in_blank') {
-          if (!question.fillInAnswer) {
-            await connection.rollback();
-            return res.status(400).json({ 
-              message: `Question ${i+1} has no answer` 
-            });
-          }
-          
-          // Add correct answer
           await connection.query(
-            `INSERT INTO fill_in_answers 
-             (question_id, answer_text)
-             VALUES (?, ?)`,
+            `INSERT INTO quiz_options 
+             (question_id, option_text, is_correct, order_index)
+             VALUES (?, ?, ?, ?)`,
             [
               questionId,
-              question.fillInAnswer
+              option.text,
+              option.is_correct ? 1 : 0,
+              j
             ]
           );
         }
       }
-      
-      await connection.commit();
-      
-      res.status(201).json({
-        message: `${isTest ? 'Test' : 'Quiz'} created successfully`,
-        quizId: quizId
-      });
-    } catch (error) {
-      await connection.rollback();
-      console.error(`Error creating ${req.params.quizType}:`, error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    } finally {
-      connection.release();
     }
-  });
-  
-  /**
-   * @route GET /api/courses/:courseId/quizzes
-   * @desc Get all quizzes or tests for a course
-   * @access Private
-   */
-  app.get('/api/courses/:courseId/:quizType', authenticateToken, async (req, res) => {
-    try {
-      const courseId = req.params.courseId;
-      const quizType = req.params.quizType;
+    
+    await connection.commit();
+    
+    res.status(201).json({
+      message: 'Quiz created successfully',
+      quizId
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error creating quiz:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    connection.release();
+  }
+});
+
+// Get Course Quizzes
+app.get('/api/courses/:courseId/quizzes', authenticateToken, async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    
+    const [quizzes] = await pool.query(
+      `SELECT q.*, 
+         (SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = q.id) as question_count
+       FROM quizzes q
+       WHERE q.course_id = ?
+       ORDER BY q.created_at DESC`,
+      [courseId]
+    );
+    
+    // For students, include attempt info for each quiz
+    if (req.user.role === 'student') {
+      const studentId = req.user.id;
       
-      // Validate quiz type
-      if (quizType !== 'quizzes' && quizType !== 'tests' && quizType !== 'all-assessments') {
-        return res.status(400).json({ message: 'Invalid quiz type. Must be "quizzes", "tests", or "all-assessments"' });
-      }
-      
-      let query = `
-        SELECT q.*, cm.title as lesson_title,
-               (SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = q.id) as question_count
-        FROM quizzes q
-        JOIN course_modules cm ON q.lesson_id = cm.id
-        WHERE q.course_id = ?
-      `;
-      
-      if (quizType === 'quizzes') {
-        query += ' AND q.is_test = FALSE';
-      } else if (quizType === 'tests') {
-        query += ' AND q.is_test = TRUE';
-      }
-      
-      query += ' ORDER BY q.created_at DESC';
-      
-      const [quizzes] = await pool.query(query, [courseId]);
-      
-      // For students, include attempt info for each quiz
-      if (req.user.role === 'student') {
-        const studentId = req.user.id;
-        
-        for (let quiz of quizzes) {
-          const [attempts] = await pool.query(
-            `SELECT * FROM quiz_attempts 
-             WHERE quiz_id = ? AND student_id = ?
-             ORDER BY start_time DESC`,
-            [quiz.id, studentId]
-          );
-          
-          quiz.attempts = attempts;
-          quiz.bestScore = attempts.length > 0 ? 
-                          Math.max(...attempts.map(a => a.score || 0)) : 
-                          null;
-          quiz.hasPassed = attempts.some(a => a.passed === true);
-        }
-      }
-      
-      res.json(quizzes);
-    } catch (error) {
-      console.error(`Error fetching ${req.params.quizType}:`, error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    }
-  });
-  
-  /**
-   * @route GET /api/quizzes/:id
-   * @desc Get a single quiz with questions
-   * @access Private
-   */
-  app.get('/api/quizzes/:id', authenticateToken, async (req, res) => {
-    try {
-      const quizId = req.params.id;
-      
-      // Get quiz details
-      const [quizzes] = await pool.query(
-        `SELECT q.*, c.title as course_title, cm.title as lesson_title
-         FROM quizzes q
-         JOIN courses c ON q.course_id = c.id
-         JOIN course_modules cm ON q.lesson_id = cm.id
-         WHERE q.id = ?`,
-        [quizId]
-      );
-      
-      if (quizzes.length === 0) {
-        return res.status(404).json({ message: 'Quiz not found' });
-      }
-      
-      const quiz = quizzes[0];
-      
-      // Add quiz questions with options/answers
-      const [questions] = await pool.query(
-        `SELECT * FROM quiz_questions 
-         WHERE quiz_id = ? 
-         ORDER BY order_index ASC`,
-        [quizId]
-      );
-      
-      // For each question, get options or fill-in answer
-      for (let question of questions) {
-        if (question.question_type === 'multiple_choice') {
-          const [options] = await pool.query(
-            `SELECT * FROM question_options 
-             WHERE question_id = ? 
-             ORDER BY order_index ASC`,
-            [question.id]
-          );
-          question.options = options;
-        } else if (question.question_type === 'fill_in_blank') {
-          const [answers] = await pool.query(
-            `SELECT * FROM fill_in_answers 
-             WHERE question_id = ?`,
-            [question.id]
-          );
-          if (answers.length > 0) {
-            question.answer = answers[0].answer_text;
-          }
-        }
-      }
-      
-      // If user is instructor or admin, include the questions with answers
-      if (req.user.role === 'instructor' || req.user.role === 'admin') {
-        quiz.questions = questions;
-      } 
-      // If student and it's not a practice quiz or they haven't taken it yet
-      else if (req.user.role === 'student') {
-        const studentId = req.user.id;
-        
-        // Get student's attempts
-        const [attempts] = await pool.query(
-          `SELECT * FROM quiz_attempts 
-           WHERE quiz_id = ? AND student_id = ?
-           ORDER BY start_time DESC`,
-          [quizId, studentId]
+      for (let quiz of quizzes) {
+        // Count student's attempts
+        const [attemptCount] = await pool.query(
+          `SELECT COUNT(*) as count 
+           FROM quiz_attempts 
+           WHERE quiz_id = ? AND student_id = ?`,
+          [quiz.id, studentId]
         );
         
-        quiz.attempts = attempts;
+        quiz.attempts = attemptCount[0].count;
         
-        // Only include questions without answers if they haven't completed it yet
-        // or if it's a practice quiz and they've completed it
-        const latestAttempt = attempts.length > 0 ? attempts[0] : null;
+        // Get highest score
+        const [scoreResult] = await pool.query(
+          `SELECT MAX(score) as highest_score 
+           FROM quiz_attempts 
+           WHERE quiz_id = ? AND student_id = ? AND score IS NOT NULL`,
+          [quiz.id, studentId]
+        );
         
-        if (!latestAttempt || !latestAttempt.is_completed || (!quiz.is_test && quiz.show_answers)) {
-          // For incomplete attempts or practice quizzes, show questions but hide correct answers
-          quiz.questions = questions.map(q => {
-            const questionCopy = {...q};
-            
-            if (q.question_type === 'multiple_choice') {
-              questionCopy.options = q.options.map(o => ({
-                id: o.id,
-                option_text: o.option_text,
-                order_index: o.order_index
-                // Remove is_correct
-              }));
-            } else if (q.question_type === 'fill_in_blank') {
-              delete questionCopy.answer;
-            }
-            
-            return questionCopy;
-          });
-        }
-      }
-      
-      res.json(quiz);
-    } catch (error) {
-      console.error('Error fetching quiz:', error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    }
-  });
-  
-  /**
-   * @route POST /api/quizzes/:id/start
-   * @desc Start a quiz attempt
-   * @access Private (students only)
-   */
-  app.post('/api/quizzes/:id/start', authenticateToken, authorize(['student']), async (req, res) => {
-    try {
-      const quizId = req.params.id;
-      const studentId = req.user.id;
-      
-      // Verify quiz exists
-      const [quizzes] = await pool.query('SELECT * FROM quizzes WHERE id = ?', [quizId]);
-      
-      if (quizzes.length === 0) {
-        return res.status(404).json({ message: 'Quiz not found' });
-      }
-      
-      const quiz = quizzes[0];
-      
-      // Check for existing incomplete attempt
-      const [existingAttempts] = await pool.query(
-        `SELECT * FROM quiz_attempts 
-         WHERE quiz_id = ? AND student_id = ? AND is_completed = FALSE`,
-        [quizId, studentId]
-      );
-      
-      if (existingAttempts.length > 0) {
-        return res.json({
-          message: 'You have an existing attempt in progress',
-          attemptId: existingAttempts[0].id
-        });
-      }
-      
-      // Start new attempt
-      const [result] = await pool.query(
-        `INSERT INTO quiz_attempts (quiz_id, student_id, start_time)
-         VALUES (?, ?, NOW())`,
-        [quizId, studentId]
-      );
-      
-      const attemptId = result.insertId;
-      
-      res.status(201).json({
-        message: 'Quiz attempt started',
-        attemptId: attemptId,
-        timeLimit: quiz.time_limit_minutes
-      });
-    } catch (error) {
-      console.error('Error starting quiz:', error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    }
-  });
-  
-  /**
-   * @route POST /api/quiz-attempts/:id/submit
-   * @desc Submit a quiz attempt with answers
-   * @access Private (students only)
-   */
-  app.post('/api/quiz-attempts/:id/submit', authenticateToken, authorize(['student']), async (req, res) => {
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
-      
-      const attemptId = req.params.id;
-      const studentId = req.user.id;
-      const { responses } = req.body;
-      
-      if (!responses || !Array.isArray(responses)) {
-        return res.status(400).json({ message: 'Responses are required' });
-      }
-      
-      // Verify attempt exists and belongs to student
-      const [attempts] = await connection.query(
-        `SELECT a.*, q.passing_score, q.is_test
-         FROM quiz_attempts a
-         JOIN quizzes q ON a.quiz_id = q.id
-         WHERE a.id = ? AND a.student_id = ?`,
-        [attemptId, studentId]
-      );
-      
-      if (attempts.length === 0) {
-        await connection.rollback();
-        return res.status(404).json({ message: 'Attempt not found or not yours' });
-      }
-      
-      const attempt = attempts[0];
-      
-      // Check if attempt already completed
-      if (attempt.is_completed) {
-        await connection.rollback();
-        return res.status(400).json({ message: 'This attempt is already completed' });
-      }
-      
-      // Get all questions for this quiz
-      const [questions] = await connection.query(
-        'SELECT * FROM quiz_questions WHERE quiz_id = ?',
-        [attempt.quiz_id]
-      );
-      
-      // Score calculation variables
-      let totalPoints = 0;
-      let earnedPoints = 0;
-      
-      // Process each response
-      for (const response of responses) {
-        const question = questions.find(q => q.id === response.questionId);
+        quiz.highestScore = scoreResult[0].highest_score || null;
         
-        if (!question) {
-          continue; // Skip invalid question IDs
-        }
+        // Check if can take quiz
+        const attemptsLeft = quiz.max_attempts - quiz.attempts;
+        quiz.canTake = attemptsLeft > 0;
         
-        totalPoints += question.points;
-        let isCorrect = false;
-        
-        if (question.question_type === 'multiple_choice') {
-          // Verify the option exists and is correct
-          if (response.optionId) {
-            const [options] = await connection.query(
-              'SELECT * FROM question_options WHERE id = ? AND question_id = ?',
-              [response.optionId, question.id]
-            );
-            
-            if (options.length > 0) {
-              isCorrect = options[0].is_correct;
-              if (isCorrect) {
-                earnedPoints += question.points;
-              }
-              
-              // Save the response
-              await connection.query(
-                `INSERT INTO quiz_responses 
-                 (attempt_id, question_id, selected_option_id, is_correct)
-                 VALUES (?, ?, ?, ?)`,
-                [attemptId, question.id, response.optionId, isCorrect]
-              );
-            }
+        // Check dates
+        if (quiz.start_date) {
+          const startDate = new Date(quiz.start_date);
+          if (startDate > new Date()) {
+            quiz.canTake = false;
+            quiz.notAvailableReason = 'Quiz not yet available';
           }
-        } else if (question.question_type === 'fill_in_blank') {
-          // Get correct answer
-          const [answers] = await connection.query(
-            'SELECT * FROM fill_in_answers WHERE question_id = ?',
-            [question.id]
+        }
+        
+        if (quiz.end_date) {
+          const endDate = new Date(quiz.end_date);
+          if (endDate < new Date()) {
+            quiz.canTake = false;
+            quiz.notAvailableReason = 'Quiz has ended';
+          }
+        }
+      }
+    }
+    
+    res.json(quizzes);
+  } catch (error) {
+    console.error('Error fetching quizzes:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get Quiz Details
+// app.get('/api/quizzes/:id', authenticateToken, async (req, res) => {
+//   try {
+//     const quizId = req.params.id;
+    
+//     const [quizzes] = await pool.query(
+//       `SELECT q.*, 
+//          c.title as course_title,
+//          CONCAT(u.first_name, ' ', u.last_name) as instructor_name
+//        FROM quizzes q
+//        JOIN courses c ON q.course_id = c.id
+//        JOIN users u ON c.instructor_id = u.id
+//        WHERE q.id = ?`,
+//       [quizId]
+//     );
+    
+//     if (quizzes.length === 0) {
+//       return res.status(404).json({ message: 'Quiz not found' });
+//     }
+    
+//     const quiz = quizzes[0];
+    
+//     // For instructors, include questions with options
+//     if (req.user.role === 'instructor' || req.user.role === 'admin') {
+//       const [questions] = await pool.query(
+//         `SELECT * FROM quiz_questions 
+//          WHERE quiz_id = ? 
+//          ORDER BY order_index`,
+//         [quizId]
+//       );
+      
+//       // Get options for each question
+//       for (let question of questions) {
+//         if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
+//           const [options] = await pool.query(
+//             `SELECT * FROM quiz_options 
+//              WHERE question_id = ? 
+//              ORDER BY order_index`,
+//             [question.id]
+//           );
+          
+//           question.options = options;
+//         }
+//       }
+      
+//       quiz.questions = questions;
+//     }
+//     // For students, check if they can take the quiz
+//     else if (req.user.role === 'student') {
+//       const studentId = req.user.id;
+      
+//       // Count student's attempts
+//       const [attemptCount] = await pool.query(
+//         `SELECT COUNT(*) as count 
+//          FROM quiz_attempts 
+//          WHERE quiz_id = ? AND student_id = ?`,
+//         [quizId, studentId]
+//       );
+      
+//       quiz.attempts = attemptCount[0].count;
+      
+//       // Get attempt history
+//       const [attempts] = await pool.query(
+//         `SELECT * FROM quiz_attempts 
+//          WHERE quiz_id = ? AND student_id = ? 
+//          ORDER BY start_time DESC`,
+//         [quizId, studentId]
+//       );
+      
+//       quiz.attemptHistory = attempts;
+      
+//       // Check if can take quiz
+//       const attemptsLeft = quiz.max_attempts - quiz.attempts;
+//       quiz.canTake = attemptsLeft > 0;
+      
+//       // Check dates
+//       if (quiz.start_date) {
+//         const startDate = new Date(quiz.start_date);
+//         if (startDate > new Date()) {
+//           quiz.canTake = false;
+//           quiz.notAvailableReason = 'Quiz not yet available';
+//         }
+//       }
+      
+//       if (quiz.end_date) {
+//         const endDate = new Date(quiz.end_date);
+//         if (endDate < new Date()) {
+//           quiz.canTake = false;
+//           quiz.notAvailableReason = 'Quiz has ended';
+//         }
+//       }
+//     }
+    
+//     res.json(quiz);
+//   } catch (error) {
+//     console.error('Error fetching quiz:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
+
+// REPLACE this section in your server.js file:
+// Get Quiz Details endpoint (around line 1200-1300)
+
+app.get('/api/quizzes/:id', authenticateToken, async (req, res) => {
+  try {
+    const quizId = req.params.id;
+    
+    const [quizzes] = await pool.query(
+      `SELECT q.*, 
+         c.title as course_title,
+         CONCAT(u.first_name, ' ', u.last_name) as instructor_name
+       FROM quizzes q
+       JOIN courses c ON q.course_id = c.id
+       JOIN users u ON c.instructor_id = u.id
+       WHERE q.id = ?`,
+      [quizId]
+    );
+    
+    if (quizzes.length === 0) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+    
+    const quiz = quizzes[0];
+    
+    // Always get questions, but handle options differently based on role
+    const [questions] = await pool.query(
+      `SELECT * FROM quiz_questions 
+       WHERE quiz_id = ? 
+       ORDER BY order_index`,
+      [quizId]
+    );
+    
+    // Get options for each question
+    for (let question of questions) {
+      if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
+        const [options] = await pool.query(
+          `SELECT * FROM quiz_options 
+           WHERE question_id = ? 
+           ORDER BY order_index`,
+          [question.id]
+        );
+        
+        // For students, remove the correct answer information unless they're viewing results
+        if (req.user.role === 'student') {
+          question.options = options.map(option => ({
+            id: option.id,
+            option_text: option.option_text,
+            order_index: option.order_index
+            // Don't include is_correct for students
+          }));
+        } else {
+          // For instructors/admins, include all information
+          question.options = options;
+        }
+      }
+    }
+    
+    quiz.questions = questions;
+    
+    // For students, add attempt-related information
+    if (req.user.role === 'student') {
+      const studentId = req.user.id;
+      
+      // Count student's attempts
+      const [attemptCount] = await pool.query(
+        `SELECT COUNT(*) as count 
+         FROM quiz_attempts 
+         WHERE quiz_id = ? AND student_id = ?`,
+        [quizId, studentId]
+      );
+      
+      quiz.attempts = attemptCount[0].count;
+      
+      // Get attempt history
+      const [attempts] = await pool.query(
+        `SELECT * FROM quiz_attempts 
+         WHERE quiz_id = ? AND student_id = ? 
+         ORDER BY start_time DESC`,
+        [quizId, studentId]
+      );
+      
+      quiz.attemptHistory = attempts;
+      
+      // Check if can take quiz
+      const attemptsLeft = quiz.max_attempts - quiz.attempts;
+      quiz.canTake = attemptsLeft > 0;
+      
+      // Check dates
+      if (quiz.start_date) {
+        const startDate = new Date(quiz.start_date);
+        if (startDate > new Date()) {
+          quiz.canTake = false;
+          quiz.notAvailableReason = 'Quiz not yet available';
+        }
+      }
+      
+      if (quiz.end_date) {
+        const endDate = new Date(quiz.end_date);
+        if (endDate < new Date()) {
+          quiz.canTake = false;
+          quiz.notAvailableReason = 'Quiz has ended';
+        }
+      }
+    }
+    
+    res.json(quiz);
+  } catch (error) {
+    console.error('Error fetching quiz:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Start Quiz Attempt
+app.post('/api/quizzes/:id/start', authenticateToken, authorize(['student']), async (req, res) => {
+  try {
+    const quizId = req.params.id;
+    const studentId = req.user.id;
+    
+    // Get the quiz
+    const [quizzes] = await pool.query(
+      'SELECT * FROM quizzes WHERE id = ?',
+      [quizId]
+    );
+    
+    if (quizzes.length === 0) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+    
+    const quiz = quizzes[0];
+    
+    // Check attempt limits
+    const [attempts] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM quiz_attempts 
+       WHERE quiz_id = ? AND student_id = ?`,
+      [quizId, studentId]
+    );
+    
+    if (attempts[0].count >= quiz.max_attempts) {
+      return res.status(400).json({ message: 'Maximum attempts reached' });
+    }
+    
+    // Check dates
+    const now = new Date();
+    if (quiz.start_date && new Date(quiz.start_date) > now) {
+      return res.status(400).json({ message: 'Quiz not yet available' });
+    }
+    
+    if (quiz.end_date && new Date(quiz.end_date) < now) {
+      return res.status(400).json({ message: 'Quiz has ended' });
+    }
+    
+    // Create a new attempt
+    const [result] = await pool.query(
+      `INSERT INTO quiz_attempts (quiz_id, student_id, start_time)
+       VALUES (?, ?, NOW())`,
+      [quizId, studentId]
+    );
+    
+    // Get questions (randomized if needed)
+    let query = `
+      SELECT q.id, q.question_text, q.question_type, q.points 
+      FROM quiz_questions q
+      WHERE q.quiz_id = ?
+    `;
+    
+    if (quiz.is_randomized) {
+      query += ' ORDER BY RAND()';
+    } else {
+      query += ' ORDER BY q.order_index';
+    }
+    
+    const [questions] = await pool.query(query, [quizId]);
+    
+    // For each question, get options but don't include the correct answer
+    const formattedQuestions = await Promise.all(questions.map(async (question) => {
+      let formattedQuestion = {
+        id: question.id,
+        text: question.question_text,
+        type: question.question_type,
+        points: question.points
+      };
+      
+      if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
+        const [options] = await pool.query(
+          `SELECT id, option_text, order_index 
+           FROM quiz_options 
+           WHERE question_id = ?
+           ORDER BY RAND()`,
+          [question.id]
+        );
+        
+        formattedQuestion.options = options;
+      }
+      
+      return formattedQuestion;
+    }));
+    
+    res.json({
+      message: 'Quiz started',
+      attemptId: result.insertId,
+      timeLimit: quiz.time_limit_minutes,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error('Error starting quiz:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Submit Quiz
+app.post('/api/quiz-attempts/:id/submit', authenticateToken, authorize(['student']), async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    
+    const attemptId = req.params.id;
+    const { answers } = req.body;
+    const studentId = req.user.id;
+    
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({ message: 'Answers array is required' });
+    }
+    
+    // Verify the attempt belongs to this student
+    const [attempts] = await connection.query(
+      `SELECT a.*, q.passing_score 
+       FROM quiz_attempts a
+       JOIN quizzes q ON a.quiz_id = q.id
+       WHERE a.id = ? AND a.student_id = ?`,
+      [attemptId, studentId]
+    );
+    
+    if (attempts.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Attempt not found or not yours' });
+    }
+    
+    const attempt = attempts[0];
+    
+    if (attempt.end_time) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'This attempt has already been submitted' });
+    }
+    
+    // Calculate score
+    let totalPoints = 0;
+    let earnedPoints = 0;
+    
+    for (const answer of answers) {
+      // Get the question
+      const [questions] = await connection.query(
+        'SELECT * FROM quiz_questions WHERE id = ? AND quiz_id = ?',
+        [answer.questionId, attempt.quiz_id]
+      );
+      
+      if (questions.length === 0) continue;
+      
+      const question = questions[0];
+      totalPoints += question.points;
+      
+      // Record the answer
+      if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
+        // Check if selected option is correct
+        const [options] = await connection.query(
+          'SELECT * FROM quiz_options WHERE id = ? AND question_id = ?',
+          [answer.selectedOptionId, question.id]
+        );
+        
+        if (options.length > 0) {
+          const isCorrect = options[0].is_correct === 1;
+          
+          // Save the answer
+          await connection.query(
+            `INSERT INTO quiz_answer_records 
+             (attempt_id, question_id, selected_option_id, is_correct)
+             VALUES (?, ?, ?, ?)`,
+            [attemptId, question.id, answer.selectedOptionId, isCorrect ? 1 : 0]
           );
           
-          if (answers.length > 0) {
-            // Case-insensitive comparison
-            const correct = answers[0].answer_text.toLowerCase().trim();
-            const submitted = (response.textAnswer || '').toLowerCase().trim();
-            
-            isCorrect = (correct === submitted);
-            if (isCorrect) {
-              earnedPoints += question.points;
-            }
-            
-            // Save the response
-            await connection.query(
-              `INSERT INTO quiz_responses 
-               (attempt_id, question_id, text_answer, is_correct)
-               VALUES (?, ?, ?, ?)`,
-              [attemptId, question.id, response.textAnswer, isCorrect]
-            );
+          if (isCorrect) {
+            earnedPoints += question.points;
           }
         }
+      } else if (question.question_type === 'short_answer' || question.question_type === 'essay') {
+        // For text answers, store without scoring (will be manually graded)
+        await connection.query(
+          `INSERT INTO quiz_answer_records 
+           (attempt_id, question_id, text_answer)
+           VALUES (?, ?, ?)`,
+          [attemptId, question.id, answer.textAnswer || '']
+        );
       }
-      
-      // Calculate score as percentage
-      const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
-      const passed = score >= attempt.passing_score;
-      
-      // Complete the attempt
-      await connection.query(
-        `UPDATE quiz_attempts
-         SET end_time = NOW(), score = ?, passed = ?, is_completed = TRUE
-         WHERE id = ?`,
-        [score, passed, attemptId]
-      );
-      
-      await connection.commit();
-      
-      res.json({
-        message: 'Quiz completed successfully',
-        score,
-        passed,
-        totalPoints,
-        earnedPoints
-      });
-    } catch (error) {
-      await connection.rollback();
-      console.error('Error submitting quiz:', error);
-      res.status(500).json({ message: 'Server error', details: error.message });
-    } finally {
-      connection.release();
     }
-  });
-  
-  // Serve uploaded submission files
-  app.use('/uploads/submissions', express.static(path.join(__dirname, 'uploads', 'submissions')));
+    
+    // Calculate score percentage
+    const scorePercentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
+    const isPassing = scorePercentage >= attempt.passing_score;
+    
+    // Update the attempt record
+    await connection.query(
+      `UPDATE quiz_attempts 
+       SET end_time = NOW(), score = ?, is_passing = ?
+       WHERE id = ?`,
+      [scorePercentage, isPassing ? 1 : 0, attemptId]
+    );
+    
+    await connection.commit();
+    
+    res.json({
+      message: 'Quiz submitted successfully',
+      score: scorePercentage,
+      passed: isPassing,
+      totalPoints,
+      earnedPoints
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error submitting quiz:', error);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    connection.release();
+  }
+});
 
-// 1. Đầu tiên, import recommendation-routes
-const recommendationRoutes = require('./routes/recommendation-routes');
-
-// 2. Đăng ký route với Express và truyền pool vào middleware
-// Thêm đoạn code này sau khi đã định nghĩa pool và authenticateToken middleware,
-// nhưng trước khi gọi app.listen()
-
-// Route cho API gợi ý khóa học
-app.use('/api/recommendations', authenticateToken, (req, res, next) => {
-  // Truyền pool vào request để route handler có thể sử dụng
-  req.pool = pool;
-  next();
-}, recommendationRoutes);
-
-// Get list of enrolled students for a course
-app.get('/api/courses/:id/students', authenticateToken, async (req, res) => {
+// <<================= Student Management ==================>>
+// Get Enrolled Students
+app.get('/api/courses/:id/students', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
   try {
     const courseId = req.params.id;
     
-    // Check if user has permission to view student list
-    const [courseCheck] = await pool.query(
-      'SELECT * FROM courses WHERE id = ? AND (instructor_id = ? OR ? = "admin")',
-      [courseId, req.user.id, req.user.role]
-    );
-    
-    if (courseCheck.length === 0 && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'You do not have permission to view this information' });
+    // Check if instructor teaches this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, req.user.id]
+      );
+      
+      if (courses.length === 0) {
+        return res.status(403).json({ message: 'You can only view students in your own courses' });
+      }
     }
     
     // Get enrolled students with more details
     const [students] = await pool.query(`
-      SELECT u.id, u.first_name, u.last_name, u.email, e.enrollment_date, 
-             (SELECT MAX(activity_date) FROM student_activity 
-              WHERE student_id = u.id AND course_id = ?) as last_activity
+      SELECT u.id, u.first_name, u.last_name, u.email, 
+             u.profile_image, e.enrollment_date, e.completion_status,
+             (SELECT COUNT(*) FROM submissions 
+              WHERE student_id = u.id 
+              AND assignment_id IN (SELECT id FROM assignments WHERE course_id = ?)) as submission_count,
+             (SELECT COUNT(*) FROM quiz_attempts 
+              WHERE student_id = u.id 
+              AND quiz_id IN (SELECT id FROM quizzes WHERE course_id = ?)) as quiz_attempt_count
       FROM enrollments e
       JOIN users u ON e.student_id = u.id
       WHERE e.course_id = ?
-      ORDER BY e.enrollment_date DESC
-    `, [courseId, courseId]);
+      ORDER BY u.last_name, u.first_name
+    `, [courseId, courseId, courseId]);
     
     res.json(students);
   } catch (error) {
@@ -4837,46 +4045,103 @@ app.get('/api/courses/:id/students', authenticateToken, async (req, res) => {
   }
 });
 
-// Get individual student progress
-app.get('/api/courses/:courseId/students/:studentId', authenticateToken, async (req, res) => {
+// Get Student Progress Details
+app.get('/api/courses/:courseId/students/:studentId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
   try {
     const { courseId, studentId } = req.params;
     
-    // Check permissions
-    if (req.user.role !== 'admin' && req.user.role !== 'instructor') {
-      return res.status(403).json({ message: 'Permission denied' });
+    // Check if instructor teaches this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, req.user.id]
+      );
+      
+      if (courses.length === 0) {
+        return res.status(403).json({ message: 'You can only view students in your own courses' });
+      }
     }
     
-    // Get student details with enrollment info
+    // Get student details
     const [students] = await pool.query(`
-      SELECT u.id, u.first_name, u.last_name, u.email, e.enrollment_date,
-             (SELECT MAX(timestamp) FROM student_activity 
-              WHERE student_id = u.id AND course_id = ?) as last_activity,
-             sf.feedback as instructorFeedback
+      SELECT u.id, u.first_name, u.last_name, u.email, 
+             u.profile_image, u.bio, e.enrollment_date, e.completion_status
       FROM enrollments e
       JOIN users u ON e.student_id = u.id
-      LEFT JOIN student_feedback sf ON sf.student_id = u.id AND sf.course_id = ?
       WHERE e.course_id = ? AND e.student_id = ?
-    `, [courseId, courseId, courseId, studentId]);
+    `, [courseId, studentId]);
     
     if (students.length === 0) {
-      return res.status(404).json({ message: 'Student not found or not enrolled in this course' });
+      return res.status(404).json({ message: 'Student not enrolled in this course' });
     }
     
-    res.json(students[0]);
+    const student = students[0];
+    
+    // Get assignment submissions
+    const [submissions] = await pool.query(`
+      SELECT s.*, a.title as assignment_title, a.due_date
+      FROM submissions s
+      JOIN assignments a ON s.assignment_id = a.id
+      WHERE s.student_id = ? AND a.course_id = ?
+      ORDER BY s.submission_date DESC
+    `, [studentId, courseId]);
+    
+    // Get quiz attempts
+    const [quizAttempts] = await pool.query(`
+      SELECT qa.*, q.title as quiz_title
+      FROM quiz_attempts qa
+      JOIN quizzes q ON qa.quiz_id = q.id
+      WHERE qa.student_id = ? AND q.course_id = ?
+      ORDER BY qa.start_time DESC
+    `, [studentId, courseId]);
+    
+    // Get discussion activity
+    const [discussionPosts] = await pool.query(`
+      SELECT dp.*, d.title as discussion_title
+      FROM discussion_posts dp
+      JOIN discussions d ON dp.discussion_id = d.id
+      WHERE dp.user_id = ? AND d.course_id = ?
+      ORDER BY dp.created_at DESC
+    `, [studentId, courseId]);
+    
+    res.json({
+      student,
+      submissions,
+      quizAttempts,
+      discussionPosts,
+      // Calculate stats
+      stats: {
+        assignmentCompletionRate: submissions.length,
+        quizAvgScore: quizAttempts.length > 0 ? 
+          quizAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) / quizAttempts.length : 0,
+        discussionParticipation: discussionPosts.length
+      }
+    });
   } catch (error) {
-    console.error('Error fetching student details:', error);
+    console.error('Error fetching student progress:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Save instructor feedback for a student
-app.post('/api/courses/:courseId/student-feedback', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
+// Update Student Progress/Status
+app.put('/api/courses/:courseId/students/:studentId', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
   try {
-    const { courseId } = req.params;
-    const { studentId, feedback } = req.body;
+    const { courseId, studentId } = req.params;
+    const { completion_status, instructor_notes } = req.body;
     
-    // Check if student is enrolled in the course
+    // Check if instructor teaches this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, req.user.id]
+      );
+      
+      if (courses.length === 0) {
+        return res.status(403).json({ message: 'You can only update students in your own courses' });
+      }
+    }
+    
+    // Verify student is enrolled
     const [enrollments] = await pool.query(
       'SELECT * FROM enrollments WHERE course_id = ? AND student_id = ?',
       [courseId, studentId]
@@ -4886,120 +4151,426 @@ app.post('/api/courses/:courseId/student-feedback', authenticateToken, authorize
       return res.status(404).json({ message: 'Student not enrolled in this course' });
     }
     
-    // Check if feedback already exists
-    const [existingFeedback] = await pool.query(
-      'SELECT * FROM student_feedback WHERE course_id = ? AND student_id = ?',
-      [courseId, studentId]
-    );
-    
-    if (existingFeedback.length > 0) {
-      // Update existing feedback
+    // Update enrollment status
+    if (completion_status) {
       await pool.query(
-        'UPDATE student_feedback SET feedback = ?, updated_at = NOW() WHERE course_id = ? AND student_id = ?',
-        [feedback, id, studentId]
-      );
-    } else {
-      // Insert new feedback
-      await pool.query(
-        'INSERT INTO student_feedback (course_id, student_id, instructor_id, feedback) VALUES (?, ?, ?, ?)',
-        [id, studentId, req.user.id, feedback]
+        'UPDATE enrollments SET completion_status = ? WHERE course_id = ? AND student_id = ?',
+        [completion_status, courseId, studentId]
       );
     }
     
-    res.json({ message: 'Feedback saved successfully' });
+    // Add or update instructor notes
+    if (instructor_notes !== undefined) {
+      // Check if notes already exist
+      const [existingNotes] = await pool.query(
+        'SELECT * FROM student_notes WHERE course_id = ? AND student_id = ?',
+        [courseId, studentId]
+      );
+      
+      if (existingNotes.length > 0) {
+        await pool.query(
+          'UPDATE student_notes SET notes = ?, updated_by = ?, updated_at = NOW() WHERE course_id = ? AND student_id = ?',
+          [instructor_notes, req.user.id, courseId, studentId]
+        );
+      } else {
+        await pool.query(
+          'INSERT INTO student_notes (course_id, student_id, notes, created_by) VALUES (?, ?, ?, ?)',
+          [courseId, studentId, instructor_notes, req.user.id]
+        );
+      }
+    }
+    
+    res.json({ message: 'Student progress updated successfully' });
   } catch (error) {
-    console.error('Error saving feedback:', error);
+    console.error('Error updating student progress:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Updated Course Statistics Endpoint
+// <<================= Course Statistics ==================>>
 app.get('/api/courses/:id/statistics', authenticateToken, authorize(['instructor', 'admin']), async (req, res) => {
   try {
     const courseId = req.params.id;
     
-    // Get enrollment statistics - this query should work as enrollments table exists
-    const [enrollments] = await pool.query(
-      'SELECT COUNT(*) as totalStudents FROM enrollments WHERE course_id = ?',
-      [courseId]
-    );
-    
-    // Get active students count safely (avoid student_activity table if it doesn't exist)
-    let activeStudentCount = 0;
-    try {
-      const [activeStudents] = await pool.query(
-        `SELECT COUNT(DISTINCT student_id) as activeCount 
-         FROM enrollments 
-         WHERE course_id = ? AND enrollment_date > DATE_SUB(NOW(), INTERVAL 7 DAY)`,
-        [courseId]
-      );
-      activeStudentCount = activeStudents[0].activeCount;
-    } catch (err) {
-      console.warn('Could not get active students count, using fallback value');
-    }
-    
-    // Get quiz statistics
-    let quizStatistics = {
-      total: 0,
-      averageScore: 0,
-      highestScore: 0,
-      lowestScore: 0
-    };
-    
-    try {
-      const [quizStats] = await pool.query(
-        `SELECT 
-           COUNT(*) as total,
-           AVG(score) as averageScore,
-           MAX(score) as highestScore,
-           MIN(score) as lowestScore
-         FROM quiz_attempts
-         WHERE quiz_id IN (SELECT id FROM quizzes WHERE course_id = ?)
-           AND is_completed = true`,
-        [courseId]
+    // Check if instructor teaches this course
+    if (req.user.role === 'instructor') {
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
+        [courseId, req.user.id]
       );
       
-      if (quizStats && quizStats.length > 0) {
-        quizStatistics = {
-          total: quizStats[0].total || 0,
-          averageScore: quizStats[0].averageScore ? Math.round(quizStats[0].averageScore) : 0,
-          highestScore: quizStats[0].highestScore || 0,
-          lowestScore: quizStats[0].lowestScore || 0
-        };
+      if (courses.length === 0) {
+        return res.status(403).json({ message: 'You can only view statistics for your own courses' });
       }
-    } catch (err) {
-      console.warn('Error getting quiz stats, using default values', err);
     }
     
-    // Return the statistics with safe fallback values
-    const statistics = {
-      enrollmentStats: {
-        totalStudents: enrollments[0].totalStudents || 0,
-        activeStudents: activeStudentCount,
-        completionRate: 72 // Placeholder value
-      },
-      quizStats: {
-        ...quizStatistics,
-        distribution: [
-          { range: '0-59', count: 3 },
-          { range: '60-69', count: 5 },
-          { range: '70-79', count: 8 },
-          { range: '80-89', count: 12 },
-          { range: '90-100', count: 7 }
-        ]
-      },
-      assignmentStats: {
-        total: 0,
-        submitted: 0,
-        graded: 0,
-        averageScore: 0,
-        onTimeSubmissionRate: 0
-      }
-    };
+    // Get enrollment stats
+    const [enrollmentStats] = await pool.query(`
+      SELECT 
+        COUNT(*) as total_students,
+        SUM(CASE WHEN completion_status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+        SUM(CASE WHEN completion_status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_count,
+        SUM(CASE WHEN completion_status = 'not_started' THEN 1 ELSE 0 END) as not_started_count
+      FROM enrollments
+      WHERE course_id = ?
+    `, [courseId]);
     
-    res.json(statistics);
+    // Get assignment stats
+    const [assignmentStats] = await pool.query(`
+      SELECT
+        COUNT(DISTINCT a.id) as total_assignments,
+        COUNT(DISTINCT s.id) as total_submissions,
+        AVG(s.grade) as average_grade,
+        SUM(CASE WHEN s.is_graded = 1 THEN 1 ELSE 0 END) as graded_count
+      FROM assignments a
+      LEFT JOIN submissions s ON a.id = s.assignment_id
+      WHERE a.course_id = ?
+    `, [courseId]);
+    
+    // Get quiz stats
+    const [quizStats] = await pool.query(`
+      SELECT
+        COUNT(DISTINCT q.id) as total_quizzes,
+        COUNT(DISTINCT qa.id) as total_attempts,
+        AVG(qa.score) as average_score,
+        SUM(CASE WHEN qa.is_passing = 1 THEN 1 ELSE 0 END) as passing_count
+      FROM quizzes q
+      LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
+      WHERE q.course_id = ?
+    `, [courseId]);
+    
+    // Get discussion stats
+    const [discussionStats] = await pool.query(`
+      SELECT
+        COUNT(DISTINCT d.id) as total_discussions,
+        COUNT(DISTINCT dp.id) as total_posts,
+        COUNT(DISTINCT dp.user_id) as participating_students
+      FROM discussions d
+      LEFT JOIN discussion_posts dp ON d.id = dp.discussion_id
+      WHERE d.course_id = ?
+    `, [courseId]);
+    
+    // Get completion rate over time (last 6 months)
+    const [completionTrend] = await pool.query(`
+      SELECT 
+        DATE_FORMAT(e.enrollment_date, '%Y-%m') as month,
+        COUNT(*) as enrollments,
+        SUM(CASE WHEN e.completion_status = 'completed' THEN 1 ELSE 0 END) as completions
+      FROM enrollments e
+      WHERE e.course_id = ? AND e.enrollment_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+      GROUP BY DATE_FORMAT(e.enrollment_date, '%Y-%m')
+      ORDER BY month
+    `, [courseId]);
+    
+    res.json({
+      enrollmentStats: enrollmentStats[0],
+      assignmentStats: assignmentStats[0],
+      quizStats: quizStats[0],
+      discussionStats: discussionStats[0],
+      completionTrend
+    });
   } catch (error) {
     console.error('Error fetching course statistics:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// <<================= Discussion Management ==================>>
+// Get Course Discussions
+app.get('/api/courses/:courseId/discussions', authenticateToken, async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    
+    // Get discussions with post count and creation info
+    const [discussions] = await pool.query(`
+      SELECT d.*, 
+             CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
+             u.profile_image as creator_profile_image,
+             (SELECT COUNT(*) FROM discussion_posts WHERE discussion_id = d.id) as post_count,
+             (SELECT MAX(created_at) FROM discussion_posts WHERE discussion_id = d.id) as latest_activity
+      FROM discussions d
+      JOIN users u ON d.created_by = u.id
+      WHERE d.course_id = ?
+      ORDER BY latest_activity DESC, d.created_at DESC
+    `, [courseId]);
+    
+    res.json(discussions);
+  } catch (error) {
+    console.error('Error fetching discussions:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create Discussion
+app.post('/api/courses/:courseId/discussions', authenticateToken, async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { title, description } = req.body;
+    const userId = req.user.id;
+    
+    // Validate input
+    if (!title) {
+      return res.status(400).json({ message: 'Discussion title is required' });
+    }
+    
+    // Create discussion
+    const [result] = await pool.query(
+      'INSERT INTO discussions (course_id, title, description, created_by) VALUES (?, ?, ?, ?)',
+      [courseId, title, description || null, userId]
+    );
+    
+    res.status(201).json({
+      message: 'Discussion created successfully',
+      discussionId: result.insertId
+    });
+  } catch (error) {
+    console.error('Error creating discussion:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get Discussion with Posts
+app.get('/api/courses/:courseId/discussions/:discussionId', authenticateToken, async (req, res) => {
+  try {
+    const { courseId, discussionId } = req.params;
+    
+    // Get discussion details
+    const [discussions] = await pool.query(`
+      SELECT d.*, 
+             CONCAT(u.first_name, ' ', u.last_name) as created_by_name,
+             u.profile_image as creator_profile_image
+      FROM discussions d
+      JOIN users u ON d.created_by = u.id
+      WHERE d.id = ? AND d.course_id = ?
+    `, [discussionId, courseId]);
+    
+    if (discussions.length === 0) {
+      return res.status(404).json({ message: 'Discussion not found' });
+    }
+    
+    const discussion = discussions[0];
+    
+    // Get all posts
+    const [posts] = await pool.query(`
+      SELECT dp.*, 
+             CONCAT(u.first_name, ' ', u.last_name) as user_name,
+             u.profile_image
+      FROM discussion_posts dp
+      JOIN users u ON dp.user_id = u.id
+      WHERE dp.discussion_id = ?
+      ORDER BY dp.created_at ASC
+    `, [discussionId]);
+    
+    // Organize posts in a threaded format
+    const threadedPosts = [];
+    const postsMap = new Map();
+    
+    // First build a map of all posts
+    posts.forEach(post => {
+      postsMap.set(post.id, {
+        ...post,
+        replies: []
+      });
+    });
+    
+    // Then organize into threads
+    posts.forEach(post => {
+      const postWithReplies = postsMap.get(post.id);
+      
+      if (post.parent_post_id) {
+        // This is a reply
+        const parent = postsMap.get(post.parent_post_id);
+        if (parent) {
+          parent.replies.push(postWithReplies);
+        } else {
+          // Parent not found, treat as top-level
+          threadedPosts.push(postWithReplies);
+        }
+      } else {
+        // This is a top-level post
+        threadedPosts.push(postWithReplies);
+      }
+    });
+    
+    discussion.posts = threadedPosts;
+    
+    res.json(discussion);
+  } catch (error) {
+    console.error('Error fetching discussion:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create Post in Discussion
+app.post('/api/courses/:courseId/discussions/:discussionId/posts', authenticateToken, async (req, res) => {
+  try {
+    const { courseId, discussionId } = req.params;
+    const { content, parentPostId } = req.body;
+    const userId = req.user.id;
+    
+    // Validate input
+    if (!content) {
+      return res.status(400).json({ message: 'Post content is required' });
+    }
+    
+    // Check if discussion exists and is not locked
+    const [discussions] = await pool.query(
+      'SELECT * FROM discussions WHERE id = ? AND course_id = ?',
+      [discussionId, courseId]
+    );
+    
+    if (discussions.length === 0) {
+      return res.status(404).json({ message: 'Discussion not found' });
+    }
+    
+    if (discussions[0].is_locked) {
+      return res.status(403).json({ message: 'This discussion is locked' });
+    }
+    
+    // If there's a parent post ID, verify it exists
+    if (parentPostId) {
+      const [parentPosts] = await pool.query(
+        'SELECT * FROM discussion_posts WHERE id = ? AND discussion_id = ?',
+        [parentPostId, discussionId]
+      );
+      
+      if (parentPosts.length === 0) {
+        return res.status(404).json({ message: 'Parent post not found' });
+      }
+    }
+    
+    // Create the post
+    const [result] = await pool.query(
+      'INSERT INTO discussion_posts (discussion_id, user_id, parent_post_id, content) VALUES (?, ?, ?, ?)',
+      [discussionId, userId, parentPostId || null, content]
+    );
+    
+    // Get the created post with user details
+    const [posts] = await pool.query(`
+      SELECT dp.*, 
+             CONCAT(u.first_name, ' ', u.last_name) as user_name,
+             u.profile_image
+      FROM discussion_posts dp
+      JOIN users u ON dp.user_id = u.id
+      WHERE dp.id = ?
+    `, [result.insertId]);
+    
+    res.status(201).json({
+      message: 'Post created successfully',
+      post: posts[0]
+    });
+  } catch (error) {
+    console.error('Error creating post:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update Post
+app.put('/api/courses/:courseId/discussions/:discussionId/posts/:postId', authenticateToken, async (req, res) => {
+  try {
+    const { courseId, discussionId, postId } = req.params;
+    const { content } = req.body;
+    const userId = req.user.id;
+    
+    // Validate input
+    if (!content) {
+      return res.status(400).json({ message: 'Post content is required' });
+    }
+    
+    // Get post to check ownership
+    const [posts] = await pool.query(`
+      SELECT p.*, d.is_locked
+      FROM discussion_posts p
+      JOIN discussions d ON p.discussion_id = d.id
+      WHERE p.id = ? AND p.discussion_id = ? AND d.course_id = ?
+    `, [postId, discussionId, courseId]);
+    
+    if (posts.length === 0) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    const post = posts[0];
+    
+    // Check if discussion is locked
+    if (post.is_locked) {
+      return res.status(403).json({ message: 'This discussion is locked' });
+    }
+    
+    // Check permissions (own post or instructor/admin)
+    if (post.user_id !== userId && req.user.role !== 'instructor' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'You can only edit your own posts' });
+    }
+    
+    // Update the post
+    await pool.query(
+      'UPDATE discussion_posts SET content = ?, updated_at = NOW() WHERE id = ?',
+      [content, postId]
+    );
+    
+    res.json({ message: 'Post updated successfully' });
+  } catch (error) {
+    console.error('Error updating post:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete Post
+app.delete('/api/courses/:courseId/discussions/:discussionId/posts/:postId', authenticateToken, async (req, res) => {
+  try {
+    const { courseId, discussionId, postId } = req.params;
+    const userId = req.user.id;
+    
+    // Get post to check ownership
+    const [posts] = await pool.query(`
+      SELECT p.*, d.is_locked
+      FROM discussion_posts p
+      JOIN discussions d ON p.discussion_id = d.id
+      WHERE p.id = ? AND p.discussion_id = ? AND d.course_id = ?
+    `, [postId, discussionId, courseId]);
+    
+    if (posts.length === 0) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    const post = posts[0];
+    
+    // Check if discussion is locked
+    if (post.is_locked) {
+      return res.status(403).json({ message: 'This discussion is locked' });
+    }
+    
+    // Check permissions (own post or instructor/admin)
+    if (post.user_id !== userId && req.user.role !== 'instructor' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'You can only delete your own posts' });
+    }
+    
+    // Check if post has replies
+    const [replies] = await pool.query(
+      'SELECT COUNT(*) as count FROM discussion_posts WHERE parent_post_id = ?',
+      [postId]
+    );
+    
+    if (replies[0].count > 0) {
+      // If post has replies, just mark as deleted
+      await pool.query(
+        "UPDATE discussion_posts SET content = '[This post has been deleted]', updated_at = NOW() WHERE id = ?",
+        [postId]
+      );
+      
+      return res.json({ 
+        message: 'Post content deleted (post preserved due to replies)'
+      });
+    } else {
+      // If no replies, delete the post
+      await pool.query(
+        'DELETE FROM discussion_posts WHERE id = ?',
+        [postId]
+      );
+      
+      return res.json({ message: 'Post deleted successfully' });
+    }
+  } catch (error) {
+    console.error('Error deleting post:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

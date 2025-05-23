@@ -108,16 +108,6 @@ async function setupDatabase() {
         console.log('ℹ️ No other data found in schema.sql to insert.');
     }
     
-    // Execute ALTER TABLE statements separately to ensure they're processed
-    console.log('Applying schema alterations...');
-    const alterTableStatements = extractAlterTableStatements(sqlScript);
-    if (alterTableStatements.trim()) {
-        await connection.query(alterTableStatements);
-        console.log('✅ ALTER TABLE statements executed successfully');
-    } else {
-        console.log('ℹ️ No ALTER TABLE statements found in schema.sql.');
-    }
-    
     // Verify data
     console.log('\n--- Verification of database setup ---');
     await verifyData(connection);
@@ -130,10 +120,6 @@ async function setupDatabase() {
     
   } catch (error) {
     console.error('❌ Error setting up database:', error);
-    console.error('Error details:', error.message);
-    if (error.sqlMessage) {
-      console.error('SQL error:', error.sqlMessage);
-    }
     process.exit(1);
   } finally {
     if (connection) {
@@ -143,13 +129,13 @@ async function setupDatabase() {
   }
 }
 
-// Helper function to extract only structure-related statements
+// Refined helper function to extract only structure-related statements
 function extractStructureStatements(sqlScript) {
   // Remove comments first to simplify parsing
   const uncommentedScript = sqlScript.replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
   const statements = uncommentedScript.split(';').map(s => s.trim()).filter(s => s.length > 0);
   
-  const structureKeywords = ['CREATE TABLE', 'CREATE INDEX', 'DROP DATABASE', 'CREATE DATABASE', 'USE ', 'DROP INDEX'];
+  const structureKeywords = ['CREATE TABLE', 'CREATE INDEX', 'DROP DATABASE', 'CREATE DATABASE', 'USE '];
   
   const structureStatements = statements.filter(stmt => {
     const upperStmt = stmt.toUpperCase();
@@ -170,24 +156,11 @@ function extractStructureStatements(sqlScript) {
   const createDb = statements.find(s => s.toUpperCase().startsWith('CREATE DATABASE'));
    if (createDb && !structureStatements.includes(createDb)) structureStatements.unshift(createDb);
 
+
   return structureStatements.join(';') + ';';
 }
 
-// Helper function to extract only ALTER TABLE statements
-function extractAlterTableStatements(sqlScript) {
-  // Remove comments first to simplify parsing
-  const uncommentedScript = sqlScript.replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-  const statements = uncommentedScript.split(';').map(s => s.trim()).filter(s => s.length > 0);
-  
-  const alterStatements = statements.filter(stmt => {
-    const upperStmt = stmt.toUpperCase();
-    return upperStmt.startsWith('ALTER TABLE');
-  });
-  
-  return alterStatements.join(';') + ';';
-}
-
-// Helper function to extract only non-user INSERT statements
+// Refined helper function to extract only non-user INSERT statements
 function extractNonUserInsertStatements(sqlScript) {
     // Remove comments first
   const uncommentedScript = sqlScript.replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -221,34 +194,6 @@ async function verifyData(connection) {
     // Check departments
     const [departments] = await connection.query('SELECT COUNT(*) as count FROM lms_db.departments');
     console.log(`✅ ${departments[0].count} departments created`);
-    
-    // Verify that the ALTER TABLE changes were applied
-    try {
-      // Check if is_test column exists in quizzes table
-      const [quizColumns] = await connection.query(`
-        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = 'lms_db' AND TABLE_NAME = 'quizzes' AND COLUMN_NAME = 'is_test'
-      `);
-      console.log(`✅ is_test column in quizzes table: ${quizColumns.length > 0 ? 'Created' : 'Not found'}`);
-      
-      // Check if image_data column exists in quiz_questions table
-      const [questionColumns] = await connection.query(`
-        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = 'lms_db' AND TABLE_NAME = 'quiz_questions' AND COLUMN_NAME = 'image_data'
-      `);
-      console.log(`✅ image_data column in quiz_questions table: ${questionColumns.length > 0 ? 'Created' : 'Not found'}`);
-      
-      // Check assignments table columns
-      const [assignmentColumns] = await connection.query(`
-        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = 'lms_db' AND TABLE_NAME = 'assignments' 
-        AND (COLUMN_NAME = 'allowed_file_types' OR COLUMN_NAME = 'max_file_size')
-      `);
-      console.log(`✅ New columns in assignments table: ${assignmentColumns.length} of 2 created`);
-      
-    } catch (error) {
-      console.error('⚠️ Error verifying column changes:', error.message);
-    }
   } catch (error) {
     console.error('❌ Error verifying data:', error);
   }

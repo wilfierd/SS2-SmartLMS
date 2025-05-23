@@ -1,162 +1,51 @@
-// src/components/course/CourseStatistics.js - Using Real Data
+// src/components/course/CourseStatistics.js - Fixed to use correct API endpoints
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import config from '../../config';
+import courseService from '../../services/courseService';
 import notification from '../../utils/notification';
 import './CourseStatistics.css';
 
 const CourseStatistics = ({ courseId, auth }) => {
-  const [students, setStudents] = useState([]);
-  const [quizzes, setQuizzes] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [tests, setTests] = useState([]);
+  const [statistics, setStatistics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  const API_URL = config.apiUrl;
 
-  // Fetch all needed data
+  // Fetch course statistics using the existing endpoint
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchStatistics = async () => {
       setIsLoading(true);
       setError(null);
       
       try {
-        // Fetch enrolled students
-        const studentsPromise = axios.get(`${API_URL}/courses/${courseId}/students`, {
-          headers: { Authorization: `Bearer ${auth.token}` }
-        });
-        
-        // Fetch quizzes
-        const quizzesPromise = axios.get(`${API_URL}/courses/${courseId}/quizzes`, {
-          headers: { Authorization: `Bearer ${auth.token}` }
-        });
-        
-        // Fetch tests
-        const testsPromise = axios.get(`${API_URL}/courses/${courseId}/tests`, {
-          headers: { Authorization: `Bearer ${auth.token}` }
-        }).catch(() => ({ data: [] })); // Fallback if endpoint doesn't exist
-        
-        // Fetch assignments
-        const assignmentsPromise = axios.get(`${API_URL}/courses/${courseId}/assignments`, {
-          headers: { Authorization: `Bearer ${auth.token}` }
-        });
-        
-        // Wait for all data to load
-        const [studentsRes, quizzesRes, testsRes, assignmentsRes] = await Promise.all([
-          studentsPromise,
-          quizzesPromise,
-          testsPromise,
-          assignmentsPromise
-        ]);
-        
-        setStudents(studentsRes.data);
-        setQuizzes(quizzesRes.data);
-        setTests(Array.isArray(testsRes.data) ? testsRes.data : []);
-        setAssignments(assignmentsRes.data);
+        // Use the existing statistics endpoint from server.js
+        const statsData = await courseService.getCourseStatistics(courseId);
+        setStatistics(statsData);
         
       } catch (error) {
-        console.error('Error fetching course data:', error);
-        setError(error.message || "Failed to load course data");
+        console.error('Error fetching course statistics:', error);
+        setError(error.message || "Failed to load course statistics");
         notification.error('Failed to load course statistics');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (courseId && auth.token) {
-      fetchAllData();
+    if (courseId) {
+      fetchStatistics();
     }
-  }, [courseId, auth.token, API_URL]);
-  
-  // Calculate statistics from fetched data
-  const calculateStatistics = () => {
-    // Enrollment stats
-    const totalStudents = students.length;
-    
-    // Calculate active students (enrolled in last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const activeStudents = students.filter(student => {
-      const enrollmentDate = new Date(student.enrollment_date);
-      return enrollmentDate >= thirtyDaysAgo;
-    }).length;
-    
-    // Completion rate - estimate based on active students and assignments completed
-    let completionRate = 0;
-    if (totalStudents > 0) {
-      // Simple estimation: % of active students compared to total
-      completionRate = Math.round((activeStudents / totalStudents) * 100);
+  }, [courseId]);
+
+  // Calculate distribution for chart from enrollment data
+  const calculateDistribution = (data) => {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return [
+        { range: '0-59', min: 0, max: 59, count: 0 },
+        { range: '60-69', min: 60, max: 69, count: 0 },
+        { range: '70-79', min: 70, max: 79, count: 0 },
+        { range: '80-89', min: 80, max: 89, count: 0 },
+        { range: '90-100', min: 90, max: 100, count: 0 }
+      ];
     }
-    
-    // Quiz stats
-    const quizScores = quizzes.flatMap(quiz => 
-      (quiz.attempts || []).map(attempt => attempt.score || 0)
-    );
-    
-    const averageQuizScore = quizScores.length > 0 
-      ? Math.round(quizScores.reduce((sum, score) => sum + score, 0) / quizScores.length)
-      : 0;
-      
-    const highestQuizScore = quizScores.length > 0 
-      ? Math.max(...quizScores)
-      : 0;
-      
-    const lowestQuizScore = quizScores.length > 0 
-      ? Math.min(...quizScores)
-      : 0;
-    
-    // Assignment stats  
-    const totalAssignments = assignments.length;
-    const submittedAssignments = assignments.filter(a => a.submission).length;
-    const gradedAssignments = assignments.filter(a => a.submission && a.submission.is_graded).length;
-    
-    const assignmentScores = assignments
-      .filter(a => a.submission && a.submission.is_graded)
-      .map(a => a.submission.grade);
-      
-    const averageAssignmentScore = assignmentScores.length > 0
-      ? Math.round(assignmentScores.reduce((sum, score) => sum + score, 0) / assignmentScores.length)
-      : 0;
-    
-    // On-time submission rate
-    const onTimeSubmissions = assignments
-      .filter(a => a.submission && !a.submission.is_late)
-      .length;
-      
-    const onTimeRate = submittedAssignments > 0
-      ? Math.round((onTimeSubmissions / submittedAssignments) * 100)
-      : 0;
-    
-    // Create quiz distribution
-    const distribution = calculateDistribution(quizScores);
-    
-    return {
-      enrollmentStats: {
-        totalStudents,
-        activeStudents,
-        completionRate
-      },
-      quizStats: {
-        total: quizzes.length,
-        averageScore: averageQuizScore,
-        highestScore: highestQuizScore,
-        lowestScore: lowestQuizScore,
-        distribution
-      },
-      assignmentStats: {
-        total: totalAssignments,
-        submitted: submittedAssignments,
-        graded: gradedAssignments,
-        averageScore: averageAssignmentScore,
-        onTimeSubmissionRate: onTimeRate
-      }
-    };
-  };
-  
-  // Calculate distribution for chart
-  const calculateDistribution = (scores) => {
+
     // Define score ranges
     const ranges = [
       { range: '0-59', min: 0, max: 59, count: 0 },
@@ -165,17 +54,19 @@ const CourseStatistics = ({ courseId, auth }) => {
       { range: '80-89', min: 80, max: 89, count: 0 },
       { range: '90-100', min: 90, max: 100, count: 0 }
     ];
-    
-    // Count scores in each range
-    scores.forEach(score => {
+
+    // For demonstration, create some sample distribution based on completion trend
+    data.forEach(item => {
+      const completionPercentage = item.completions > 0 ? (item.completions / item.enrollments) * 100 : 0;
+      
       for (const range of ranges) {
-        if (score >= range.min && score <= range.max) {
+        if (completionPercentage >= range.min && completionPercentage <= range.max) {
           range.count++;
           break;
         }
       }
     });
-    
+
     return ranges;
   };
 
@@ -225,8 +116,39 @@ const CourseStatistics = ({ courseId, auth }) => {
     return <div className="loading-spinner">Loading statistics...</div>;
   }
 
-  // Calculate statistics from real data
-  const statistics = calculateStatistics();
+  if (error) {
+    return (
+      <div className="statistics-error">
+        <h3>Unable to Load Statistics</h3>
+        <p>There was an issue loading the course statistics: {error}</p>
+        <p>Please try refreshing the page or contact support if the problem persists.</p>
+      </div>
+    );
+  }
+
+  if (!statistics) {
+    return (
+      <div className="no-data">
+        <h3>No Statistics Available</h3>
+        <p>Statistics will be available once students start engaging with the course content.</p>
+      </div>
+    );
+  }
+
+  // Calculate completion rate
+  const completionRate = statistics.enrollmentStats?.total_students > 0 
+    ? Math.round((statistics.enrollmentStats.completed_count / statistics.enrollmentStats.total_students) * 100)
+    : 0;
+
+  // Calculate assignment submission rate
+  const assignmentSubmissionRate = statistics.assignmentStats?.total_assignments > 0
+    ? Math.round((statistics.assignmentStats.total_submissions / statistics.assignmentStats.total_assignments) * 100)
+    : 0;
+
+  // Calculate grading completion rate
+  const gradingRate = statistics.assignmentStats?.total_submissions > 0
+    ? Math.round((statistics.assignmentStats.graded_count / statistics.assignmentStats.total_submissions) * 100)
+    : 0;
 
   return (
     <div className="course-statistics-container">
@@ -234,94 +156,193 @@ const CourseStatistics = ({ courseId, auth }) => {
         <h2>Course Statistics & Analytics</h2>
       </div>
       
-      {error && (
-        <div className="statistics-error">
-          <p>There was an issue loading some course data: {error}</p>
-          <p>Some statistics may be incomplete or unavailable.</p>
-        </div>
-      )}
-      
       <div className="statistics-grid">
+        {/* Enrollment Statistics */}
         <div className="statistics-card enrollment-stats">
-          <h3>Enrollment & Engagement</h3>
+          <h3>Enrollment & Completion</h3>
           <div className="stats-body">
             <div className="stat-row">
               <div className="stat-item">
-                <div className="stat-value">{statistics.enrollmentStats.totalStudents}</div>
+                <div className="stat-value">{statistics.enrollmentStats?.total_students || 0}</div>
                 <div className="stat-label">Total Enrolled</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{statistics.enrollmentStats.activeStudents}</div>
-                <div className="stat-label">Active Students</div>
+                <div className="stat-value">{statistics.enrollmentStats?.in_progress_count || 0}</div>
+                <div className="stat-label">In Progress</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{statistics.enrollmentStats.completionRate}%</div>
-                <div className="stat-label">Est. Completion Rate</div>
+                <div className="stat-value">{statistics.enrollmentStats?.completed_count || 0}</div>
+                <div className="stat-label">Completed</div>
               </div>
             </div>
             
             <div className="progress-container">
-              <div className="progress-label">Overall Course Progress</div>
+              <div className="progress-label">Course Completion Rate</div>
               <div className="progress-bar">
                 <div 
                   className="progress-fill" 
-                  style={{ width: `${statistics.enrollmentStats.completionRate}%` }}
+                  style={{ width: `${completionRate}%` }}
                 ></div>
               </div>
+              <div className="progress-percentage">{completionRate}%</div>
             </div>
           </div>
         </div>
-        
+
+        {/* Quiz Statistics */}
         <div className="statistics-card quiz-stats">
           <h3>Quiz Performance</h3>
           <div className="stats-body">
             <div className="stat-row">
               <div className="stat-item">
-                <div className="stat-value">{statistics.quizStats.total}</div>
+                <div className="stat-value">{statistics.quizStats?.total_quizzes || 0}</div>
                 <div className="stat-label">Total Quizzes</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{statistics.quizStats.averageScore}%</div>
-                <div className="stat-label">Average Score</div>
+                <div className="stat-value">{statistics.quizStats?.total_attempts || 0}</div>
+                <div className="stat-label">Total Attempts</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{statistics.quizStats.highestScore}%</div>
-                <div className="stat-label">Highest Score</div>
+                <div className="stat-value">
+                  {statistics.quizStats?.average_score ? Math.round(statistics.quizStats.average_score) : 0}%
+                </div>
+                <div className="stat-label">Average Score</div>
               </div>
             </div>
             
-            {renderDistribution(statistics.quizStats.distribution, 'Quiz Score Distribution')}
+            <div className="quiz-performance">
+              <div className="performance-label">Passing Rate</div>
+              <div className="performance-stat">
+                <span className="passing-count">{statistics.quizStats?.passing_count || 0}</span>
+                <span className="total-attempts">/ {statistics.quizStats?.total_attempts || 0}</span>
+                <span className="percentage">
+                  ({statistics.quizStats?.total_attempts > 0 
+                    ? Math.round((statistics.quizStats.passing_count / statistics.quizStats.total_attempts) * 100)
+                    : 0}%)
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         
+        {/* Assignment Statistics */}
         <div className="statistics-card assignment-stats">
           <h3>Assignment Performance</h3>
           <div className="stats-body">
             <div className="stat-row">
               <div className="stat-item">
-                <div className="stat-value">{statistics.assignmentStats.submitted}/{statistics.assignmentStats.total}</div>
-                <div className="stat-label">Submission Rate</div>
+                <div className="stat-value">{statistics.assignmentStats?.total_assignments || 0}</div>
+                <div className="stat-label">Total Assignments</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">{statistics.assignmentStats.graded}/{statistics.assignmentStats.submitted}</div>
+                <div className="stat-value">{statistics.assignmentStats?.total_submissions || 0}</div>
+                <div className="stat-label">Submissions</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{statistics.assignmentStats?.graded_count || 0}</div>
                 <div className="stat-label">Graded</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-value">{statistics.assignmentStats.averageScore}%</div>
-                <div className="stat-label">Average Score</div>
               </div>
             </div>
             
-            <div className="on-time-stat">
-              <div className="on-time-label">On-Time Submission Rate</div>
-              <div className="on-time-meter">
-                <div className="meter-fill" style={{ width: `${statistics.assignmentStats.onTimeSubmissionRate}%` }}></div>
-                <div className="meter-value">{statistics.assignmentStats.onTimeSubmissionRate}%</div>
+            <div className="assignment-rates">
+              <div className="rate-item">
+                <div className="rate-label">Submission Rate</div>
+                <div className="rate-meter">
+                  <div 
+                    className="meter-fill submission-fill" 
+                    style={{ width: `${assignmentSubmissionRate}%` }}
+                  ></div>
+                  <div className="meter-value">{assignmentSubmissionRate}%</div>
+                </div>
+              </div>
+              
+              <div className="rate-item">
+                <div className="rate-label">Grading Progress</div>
+                <div className="rate-meter">
+                  <div 
+                    className="meter-fill grading-fill" 
+                    style={{ width: `${gradingRate}%` }}
+                  ></div>
+                  <div className="meter-value">{gradingRate}%</div>
+                </div>
+              </div>
+            </div>
+
+            {statistics.assignmentStats?.average_grade && (
+              <div className="average-grade">
+                <div className="grade-label">Average Grade</div>
+                <div className="grade-value">
+                  {Math.round(statistics.assignmentStats.average_grade)}/100
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Discussion Statistics */}
+        <div className="statistics-card discussion-stats">
+          <h3>Discussion Activity</h3>
+          <div className="stats-body">
+            <div className="stat-row">
+              <div className="stat-item">
+                <div className="stat-value">{statistics.discussionStats?.total_discussions || 0}</div>
+                <div className="stat-label">Total Discussions</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{statistics.discussionStats?.total_posts || 0}</div>
+                <div className="stat-label">Total Posts</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{statistics.discussionStats?.participating_students || 0}</div>
+                <div className="stat-label">Active Participants</div>
+              </div>
+            </div>
+
+            <div className="participation-rate">
+              <div className="participation-label">Participation Rate</div>
+              <div className="participation-percentage">
+                {statistics.enrollmentStats?.total_students > 0
+                  ? Math.round((statistics.discussionStats?.participating_students / statistics.enrollmentStats.total_students) * 100)
+                  : 0}%
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Completion Trend */}
+      {statistics.completionTrend && statistics.completionTrend.length > 0 && (
+        <div className="statistics-card trend-chart">
+          <h3>Enrollment & Completion Trend</h3>
+          <div className="stats-body">
+            <div className="trend-container">
+              {statistics.completionTrend.map((item, index) => (
+                <div key={index} className="trend-item">
+                  <div className="trend-month">{item.month}</div>
+                  <div className="trend-bars">
+                    <div className="trend-bar enrollments" style={{ height: `${(item.enrollments / 10) * 100}%` }}>
+                      <span className="bar-value">{item.enrollments}</span>
+                    </div>
+                    <div className="trend-bar completions" style={{ height: `${(item.completions / 10) * 100}%` }}>
+                      <span className="bar-value">{item.completions}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="trend-legend">
+              <div className="legend-item">
+                <div className="legend-color enrollments"></div>
+                <span>Enrollments</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color completions"></div>
+                <span>Completions</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

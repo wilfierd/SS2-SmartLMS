@@ -1,9 +1,10 @@
 // src/components/quiz/QuizDetail.js
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
-import axios from 'axios';
-import config from '../../config';
+import Sidebar from '../common/Sidebar';
+import Header from '../common/Header';
+import courseService from '../../services/courseService';
 import notification from '../../utils/notification';
 import './QuizDetail.css';
 
@@ -11,472 +12,299 @@ const QuizDetail = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const { auth } = useContext(AuthContext);
-  const timerRef = useRef(null);
   
   const [quiz, setQuiz] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [attemptId, setAttemptId] = useState(null);
-  const [isStarted, setIsStarted] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [responses, setResponses] = useState([]);
-  const [results, setResults] = useState(null);
-  
-  const API_URL = config.apiUrl;
-  
-  // Fetch quiz details
-  useEffect(() => {
-    const fetchQuizDetails = async () => {
-      setIsLoading(true);
-      try {
-        const response = await axios.get(`${API_URL}/quizzes/${quizId}`, {
-          headers: { Authorization: `Bearer ${auth.token}` }
-        });
-        
-        setQuiz(response.data);
-        
-        // Check if there's an existing attempt
-        if (response.data.attempts && response.data.attempts.length > 0) {
-          const latestAttempt = response.data.attempts[0];
-          
-          if (!latestAttempt.is_completed) {
-            setAttemptId(latestAttempt.id);
-            setIsStarted(true);
-            initializeResponses(response.data.questions);
-            
-            // Calculate remaining time
-            const startTime = new Date(latestAttempt.start_time);
-            const timeLimit = response.data.time_limit_minutes * 60; // in seconds
-            const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
-            const remaining = Math.max(0, timeLimit - elapsedSeconds);
-            
-            setTimeLeft(remaining);
-            startTimer(remaining);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching quiz details:', error);
-        notification.error('Failed to load quiz details');
-        navigate('/courses');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const [currentAttempt, setCurrentAttempt] = useState(null);
+  const [answers, setAnswers] = useState({});
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    if (quizId && auth.token) {
-      fetchQuizDetails();
+  useEffect(() => {
+    fetchQuiz();
+  }, [quizId]);
+
+  // Timer effect
+  useEffect(() => {
+    if (currentAttempt && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            handleSubmitQuiz();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      return () => clearInterval(timer);
     }
-    
-    // Clean up timer on unmount
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [quizId, auth.token, API_URL, navigate]);
-  
-  // Initialize responses array
-  const initializeResponses = (questions) => {
-    if (!questions) return;
-    
-    const initialResponses = questions.map(question => ({
-      questionId: question.id,
-      optionId: null,
-      textAnswer: '',
-      isAnswered: false
-    }));
-    
-    setResponses(initialResponses);
+  }, [currentAttempt, timeLeft]);
+
+  const fetchQuiz = async () => {
+    try {
+      setIsLoading(true);
+      const data = await courseService.getQuiz(quizId);
+      setQuiz(data);
+    } catch (error) {
+      notification.error('Failed to load quiz');
+      console.error('Error fetching quiz:', error);
+      navigate(-1);
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
-  // Start the quiz
+
   const handleStartQuiz = async () => {
     try {
-      const response = await axios.post(`${API_URL}/quizzes/${quizId}/start`, {}, {
-        headers: { Authorization: `Bearer ${auth.token}` }
+      const response = await courseService.startQuiz(quizId);
+      setCurrentAttempt(response);
+      setTimeLeft(quiz.time_limit_minutes * 60); // Convert to seconds
+      
+      // Initialize answers object
+      const initialAnswers = {};
+      response.questions.forEach(q => {
+        initialAnswers[q.id] = null;
       });
+      setAnswers(initialAnswers);
       
-      setAttemptId(response.data.attemptId);
-      setIsStarted(true);
-      
-      // Initialize responses
-      initializeResponses(quiz.questions);
-      
-      // Start timer
-      const timeLimit = quiz.time_limit_minutes * 60; // convert to seconds
-      setTimeLeft(timeLimit);
-      startTimer(timeLimit);
-      
-      notification.success('Quiz started. Good luck!');
     } catch (error) {
+      notification.error('Failed to start quiz');
       console.error('Error starting quiz:', error);
-      notification.error('Failed to start quiz. Please try again.');
     }
   };
-  
-  // Start countdown timer
-  const startTimer = (seconds) => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prevTime => {
-        if (prevTime <= 1) {
-          // Time's up, submit quiz automatically
-          clearInterval(timerRef.current);
-          handleSubmitQuiz();
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
+
+  const handleAnswerChange = (questionId, answer) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
   };
-  
-  // Format time as MM:SS
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-  
-  // Handle radio button select (multiple choice)
-  const handleOptionSelect = (questionIndex, optionId) => {
-    const updatedResponses = [...responses];
-    updatedResponses[questionIndex] = {
-      ...updatedResponses[questionIndex],
-      optionId: optionId,
-      isAnswered: true
-    };
-    
-    setResponses(updatedResponses);
-  };
-  
-  // Handle text answer change (fill in the blank)
-  const handleTextAnswerChange = (questionIndex, value) => {
-    const updatedResponses = [...responses];
-    updatedResponses[questionIndex] = {
-      ...updatedResponses[questionIndex],
-      textAnswer: value,
-      isAnswered: value.trim() !== ''
-    };
-    
-    setResponses(updatedResponses);
-  };
-  
-  // Go to next question
-  const handleNextQuestion = () => {
-    if (currentQuestion < quiz.questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    }
-  };
-  
-  // Go to previous question
-  const handlePrevQuestion = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-    }
-  };
-  
-  // Jump to specific question
-  const jumpToQuestion = (index) => {
-    setCurrentQuestion(index);
-  };
-  
-  // Submit quiz
+
   const handleSubmitQuiz = async () => {
-    // Ask for confirmation
-    if (!window.confirm('Are you sure you want to submit your quiz? Once submitted, you cannot make changes.')) {
-      return;
-    }
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     
     try {
-      // Stop the timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
+        questionId: parseInt(questionId),
+        selectedOptionId: answer,
+        textAnswer: typeof answer === 'string' ? answer : null
+      }));
+
+      const result = await courseService.submitQuizAttempt(currentAttempt.attemptId, formattedAnswers);
       
-      const submissionData = {
-        responses: responses.map(response => ({
-          questionId: response.questionId,
-          optionId: response.optionId,
-          textAnswer: response.textAnswer
-        }))
-      };
+      notification.success(`Quiz submitted! Score: ${result.score.toFixed(1)}%`);
+      setCurrentAttempt(null);
+      fetchQuiz(); // Refresh to show updated attempt history
       
-      const response = await axios.post(
-        `${API_URL}/quiz-attempts/${attemptId}/submit`,
-        submissionData,
-        { headers: { Authorization: `Bearer ${auth.token}` } }
-      );
-      
-      // Set completion state and results
-      setIsCompleted(true);
-      setResults(response.data);
-      
-      notification.success('Quiz submitted successfully!');
     } catch (error) {
+      notification.error('Failed to submit quiz');
       console.error('Error submitting quiz:', error);
-      notification.error('Failed to submit quiz. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-  // Calculate progress
-  const calculateProgress = () => {
-    if (!quiz || !quiz.questions) return 0;
-    
-    const answeredCount = responses.filter(r => r.isAnswered).length;
-    return Math.round((answeredCount / quiz.questions.length) * 100);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-  
-  // Get unanswered question count
-  const getUnansweredCount = () => {
-    if (!responses.length) return 0;
-    return responses.filter(r => !r.isAnswered).length;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No limit';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
-  
-  // Navigate back to course
-  const handleReturnToCourse = () => {
-    navigate(`/courses/${quiz.course_id}`);
-  };
-  
+
   if (isLoading) {
-    return <div className="loading-spinner">Loading quiz details...</div>;
+    return <div className="loading-spinner">Loading quiz...</div>;
   }
 
   if (!quiz) {
-    return <div className="error-message">Quiz not found or you don't have access.</div>;
+    return <div className="error-message">Quiz not found</div>;
   }
-  
-  // Results display after submission
-  if (isCompleted && results) {
-    return (
-      <div className="quiz-container quiz-results">
-        <div className="quiz-header">
-          <h1>{quiz.title} - Results</h1>
-          <div className="quiz-meta">
-            <span>Course: {quiz.course_title}</span>
-            <span>Lesson: {quiz.lesson_title}</span>
-          </div>
-        </div>
-        
-        <div className="results-summary">
-          <div className="result-card">
-            <h2>Your Score</h2>
-            <div className="score-display">
-              <div className={`score-circle ${results.passed ? 'passed' : 'failed'}`}>
-                <span className="score-percent">{Math.round(results.score)}%</span>
-              </div>
-              <div className="score-details">
-                <p>Points: {results.earnedPoints} / {results.totalPoints}</p>
-                <p className="pass-status">
-                  {results.passed 
-                    ? <span className="passed-text">PASSED</span> 
-                    : <span className="failed-text">FAILED</span>}
-                </p>
-                <p>Passing Score: {quiz.passing_score}%</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="feedback-section">
-            {results.passed 
-              ? <p>Congratulations! You have successfully passed this {quiz.is_test ? 'test' : 'quiz'}.</p>
-              : <p>You did not reach the passing score. {quiz.is_test 
-                 ? 'Please contact your instructor for next steps.' 
-                 : 'You may be able to retake this quiz later.'}
-                </p>}
-          </div>
-        </div>
-        
-        <div className="action-buttons">
-          <button className="primary-btn" onClick={handleReturnToCourse}>
-            Return to Course
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
-  // Quiz introduction before starting
-  if (!isStarted) {
-    return (
-      <div className="quiz-container quiz-intro">
-        <div className="quiz-header">
-          <h1>{quiz.title}</h1>
-          <div className="quiz-meta">
-            <span>Course: {quiz.course_title}</span>
-            <span>Lesson: {quiz.lesson_title}</span>
-            <span className="quiz-type">{quiz.is_test ? 'Graded Test' : 'Practice Quiz'}</span>
-          </div>
-        </div>
-        
-        <div className="quiz-details">
-          <div className="detail-item">
-            <span className="detail-icon">⏱️</span>
-            <span className="detail-label">Time Limit:</span>
-            <span className="detail-value">{quiz.time_limit_minutes} minutes</span>
-          </div>
-          
-          <div className="detail-item">
-            <span className="detail-icon">❓</span>
-            <span className="detail-label">Questions:</span>
-            <span className="detail-value">{quiz.questions?.length || 0}</span>
-          </div>
-          
-          <div className="detail-item">
-            <span className="detail-icon">🎯</span>
-            <span className="detail-label">Passing Score:</span>
-            <span className="detail-value">{quiz.passing_score}%</span>
-          </div>
-        </div>
-        
-        <div className="quiz-instructions">
-          <h3>Instructions</h3>
-          <div className="instruction-content">
-            {quiz.description ? (
-              <p>{quiz.description}</p>
-            ) : (
-              <>
-                <p>Please read each question carefully and select the best answer.</p>
-                <p>Once you start the {quiz.is_test ? 'test' : 'quiz'}, a timer will begin counting down.</p>
-                <p>You must complete all questions within the time limit.</p>
-                {quiz.is_test && <p>This is a graded test that will count towards your course grade.</p>}
-              </>
-            )}
-          </div>
-        </div>
-        
-        <div className="action-buttons">
-          <button className="secondary-btn" onClick={handleReturnToCourse}>
-            Back to Course
-          </button>
-          <button className="primary-btn start-btn" onClick={handleStartQuiz}>
-            Start {quiz.is_test ? 'Test' : 'Quiz'} Now
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
-  // Active quiz taking interface
-  if (!quiz.questions || quiz.questions.length === 0) {
-    return <div className="error-message">No questions available for this quiz.</div>;
-  }
-  
-  const question = quiz.questions[currentQuestion];
-  const response = responses[currentQuestion];
-  
+
   return (
-    <div className="quiz-container quiz-active">
-      <div className="quiz-header">
-        <h1>{quiz.title}</h1>
-        <div className="timer-container">
-          <span className={`timer ${timeLeft < 60 ? 'timer-warning' : ''}`}>
-            <span className="timer-icon">⏱️</span>
-            {formatTime(timeLeft)}
-          </span>
-        </div>
-      </div>
+    <div className="quiz-detail-container">
+      <Sidebar activeItem="courses" />
       
-      <div className="quiz-progress">
-        <div className="progress-bar">
-          <div 
-            className="progress-fill"
-            style={{ width: `${calculateProgress()}%` }}
-          ></div>
-        </div>
-        <div className="progress-stats">
-          <span>Question {currentQuestion + 1} of {quiz.questions.length}</span>
-          <span>{getUnansweredCount()} questions unanswered</span>
-        </div>
-      </div>
-      
-      <div className="question-container">
-        <div className="question-text">
-          <h3>Question {currentQuestion + 1}</h3>
-          <p>{question.question_text}</p>
-          
-          {question.image_data && (
-            <div className="question-image">
-              <img src={question.image_data} alt="Question" />
-            </div>
-          )}
-        </div>
+      <div className="admin-main-content">
+        <Header title={quiz.title} />
         
-        <div className="answer-container">
-          {question.question_type === 'multiple_choice' && question.options && (
-            <div className="options-list">
-              {question.options.map((option) => (
-                <label key={option.id} className="option-item">
-                  <input
-                    type="radio"
-                    name={`question-${question.id}`}
-                    checked={response?.optionId === option.id}
-                    onChange={() => handleOptionSelect(currentQuestion, option.id)}
-                  />
-                  <span className="option-text">{option.option_text}</span>
-                </label>
-              ))}
+        <div className="quiz-detail-content">
+          {!currentAttempt ? (
+            // Quiz Overview
+            <div className="quiz-overview">
+              <div className="quiz-header">
+                <h1>{quiz.title}</h1>
+                <div className="quiz-meta">
+                  <span>Course: {quiz.course_title}</span>
+                  <span>Time Limit: {quiz.time_limit_minutes} minutes</span>
+                  <span>Passing Score: {quiz.passing_score}%</span>
+                  <span>Max Attempts: {quiz.max_attempts}</span>
+                </div>
+              </div>
+
+              {quiz.description && (
+                <div className="quiz-description">
+                  <h3>Description</h3>
+                  <p>{quiz.description}</p>
+                </div>
+              )}
+
+              <div className="quiz-info">
+                <div className="info-grid">
+                  <div className="info-item">
+                    <label>Questions:</label>
+                    <span>{quiz.questions?.length || 0}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Available From:</label>
+                    <span>{formatDate(quiz.start_date)}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Available Until:</label>
+                    <span>{formatDate(quiz.end_date)}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Randomized:</label>
+                    <span>{quiz.is_randomized ? 'Yes' : 'No'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Student specific information */}
+              {auth.user.role === 'student' && (
+                <div className="student-info">
+                  <div className="attempts-info">
+                    <h3>Your Attempts</h3>
+                    <p>Attempts Used: {quiz.attempts || 0} / {quiz.max_attempts}</p>
+                    
+                    {quiz.attemptHistory && quiz.attemptHistory.length > 0 && (
+                      <div className="attempt-history">
+                        <h4>Previous Attempts:</h4>
+                        {quiz.attemptHistory.map((attempt, index) => (
+                          <div key={attempt.id} className="attempt-item">
+                            <span>Attempt {index + 1}: </span>
+                            <span>{attempt.score ? `${attempt.score}%` : 'In Progress'}</span>
+                            <span className={attempt.is_passing ? 'passed' : 'failed'}>
+                              {attempt.is_passing ? ' (Passed)' : ' (Failed)'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="quiz-actions">
+                    {quiz.canTake ? (
+                      <button 
+                        className="start-quiz-btn"
+                        onClick={handleStartQuiz}
+                      >
+                        {quiz.attempts > 0 ? 'Retake Quiz' : 'Start Quiz'}
+                      </button>
+                    ) : (
+                      <div className="cannot-take">
+                        <p className="error-message">
+                          {quiz.notAvailableReason || 'No attempts remaining'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="back-action">
+                <button className="secondary-btn" onClick={() => navigate(-1)}>
+                  ← Back to Course
+                </button>
+              </div>
             </div>
-          )}
-          
-          {question.question_type === 'fill_in_blank' && (
-            <div className="fill-blank-container">
-              <label>Your Answer:</label>
-              <input
-                type="text"
-                value={response?.textAnswer || ''}
-                onChange={(e) => handleTextAnswerChange(currentQuestion, e.target.value)}
-                placeholder="Type your answer here..."
-                className="fill-blank-input"
-              />
+          ) : (
+            // Quiz Taking Interface
+            <div className="quiz-taking">
+              <div className="quiz-header">
+                <h2>Taking Quiz: {quiz.title}</h2>
+                <div className="quiz-timer">
+                  Time Remaining: <span className={timeLeft <= 300 ? 'warning' : ''}>
+                    {formatTime(timeLeft)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="quiz-questions">
+                {currentAttempt.questions.map((question, index) => (
+                  <div key={question.id} className="question-item">
+                    <div className="question-header">
+                      <h3>Question {index + 1}</h3>
+                      <span className="question-points">({question.points} points)</span>
+                    </div>
+                    
+                    <div className="question-text">
+                      {question.text}
+                    </div>
+
+                    <div className="question-options">
+                      {question.type === 'multiple_choice' && question.options.map(option => (
+                        <label key={option.id} className="option-label">
+                          <input
+                            type="radio"
+                            name={`question-${question.id}`}
+                            value={option.id}
+                            checked={answers[question.id] === option.id}
+                            onChange={(e) => handleAnswerChange(question.id, parseInt(e.target.value))}
+                          />
+                          {option.option_text}
+                        </label>
+                      ))}
+
+                      {question.type === 'true_false' && question.options.map(option => (
+                        <label key={option.id} className="option-label">
+                          <input
+                            type="radio"
+                            name={`question-${question.id}`}
+                            value={option.id}
+                            checked={answers[question.id] === option.id}
+                            onChange={(e) => handleAnswerChange(question.id, parseInt(e.target.value))}
+                          />
+                          {option.option_text}
+                        </label>
+                      ))}
+
+                      {(question.type === 'short_answer' || question.type === 'essay') && (
+                        <textarea
+                          value={answers[question.id] || ''}
+                          onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                          placeholder="Enter your answer here..."
+                          rows={question.type === 'essay' ? 6 : 3}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="quiz-submit">
+                <button
+                  className="submit-quiz-btn"
+                  onClick={handleSubmitQuiz}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+                </button>
+              </div>
             </div>
           )}
         </div>
-      </div>
-      
-      <div className="navigation-buttons">
-        <button 
-          className="nav-btn prev-btn" 
-          onClick={handlePrevQuestion}
-          disabled={currentQuestion === 0}
-        >
-          Previous
-        </button>
-        
-        <button 
-          className="nav-btn next-btn" 
-          onClick={handleNextQuestion}
-          disabled={currentQuestion === quiz.questions.length - 1}
-        >
-          Next
-        </button>
-      </div>
-      
-      <div className="question-navigator">
-        <div className="navigator-label">Question Navigator:</div>
-        <div className="question-dots">
-          {quiz.questions.map((_, index) => (
-            <div 
-              key={index}
-              className={`question-dot ${index === currentQuestion ? 'active' : ''} ${
-                responses[index]?.isAnswered ? 'answered' : ''
-              }`}
-              onClick={() => jumpToQuestion(index)}
-            >
-              {index + 1}
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <div className="action-buttons">
-        <button className="submit-btn" onClick={handleSubmitQuiz}>
-          Submit {quiz.is_test ? 'Test' : 'Quiz'}
-        </button>
       </div>
     </div>
   );

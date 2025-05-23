@@ -1,4 +1,4 @@
-// src/App.js
+// src/App.js - Updated with proper component imports and route handling
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -10,18 +10,32 @@ import ResetPassword from './components/auth/ResetPassword';
 import ChangePasswordModal from './components/auth/ChangePasswordModal';
 import UnauthorizedPage from './components/common/UnauthorizedPage';
 import CourseDetail from './components/course/CourseDetail';
+import QuizDetail from './components/quiz/QuizDetail';
 import AuthContext from './context/AuthContext';
-import { ChatbotProvider } from './context/ChatbotContext'; // Import ChatbotProvider
-import Chatbot from './components/chatbot/Chatbot'; // Import Chatbot component
+import { ChatbotProvider } from './context/ChatbotContext';
+import Chatbot from './components/chatbot/Chatbot';
 import axios from 'axios';
 import './App.css';
 import config from './config';
 import SidebarManager from './components/common/SidebarManager';
+import AssignmentDetail from './components/assessment/AssignmentDetail';
 
-// Import Virtual Classroom components directly
+// Import Virtual Classroom components
 import VirtualClassroom from './components/classroom/VirtualClassroom';
 import SessionAnalytics from './components/classroom/SessionAnalytics';
 import SessionRecordingView from './components/classroom/SessionRecordingView';
+
+const GradeAssignment = React.lazy(() => 
+  import('./components/assessment/GradeAssignment').catch(() => ({
+    default: () => <div className="error-message">Grade Assignment component not found. Please check the file path.</div>
+  }))
+);
+
+const StudentProgressView = React.lazy(() => 
+  import('./components/course/StudentProgressView').catch(() => ({
+    default: () => <div className="error-message">Student Progress component not found. Please check the file path.</div>
+  }))
+);
 
 function App() {
   const [auth, setAuth] = useState({
@@ -32,7 +46,6 @@ function App() {
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-  // Get API URL and Google Client ID from environment variables
   const API_URL = config.apiUrl;
   const googleClientId = config.googleClientId || '';
 
@@ -41,9 +54,8 @@ function App() {
     SidebarManager.initialize();
   }, []);
 
-  // Set up axios defaults
+  // Set up axios defaults and check server status
   useEffect(() => {
-    // Check server status
     const checkServerStatus = async () => {
       try {
         const response = await axios.get(`${API_URL}/status`);
@@ -56,10 +68,9 @@ function App() {
     checkServerStatus();
   }, [API_URL]);
 
-  // Set up authentication from local storage
+  // Authentication initialization
   useEffect(() => {
     const initAuth = async () => {
-      // Check if user is authenticated (from localStorage)
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       
@@ -67,10 +78,8 @@ function App() {
         try {
           const user = JSON.parse(storedUser);
           
-          // Configure axios to use the token for future requests
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
-          // Verify token is still valid with the server
           try {
             await axios.get(`${API_URL}/users/me`);
             
@@ -81,13 +90,11 @@ function App() {
               isLoading: false
             });
             
-            // Check if password needs to be changed
             if (user.role === 'student' && !user.isPasswordChanged) {
               setShowPasswordModal(true);
             }
           } catch (error) {
             console.error('Token validation failed:', error);
-            // Token is invalid, clear localStorage
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             delete axios.defaults.headers.common['Authorization'];
@@ -128,7 +135,6 @@ function App() {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     
-    // Set authorization header for future requests
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     setAuth({
@@ -138,7 +144,6 @@ function App() {
       isLoading: false
     });
 
-    // Show password change modal for students on first login
     if (userData.role === 'student' && !userData.isPasswordChanged) {
       setShowPasswordModal(true);
     }
@@ -148,7 +153,6 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     
-    // Remove authorization header
     delete axios.defaults.headers.common['Authorization'];
     
     setAuth({
@@ -158,7 +162,6 @@ function App() {
       isLoading: false
     });
     
-    // Reset sidebar state before logout
     SidebarManager.setExpanded(false);
   };
 
@@ -178,95 +181,196 @@ function App() {
     return <div className="loading">Loading...</div>;
   }
 
-  // Create a ProtectedRoute component for reuse
   const ProtectedRoute = ({ children }) => {
     return auth.isAuthenticated ? children : <Navigate to="/login" />;
   };
 
+  const LazyWrapper = ({ children }) => (
+    <React.Suspense fallback={<div className="loading-spinner">Loading component...</div>}>
+      {children}
+    </React.Suspense>
+  );
+
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthContext.Provider value={{ auth, login, logout, updateUser }}>
-        {/* Add Toaster component here */}
         <ChatbotProvider>
-        <Toaster />
-        
-        <Router>
-          <div className="App">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
-              <Route path="/forgot-password" element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
-              <Route path="/reset-password/:token" element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
-              <Route path="/unauthorized" element={<UnauthorizedPage />} />
-              
-              {/* Role-based routes */}
-              <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
-              <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
-              <Route path="/users" element={<RoleBasedRoute component="users" />} />
-              <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
-              <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
-              <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
-              
-              {/* Course Detail Route */}
-              <Route path="/courses/:courseId/detail" element={
-                <ProtectedRoute>
-                  <CourseDetail />
-                </ProtectedRoute>
-              } />
-              
-              {/* Quiz Detail Routes */}
-              <Route path="/quizzes/:quizId" element={<RoleBasedRoute component="quizDetail" />} />
-              
-              {/* Assignment Detail Route - can be added when implemented */}
-              <Route path="/assignments/:assignmentId" element={<RoleBasedRoute component="assignmentDetail" />} />
-               
-              {/* Virtual Classroom routes */}
-              {/* Main route */}
-              <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} />
-              
-              {/* Alternative path for consistency with component navigation */}
-              <Route path="/virtual-classroom" element={<Navigate to="/classroom" />} />
-              
-              {/* Sub-routes for specific classroom features */}
-              <Route 
-                path="/classroom/analytics/:sessionId" 
-                element={
-                  <ProtectedRoute>
-                    <SessionAnalytics />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/classroom/recording/:sessionId/:recordingId" 
-                element={
-                  <ProtectedRoute>
-                    <SessionRecordingView />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/classroom/recording/:sessionId" 
-                element={
-                  <ProtectedRoute>
-                    <SessionRecordingView />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Assessment tools route */}
-              <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} />
+          <Toaster />
+          
+          <Router>
+            <div className="App">
+              <Routes>
+                {/* Public routes */}
+                <Route 
+                  path="/login" 
+                  element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} 
+                />
+                <Route 
+                  path="/forgot-password" 
+                  element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} 
+                />
+                <Route 
+                  path="/reset-password/:token" 
+                  element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} 
+                />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                
+                {/* Dashboard routes */}
+                <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
+                
+                {/* Course management routes */}
+                <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
+                <Route 
+                  path="/courses/:courseId/detail" 
+                  element={
+                    <ProtectedRoute>
+                      <CourseDetail />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Assessment routes with lazy loading */}
+                <Route 
+                  path="/quizzes/:quizId" 
+                  element={
+                    <ProtectedRoute>
+                      <QuizDetail />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/assignments/:assignmentId" 
+                  element={
+                    <ProtectedRoute>
+                      <LazyWrapper>
+                        <AssignmentDetail />
+                      </LazyWrapper>
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Grading routes (instructors/admins only) */}
+                <Route 
+                  path="/courses/:courseId/assignments/:assignmentId/submissions/:submissionId/grade" 
+                  element={
+                    <ProtectedRoute>
+                      <LazyWrapper>
+                        <GradeAssignment />
+                      </LazyWrapper>
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Student progress routes (instructors/admins only) */}
+                <Route 
+                  path="/courses/:courseId/students/:studentId" 
+                  element={
+                    <ProtectedRoute>
+                      <LazyWrapper>
+                        <StudentProgressView />
+                      </LazyWrapper>
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Virtual Classroom routes */}
+                <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} />
+                <Route path="/virtual-classroom" element={<Navigate to="/classroom" />} />
+                <Route 
+                  path="/classroom/analytics/:sessionId" 
+                  element={
+                    <ProtectedRoute>
+                      <SessionAnalytics />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/classroom/recording/:sessionId/:recordingId" 
+                  element={
+                    <ProtectedRoute>
+                      <SessionRecordingView />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/classroom/recording/:sessionId" 
+                  element={
+                    <ProtectedRoute>
+                      <SessionRecordingView />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Admin routes */}
+                <Route path="/users" element={<RoleBasedRoute component="users" />} />
+                <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
+                <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
+                
+                {/* Assessment tools route */}
+                <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} />
+                
+                {/* Messages route */}
+                <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
+                
+                {/* Course export/import routes */}
+                <Route 
+                  path="/courses/:courseId/export" 
+                  element={
+                    <ProtectedRoute>
+                      <RoleBasedRoute component="courseExport" />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/course-import" 
+                  element={
+                    <ProtectedRoute>
+                      <RoleBasedRoute component="courseImport" />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Analytics routes */}
+                <Route 
+                  path="/analytics" 
+                  element={<RoleBasedRoute component="analytics" />} 
+                />
+                <Route 
+                  path="/analytics/course/:courseId" 
+                  element={
+                    <ProtectedRoute>
+                      <RoleBasedRoute component="courseAnalytics" />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* API testing route (development only) */}
+                {process.env.NODE_ENV === 'development' && (
+                  <Route 
+                    path="/api-test" 
+                    element={
+                      <ProtectedRoute>
+                        <RoleBasedRoute component="apiTest" />
+                      </ProtectedRoute>
+                    } 
+                  />
+                )}
+                
+                {/* Default routes */}
+                <Route 
+                  path="/" 
+                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} 
+                />
+                <Route 
+                  path="*" 
+                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} 
+                />
+              </Routes>
 
-              {/* Default routes */}
-              <Route path="/" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
-              <Route path="*" element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} />
-            </Routes>
-
+              {/* Password change modal */}
               {showPasswordModal && (
                 <ChangePasswordModal
                   onClose={() => {
-                    // Prevent closing if password hasn't been changed
                     if (auth.user.isPasswordChanged) {
                       setShowPasswordModal(false);
                     }
@@ -275,7 +379,7 @@ function App() {
                 />
               )}
               
-              {/* Only show chatbot for authenticated users */}
+              {/* Chatbot for authenticated users */}
               {auth.isAuthenticated && <Chatbot />}
             </div>
           </Router>

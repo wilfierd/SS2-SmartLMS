@@ -1,0 +1,485 @@
+/* src/components/assessment/GradeAssignment.css */
+.grade-assignment-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.grade-assignment-content {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.grade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.grade-info h1 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.grade-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.grade-meta span {
+    padding: 6px 12px;
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.student-name {
+    background-color: #e3f2fd !important;
+    color: #1976d2 !important;
+    font-weight: 600;
+}
+
+.assignment-title {
+    background-color: #f3e5f5 !important;
+    color: #7b1fa2 !important;
+}
+
+.max-points {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+.submission-date {
+    background-color: #e8f5e8 !important;
+    color: #2e7d32 !important;
+}
+
+.grade-main-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 25px;
+}
+
+.submission-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.submission-panel h3 {
+    background: #f8f9fa;
+    margin: 0;
+    padding: 20px;
+    color: #2c3e50;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.submission-content {
+    padding: 25px;
+}
+
+.submission-file {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.file-icon {
+    font-size: 1.5rem;
+}
+
+.file-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.file-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.download-btn {
+    background: #28a745;
+    color: white;
+}
+
+.download-btn:hover {
+    background: #218838;
+}
+
+.view-btn {
+    background: #007bff;
+    color: white;
+}
+
+.view-btn:hover {
+    background: #0056b3;
+}
+
+.submission-text-section {
+    margin-top: 20px;
+}
+
+.submission-text-section h4 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.submission-text {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+    line-height: 1.6;
+    color: #495057;
+    white-space: pre-wrap;
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.no-text-submission {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.grading-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.grading-panel h3 {
+    background: #007bff;
+    color: white;
+    margin: 0;
+    padding: 20px;
+    font-size: 1.2rem;
+    border-radius: 8px 8px 0 0;
+}
+
+.grading-form {
+    padding: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.grade-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.grade-input {
+    width: 80px;
+    padding: 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.grade-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.grade-separator {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.max-grade {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.grade-percentage {
+    margin-left: 15px;
+    padding: 8px 12px;
+    background: #e9ecef;
+    border-radius: 15px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.feedback-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.feedback-textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.feedback-help {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.grading-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.submit-grade-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 15px 20px;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-grade-btn:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.submit-grade-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #545b62;
+    transform: translateY(-1px);
+}
+
+.existing-grade {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.existing-grade h4 {
+    margin: 0 0 15px 0;
+    color: #0c5460;
+    font-size: 1.1rem;
+}
+
+.grade-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.current-grade {
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.grade-date {
+    color: #495057;
+    font-size: 0.875rem;
+}
+
+.existing-feedback {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+    color: #495057;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.update-grade-note {
+    color: #856404;
+    background: #fff3cd;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-top: 10px;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    font-size: 1.2rem;
+    color: #6c757d;
+}
+
+.error-message {
+    text-align: center;
+    padding: 40px;
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    margin: 20px;
+}
+
+/* File viewer styles */
+.file-viewer {
+    width: 100%;
+    height: 500px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+.file-viewer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 6px;
+}
+
+.file-viewer-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .grade-main-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .grading-panel {
+        position: relative;
+        top: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .grade-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+
+    .grade-meta {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .grade-meta span {
+        text-align: center;
+    }
+
+    .grade-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .grade-percentage {
+        margin-left: 0;
+        text-align: center;
+    }
+
+    .file-actions {
+        flex-direction: column;
+    }
+
+    .grading-actions {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .grade-assignment-content {
+        padding: 10px;
+    }
+
+    .submission-panel,
+    .grading-panel {
+        margin: 0 -10px;
+        border-radius: 0;
+    }
+}

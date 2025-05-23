@@ -998,176 +998,150 @@ CREATE TABLE IF NOT EXISTS quiz_attempts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   quiz_id INT NOT NULL,
   student_id INT NOT NULL,
-  start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   end_time TIMESTAMP NULL,
-  score DECIMAL(5,2) DEFAULT NULL,
-  passed BOOLEAN DEFAULT NULL,
-  is_completed BOOLEAN DEFAULT FALSE,
+  score DECIMAL(5,2) NULL,
+  is_passing BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
-  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_quiz_attempts_quiz (quiz_id),
+  INDEX idx_quiz_attempts_student (student_id),
+  INDEX idx_quiz_attempts_score (score)
 );
 
--- Quiz Responses
-CREATE TABLE IF NOT EXISTS quiz_responses (
+-- Quiz answer records table
+CREATE TABLE IF NOT EXISTS quiz_answer_records (
   id INT AUTO_INCREMENT PRIMARY KEY,
   attempt_id INT NOT NULL,
   question_id INT NOT NULL,
-  selected_option_id INT DEFAULT NULL, -- For multiple choice
-  text_answer VARCHAR(255) DEFAULT NULL, -- For fill-in-blank
+  selected_option_id INT NULL,
+  text_answer TEXT NULL,
   is_correct BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE,
   FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE,
-  FOREIGN KEY (selected_option_id) REFERENCES question_options(id) ON DELETE SET NULL
+  FOREIGN KEY (selected_option_id) REFERENCES quiz_options(id) ON DELETE SET NULL,
+  INDEX idx_answer_records_attempt (attempt_id),
+  INDEX idx_answer_records_question (question_id)
 );
 
--- Create necessary indexes for better performance
-CREATE INDEX idx_assignments_course ON assignments(course_id);
-CREATE INDEX idx_assignments_lesson ON assignments(lesson_id);
-CREATE INDEX idx_submissions_assignment ON assignment_submissions(assignment_id);
-CREATE INDEX idx_submissions_student ON assignment_submissions(student_id);
-CREATE INDEX idx_quizzes_course ON quizzes(course_id);
-CREATE INDEX idx_quizzes_lesson ON quizzes(lesson_id);
-CREATE INDEX idx_questions_quiz ON quiz_questions(quiz_id);
-CREATE INDEX idx_options_question ON question_options(question_id);
-CREATE INDEX idx_answers_question ON fill_in_answers(question_id);
-CREATE INDEX idx_attempts_quiz ON quiz_attempts(quiz_id);
-CREATE INDEX idx_attempts_student ON quiz_attempts(student_id);
-CREATE INDEX idx_responses_attempt ON quiz_responses(attempt_id);
 
-ALTER TABLE quizzes ADD COLUMN is_test BOOLEAN DEFAULT FALSE;
-ALTER TABLE quiz_questions ADD COLUMN image_data TEXT;
-ALTER TABLE quiz_questions MODIFY COLUMN question_type VARCHAR(200);
-ALTER TABLE assignments ADD COLUMN allowed_file_types TEXT;
-ALTER TABLE assignments ADD COLUMN max_file_size VARCHAR(10);
-
-CREATE TABLE IF NOT EXISTS student_feedback (
+-- Student notes table (for instructor notes about students)
+CREATE TABLE IF NOT EXISTS student_notes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   course_id INT NOT NULL,
   student_id INT NOT NULL,
-  instructor_id INT NOT NULL,
-  feedback TEXT NOT NULL,
+  notes TEXT,
+  created_by INT NOT NULL,
+  updated_by INT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
   FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_feedback (course_id, student_id)
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE KEY unique_student_notes (course_id, student_id),
+  INDEX idx_student_notes_course (course_id),
+  INDEX idx_student_notes_student (student_id)
 );
 
-CREATE TABLE IF NOT EXISTS student_activity (
+-- Virtual sessions table (if you plan to use virtual classroom features)
+CREATE TABLE IF NOT EXISTS virtual_sessions (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  student_id INT NOT NULL,
   course_id INT NOT NULL,
-  activity_type VARCHAR(50) NOT NULL,
-  activity_data JSON,
-  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  instructor_id INT NOT NULL,
+  session_url VARCHAR(512),
+  session_id VARCHAR(255),
+  scheduled_start TIMESTAMP NOT NULL,
+  scheduled_end TIMESTAMP NOT NULL,
+  actual_start TIMESTAMP NULL,
+  actual_end TIMESTAMP NULL,
+  status ENUM('scheduled', 'live', 'ended', 'cancelled') DEFAULT 'scheduled',
+  max_participants INT DEFAULT 50,
+  is_recorded BOOLEAN DEFAULT FALSE,
+  recording_url VARCHAR(512),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_virtual_sessions_course (course_id),
+  INDEX idx_virtual_sessions_instructor (instructor_id),
+  INDEX idx_virtual_sessions_status (status),
+  INDEX idx_virtual_sessions_start (scheduled_start)
 );
 
--- ALTER TABLE enrollments 
--- ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST,
--- DROP COLUMN completion_status;
+-- Session participants table
+CREATE TABLE IF NOT EXISTS session_participants (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  user_id INT NOT NULL,
+  joined_at TIMESTAMP NULL,
+  left_at TIMESTAMP NULL,
+  duration_minutes INT DEFAULT 0,
+  is_present BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_session_participant (session_id, user_id),
+  INDEX idx_session_participants_session (session_id),
+  INDEX idx_session_participants_user (user_id)
+);
 
--- -- UPDATE
--- -- Add test quiz attempts and scores
--- -- First create some quizzes
--- INSERT INTO quizzes (course_id, lesson_id, title, description, time_limit_minutes, passing_score, is_test)
--- VALUES
--- ((SELECT id FROM courses WHERE code = 'CS101'),
---  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'CS101') LIMIT 1),
---  'Programming Basics Quiz', 'Test your understanding of programming fundamentals', 30, 70, false),
- 
--- ((SELECT id FROM courses WHERE code = 'WD101'),
---  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'WD101') LIMIT 1),
---  'HTML & CSS Quiz', 'Test your understanding of web fundamentals', 30, 70, false),
- 
--- ((SELECT id FROM courses WHERE code = 'DB101'),
---  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'DB101') LIMIT 1),
---  'Database Concepts Quiz', 'Test your understanding of database concepts', 30, 70, false);
+-- Notifications table (optional - for system notifications)
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  type ENUM('info', 'success', 'warning', 'error') DEFAULT 'info',
+  is_read BOOLEAN DEFAULT FALSE,
+  related_type ENUM('course', 'assignment', 'quiz', 'discussion', 'grade') NULL,
+  related_id INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMP NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_notifications_user (user_id),
+  INDEX idx_notifications_read (is_read),
+  INDEX idx_notifications_created (created_at)
+);
 
--- -- Add quiz attempts for students
--- INSERT INTO quiz_attempts (quiz_id, student_id, start_time, end_time, score, passed, is_completed)
--- VALUES
--- -- Student 1
--- ((SELECT id FROM quizzes WHERE title = 'Programming Basics Quiz'),
---  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
---  '2023-02-01 10:00:00', '2023-02-01 10:25:00', 85, true, true),
- 
--- ((SELECT id FROM quizzes WHERE title = 'HTML & CSS Quiz'),
---  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
---  '2023-03-01 14:00:00', '2023-03-01 14:28:00', 78, true, true),
+-- Course analytics table (for tracking course metrics)
+CREATE TABLE IF NOT EXISTS course_analytics (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  metric_name VARCHAR(100) NOT NULL,
+  metric_value DECIMAL(10,2) NOT NULL,
+  metric_date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_course_metric_date (course_id, metric_name, metric_date),
+  INDEX idx_course_analytics_course (course_id),
+  INDEX idx_course_analytics_date (metric_date)
+);
 
--- -- Student 2
--- ((SELECT id FROM quizzes WHERE title = 'Programming Basics Quiz'),
---  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
---  '2023-02-05 11:00:00', '2023-02-05 11:22:00', 92, true, true),
- 
--- ((SELECT id FROM quizzes WHERE title = 'Database Concepts Quiz'),
---  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
---  '2023-02-20 13:00:00', '2023-02-20 13:27:00', 88, true, true),
-
--- -- Student 3
--- ((SELECT id FROM quizzes WHERE title = 'HTML & CSS Quiz'),
---  (SELECT id FROM users WHERE email = 'teststudent3@example.com'),
---  '2023-03-15 09:00:00', '2023-03-15 09:24:00', 95, true, true);
-
--- -- Add some assignments
--- INSERT INTO assignments (course_id, lesson_id, title, description, max_points, due_date, allow_late_submissions)
--- VALUES
--- ((SELECT id FROM courses WHERE code = 'CS101'),
---  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'CS101') LIMIT 1),
---  'Programming Basics Assignment', 'Create a simple program demonstrating variables and control flow', 
---  100, '2023-02-15 23:59:59', true),
- 
--- ((SELECT id FROM courses WHERE code = 'WD101'),
---  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'WD101') LIMIT 1),
---  'Personal Portfolio Page', 'Create a personal portfolio page using HTML and CSS', 
---  100, '2023-03-15 23:59:59', false),
- 
--- ((SELECT id FROM courses WHERE code = 'DB101'),
---  (SELECT id FROM course_modules WHERE course_id = (SELECT id FROM courses WHERE code = 'DB101') LIMIT 1),
---  'Database Design Assignment', 'Design a normalized database schema for a given scenario', 
---  100, '2023-02-28 23:59:59', false);
-
--- -- Mock assignment submissions (without actual files)
--- INSERT INTO assignment_submissions (assignment_id, student_id, file_path, file_type, file_size, submission_date, is_late, grade, feedback, graded_by)
--- VALUES
--- -- Student 1
--- ((SELECT id FROM assignments WHERE title = 'Programming Basics Assignment'),
---  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
---  '/mock/path/student1_programming.py', 'py', 2500,
---  '2023-02-14 10:00:00', false, 88, 'Good work! Clear variable names and logic.', 
---  (SELECT id FROM users WHERE email = 'john.smith@lms.com')),
- 
--- ((SELECT id FROM assignments WHERE title = 'Personal Portfolio Page'),
---  (SELECT id FROM users WHERE email = 'teststudent1@example.com'),
---  '/mock/path/student1_portfolio.zip', 'zip', 15000,
---  '2023-03-14 22:00:00', false, 85, 'Nice design! Could improve mobile responsiveness.', 
---  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com')),
-
--- -- Student 2
--- ((SELECT id FROM assignments WHERE title = 'Programming Basics Assignment'),
---  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
---  '/mock/path/student2_programming.py', 'py', 3200,
---  '2023-02-15 09:00:00', false, 95, 'Excellent work! Well-structured and efficient code.', 
---  (SELECT id FROM users WHERE email = 'john.smith@lms.com')),
- 
--- ((SELECT id FROM assignments WHERE title = 'Database Design Assignment'),
---  (SELECT id FROM users WHERE email = 'teststudent2@example.com'),
---  '/mock/path/student2_db_design.pdf', 'pdf', 5000,
---  '2023-02-25 14:30:00', false, 92, 'Very well normalized schema with clear relationships.', 
---  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com')),
-
--- -- Student 3
--- ((SELECT id FROM assignments WHERE title = 'Personal Portfolio Page'),
---  (SELECT id FROM users WHERE email = 'teststudent3@example.com'),
---  '/mock/path/student3_portfolio.zip', 'zip', 18000,
---  '2023-03-10 12:45:00', false, 98, 'Outstanding work! Creative design and well-structured code.', 
---  (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com'));
-
-
+-- User activity log table (for tracking user engagement)
+CREATE TABLE IF NOT EXISTS user_activity_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  activity_type VARCHAR(50) NOT NULL,
+  activity_description VARCHAR(255),
+  course_id INT NULL,
+  lesson_id INT NULL,
+  assignment_id INT NULL,
+  quiz_id INT NULL,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
+  FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL,
+  FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE SET NULL,
+  FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE SET NULL,
+  INDEX idx_activity_log_user (user_id),
+  INDEX idx_activity_log_type (activity_type),
+  INDEX idx_activity_log_created (created_at)
+);

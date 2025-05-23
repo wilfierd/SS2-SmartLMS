@@ -1,4 +1,225 @@
 /* src/components/course/CourseStatistics.css */
+/* Progress percentage display */
+.progress-percentage {
+    text-align: center;
+    margin-top: 5px;
+    font-weight: 600;
+    color: #2ecc71;
+}
+
+/* Quiz performance stats */
+.quiz-performance {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.performance-label {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.performance-stat {
+    font-size: 16px;
+}
+
+.performance-stat .passing-count {
+    color: #27ae60;
+    font-weight: 700;
+}
+
+.performance-stat .total-attempts {
+    color: #666;
+    margin: 0 5px;
+}
+
+.performance-stat .percentage {
+    color: #3498db;
+    font-weight: 600;
+}
+
+/* Assignment rates */
+.assignment-rates {
+    margin-top: 20px;
+}
+
+.rate-item {
+    margin-bottom: 15px;
+}
+
+.rate-label {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.rate-meter {
+    height: 20px;
+    background-color: #f1f1f1;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.meter-fill.submission-fill {
+    background-color: #3498db;
+}
+
+.meter-fill.grading-fill {
+    background-color: #e67e22;
+}
+
+/* Average grade display */
+.average-grade {
+    margin-top: 15px;
+    text-align: center;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.grade-label {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.grade-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e67e22;
+}
+
+/* Discussion stats */
+.discussion-stats .stat-value {
+    color: #9b59b6;
+}
+
+.participation-rate {
+    margin-top: 15px;
+    text-align: center;
+    padding: 10px;
+    background-color: #f3e5f5;
+    border-radius: 6px;
+}
+
+.participation-label {
+    font-size: 13px;
+    color: #7b1fa2;
+    margin-bottom: 5px;
+}
+
+.participation-percentage {
+    font-size: 20px;
+    font-weight: 700;
+    color: #9b59b6;
+}
+
+/* Trend chart */
+.trend-chart {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+}
+
+.trend-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 150px;
+    margin-bottom: 20px;
+}
+
+.trend-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+}
+
+.trend-month {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.trend-bars {
+    display: flex;
+    gap: 5px;
+    align-items: flex-end;
+    height: 100px;
+}
+
+.trend-bar {
+    width: 25px;
+    min-height: 2px;
+    border-radius: 2px 2px 0 0;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.trend-bar.enrollments {
+    background-color: #3498db;
+}
+
+.trend-bar.completions {
+    background-color: #27ae60;
+}
+
+.bar-value {
+    font-size: 10px;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.trend-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.trend-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trend-legend .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.trend-legend .legend-color.enrollments {
+    background-color: #3498db;
+}
+
+.trend-legend .legend-color.completions {
+    background-color: #27ae60;
+}
+
+/* Error states */
+.statistics-error {
+    padding: 40px;
+    text-align: center;
+    background-color: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 8px;
+    margin: 20px;
+}
+
+.statistics-error h3 {
+    color: #c53030;
+    margin-bottom: 10px;
+}
+
+.statistics-error p {
+    color: #744210;
+    margin-bottom: 10px;
+}
+
 .course-statistics-container {
     background-color: white;
     border-radius: 8px;

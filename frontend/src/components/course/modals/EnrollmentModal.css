@@ -1,0 +1,367 @@
+/* src/components/course/modals/EnrollmentModal.css */
+.enrollment-modal {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    position: relative;
+}
+
+.modal-content {
+    padding: 30px;
+}
+
+.enrollment-info {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.enrollment-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.enrollment-info h3 {
+    margin: 0 0 15px 0;
+    color: #1f2937;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.enrollment-info p {
+    color: #6b7280;
+    line-height: 1.6;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.enrollment-form {
+    margin-bottom: 25px;
+}
+
+.enrollment-benefits {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border: 1px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.enrollment-benefits h4 {
+    margin: 0 0 20px 0;
+    color: #0c4a6e;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.enrollment-benefits ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.enrollment-benefits li {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 0;
+    color: #1e40af;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+}
+
+.enrollment-benefits li:last-child {
+    border-bottom: none;
+}
+
+.benefit-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    width: 30px;
+    text-align: center;
+}
+
+.enrollment-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.cancel-btn {
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #d1d5db;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cancel-btn:hover:not(:disabled) {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    transform: translateY(-2px);
+}
+
+.cancel-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.enroll-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: 2px solid #10b981;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+}
+
+.enroll-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669, #047857);
+    border-color: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.5);
+}
+
+.enroll-btn:disabled {
+    background: #9ca3af;
+    border-color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+.enrollment-terms {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.enrollment-terms p {
+    margin: 0;
+}
+
+.enrollment-terms small {
+    color: #6b7280;
+    line-height: 1.5;
+    font-size: 0.875rem;
+}
+
+/* Enrollment key input styling */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: inherit;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input:required:invalid {
+    border-color: #dc2626;
+}
+
+.form-group input:required:valid {
+    border-color: #10b981;
+}
+
+/* Key input section highlighting */
+.key-input-section {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 2px solid #ef4444;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.key-input-section::before {
+    content: '🔑';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    border: 2px solid #ef4444;
+}
+
+.key-input-section label {
+    color: #991b1b !important;
+    font-weight: 700;
+}
+
+.key-input-section input {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.key-input-section input:focus {
+    background: white;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Loading animation */
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success animation */
+.enrollment-success {
+    animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Hover effects for benefits */
+.enrollment-benefits li {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 0 -12px;
+}
+
+.enrollment-benefits li:hover {
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateX(5px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .enrollment-modal {
+        max-width: 95vw;
+        border-radius: 12px;
+    }
+
+    .modal-content {
+        padding: 20px;
+    }
+
+    .enrollment-info h3 {
+        font-size: 1.3rem;
+    }
+
+    .enrollment-benefits {
+        padding: 20px;
+    }
+
+    .enrollment-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .cancel-btn,
+    .enroll-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 16px 24px;
+    }
+
+    .enrollment-benefits li {
+        padding: 10px 0;
+        margin: 0;
+    }
+
+    .enrollment-benefits li:hover {
+        transform: none;
+        margin: 0 -15px;
+        padding: 10px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 15px;
+    }
+
+    .enrollment-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .enrollment-info h3 {
+        font-size: 1.2rem;
+    }
+
+    .enrollment-benefits {
+        padding: 15px;
+    }
+
+    .benefit-icon {
+        font-size: 1.1rem;
+        width: 25px;
+    }
+
+    .enrollment-benefits li {
+        gap: 12px;
+        font-size: 0.9rem;
+    }
+}

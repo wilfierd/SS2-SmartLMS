@@ -2,11 +2,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
-import axios from 'axios';
-import config from '../../config';
-import notification from '../../utils/notification';
 import Sidebar from '../common/Sidebar';
 import Header from '../common/Header';
+import courseService from '../../services/courseService';
+import notification from '../../utils/notification';
 import './GradeAssignment.css';
 
 const GradeAssignment = () => {
@@ -15,246 +14,367 @@ const GradeAssignment = () => {
   const { auth } = useContext(AuthContext);
   
   const [submission, setSubmission] = useState(null);
-  const [student, setStudent] = useState(null);
   const [assignment, setAssignment] = useState(null);
-  const [grade, setGrade] = useState('');
-  const [feedback, setFeedback] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const API_URL = config.apiUrl;
-  
-  // Check if user is authorized (instructor or admin)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gradeData, setGradeData] = useState({
+    grade: '',
+    feedback: ''
+  });
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
-    if (auth.user.role !== 'instructor' && auth.user.role !== 'admin') {
-      notification.error('You do not have permission to grade assignments');
-      navigate(`/courses/${courseId}`);
-    }
-  }, [auth.user.role, courseId, navigate]);
-  
-  // Fetch submission details
-  useEffect(() => {
-    const fetchSubmissionDetails = async () => {
+    fetchSubmissionData();
+  }, [submissionId]);
+
+  const fetchSubmissionData = async () => {
+    try {
       setIsLoading(true);
-      try {
-        // Fetch submission with student and assignment details
-        const response = await axios.get(
-          `${API_URL}/submissions/${submissionId}/details`, 
-          { headers: { Authorization: `Bearer ${auth.token}` } }
-        );
-        
-        setSubmission(response.data.submission);
-        setStudent(response.data.student);
-        setAssignment(response.data.assignment);
-        
-        // Pre-fill grade and feedback if already graded
-        if (response.data.submission.is_graded) {
-          setGrade(response.data.submission.grade);
-          setFeedback(response.data.submission.feedback || '');
-        }
-      } catch (error) {
-        console.error('Error fetching submission details:', error);
-        notification.error('Failed to load submission. Please try again.');
-        navigate(`/courses/${courseId}/assignments/${assignmentId}`);
-      } finally {
-        setIsLoading(false);
+      
+      // Get assignment details which includes submission info
+      const assignmentData = await courseService.getAssignment(assignmentId);
+      setAssignment(assignmentData);
+      
+      // Find the specific submission
+      const submissionToGrade = assignmentData.submissions?.find(
+        sub => sub.id === parseInt(submissionId)
+      );
+      
+      if (!submissionToGrade) {
+        notification.error('Submission not found');
+        navigate(-1);
+        return;
       }
-    };
-    
-    if (courseId && assignmentId && submissionId && auth.token) {
-      fetchSubmissionDetails();
+      
+      setSubmission(submissionToGrade);
+      
+      // Pre-fill existing grade data if available
+      if (submissionToGrade.is_graded) {
+        setGradeData({
+          grade: submissionToGrade.grade || '',
+          feedback: submissionToGrade.feedback || ''
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error fetching submission:', error);
+      notification.error('Failed to load submission details');
+      navigate(-1);
+    } finally {
+      setIsLoading(false);
     }
-  }, [courseId, assignmentId, submissionId, auth.token, API_URL, navigate]);
-  
-  // Handle grade submission
+  };
+
+  const validateGrade = () => {
+    const newErrors = {};
+    
+    if (!gradeData.grade && gradeData.grade !== 0) {
+      newErrors.grade = 'Grade is required';
+    } else {
+      const grade = parseFloat(gradeData.grade);
+      if (isNaN(grade) || grade < 0 || grade > assignment.max_points) {
+        newErrors.grade = `Grade must be between 0 and ${assignment.max_points}`;
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    setGradeData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
   const handleSubmitGrade = async (e) => {
     e.preventDefault();
     
-    // Validate grade
-    if (!grade || isNaN(grade) || parseFloat(grade) < 0 || parseFloat(grade) > assignment.max_points) {
-      notification.error(`Grade must be a number between 0 and ${assignment.max_points}`);
+    if (!validateGrade()) {
       return;
     }
     
-    setIsSaving(true);
+    setIsSubmitting(true);
     
     try {
-      // Submit grade
-      await axios.post(
-        `${API_URL}/submissions/${submissionId}/grade`,
-        {
-          grade: parseFloat(grade),
-          feedback: feedback
-        },
-        { headers: { Authorization: `Bearer ${auth.token}` } }
-      );
-      
-      notification.success('Assignment graded successfully');
-      
-      // Update local state
-      setSubmission({
-        ...submission,
-        is_graded: true,
-        grade: parseFloat(grade),
-        feedback: feedback,
-        graded_by: auth.user.id,
-        graded_at: new Date().toISOString()
+      await courseService.gradeSubmission(submissionId, {
+        grade: parseFloat(gradeData.grade),
+        feedback: gradeData.feedback.trim() || null
       });
       
-      // Navigate back to assignment overview
-      navigate(`/courses/${courseId}/assignments/${assignmentId}`);
+      notification.success('Grade submitted successfully');
+      navigate(`/assignments/${assignmentId}`);
+      
     } catch (error) {
-      console.error('Error grading submission:', error);
-      notification.error('Failed to save grade. Please try again.');
+      console.error('Error submitting grade:', error);
+      notification.error('Failed to submit grade');
     } finally {
-      setIsSaving(false);
+      setIsSubmitting(false);
     }
   };
-  
-  // Format date for display
+
+  const calculatePercentage = () => {
+    if (!gradeData.grade || !assignment) return 0;
+    const grade = parseFloat(gradeData.grade);
+    return ((grade / assignment.max_points) * 100).toFixed(1);
+  };
+
+  const getGradeColor = () => {
+    const percentage = parseFloat(calculatePercentage());
+    if (percentage >= 90) return '#10b981'; // Green
+    if (percentage >= 80) return '#f59e0b'; // Yellow
+    if (percentage >= 70) return '#f97316'; // Orange
+    return '#ef4444'; // Red
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'short',
+      month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
-  
+
+  const downloadFile = (filePath, fileName) => {
+    const link = document.createElement('a');
+    link.href = filePath;
+    link.download = fileName || 'submission-file';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (isLoading) {
-    return <div className="loading-spinner">Loading submission details...</div>;
+    return <div className="loading-spinner">Loading submission...</div>;
   }
-  
-  if (!submission || !student || !assignment) {
-    return <div className="error-message">Submission not found or you don't have access.</div>;
+
+  if (!submission || !assignment) {
+    return <div className="error-message">Submission not found</div>;
   }
-  
+
   return (
     <div className="grade-assignment-container">
       <Sidebar activeItem="courses" />
       
       <div className="admin-main-content">
-        <Header title="Grade Assignment" />
+        <Header title={`Grade Submission`} />
         
-        <div className="grade-content">
-          <div className="breadcrumb">
-            <span onClick={() => navigate(`/courses/${courseId}`)}>Course</span> &gt; 
-            <span onClick={() => navigate(`/courses/${courseId}/assignments/${assignmentId}`)}>Assignment</span> &gt; 
-            <span>Grade Submission</span>
-          </div>
-          
-          <div className="grading-header">
-            <h1>{assignment.title}</h1>
-            <p className="assignment-description">{assignment.description}</p>
-          </div>
-          
-          <div className="submission-details">
-            <div className="detail-row">
-              <span className="detail-label">Student:</span>
-              <span className="detail-value">{student.first_name} {student.last_name} ({student.email})</span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Submitted:</span>
-              <span className="detail-value">
-                {formatDate(submission.submission_date)}
-                {submission.is_late && <span className="late-badge">LATE</span>}
-              </span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Due Date:</span>
-              <span className="detail-value">{formatDate(assignment.due_date)}</span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Max Points:</span>
-              <span className="detail-value">{assignment.max_points}</span>
-            </div>
-          </div>
-          
-          <div className="submission-content">
-            <h2>Submission</h2>
-            {submission.file_path ? (
-              <div className="submission-file">
-                <a 
-                  href={API_URL + submission.file_path} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="file-link"
-                >
-                  <span className="file-icon">📎</span>
-                  View Submitted File
-                </a>
-                <p className="file-info">
-                  File Type: {submission.file_type.toUpperCase()} | 
-                  Size: {(submission.file_size / 1024).toFixed(2)} MB
-                </p>
+        <div className="grade-assignment-content">
+          {/* Grade Header */}
+          <div className="grade-header">
+            <div className="grade-info">
+              <h1>Grade Submission</h1>
+              <div className="grade-meta">
+                <span className="student-name">{submission.student_name}</span>
+                <span className="assignment-title">{assignment.title}</span>
+                <span className="max-points">Max: {assignment.max_points} points</span>
+                <span className="submission-date">
+                  Submitted: {formatDate(submission.submission_date)}
+                </span>
               </div>
-            ) : (
-              <p className="no-file">No file submitted</p>
-            )}
+            </div>
             
-            {submission.comments && (
-              <div className="submission-comments">
-                <h3>Student Comments</h3>
-                <div className="comments-box">
-                  {submission.comments}
+            <div className="action-buttons">
+              <button 
+                className="back-btn"
+                onClick={() => navigate(`/assignments/${assignmentId}`)}
+              >
+                ← Back to Assignment
+              </button>
+            </div>
+          </div>
+
+          <div className="grade-main-content">
+            {/* Submission Panel */}
+            <div className="submission-panel">
+              <h3>Student Submission</h3>
+              
+              <div className="submission-content">
+                {/* File Submission */}
+                {submission.file_path && (
+                  <div className="submission-file">
+                    <div className="file-info">
+                      <span className="file-icon">📎</span>
+                      <span>Submitted File</span>
+                    </div>
+                    <div className="file-actions">
+                      <button
+                        className="file-btn download-btn"
+                        onClick={() => downloadFile(submission.file_path, 'submission')}
+                      >
+                        Download
+                      </button>
+                      <button
+                        className="file-btn view-btn"
+                        onClick={() => window.open(submission.file_path, '_blank')}
+                      >
+                        View
+                      </button>
+                    </div>
+                    
+                    {/* File Viewer (for certain file types) */}
+                    {submission.file_path.match(/\.(pdf|txt|jpg|jpeg|png|gif)$/i) && (
+                      <div className="file-viewer">
+                        {submission.file_path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                          <img 
+                            src={submission.file_path} 
+                            alt="Submission" 
+                            style={{ maxWidth: '100%', height: 'auto' }}
+                          />
+                        ) : submission.file_path.endsWith('.pdf') ? (
+                          <iframe 
+                            src={submission.file_path}
+                            title="Submission PDF"
+                          />
+                        ) : (
+                          <div className="file-viewer-error">
+                            <p>Preview not available for this file type.</p>
+                            <p>Please download the file to view it.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Text Submission */}
+                <div className="submission-text-section">
+                  <h4>Text Submission</h4>
+                  {submission.submission_text ? (
+                    <div className="submission-text">
+                      {submission.submission_text}
+                    </div>
+                  ) : (
+                    <div className="no-text-submission">
+                      No text submission provided
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-          
-          <div className="grading-form">
-            <h2>Grade Assignment</h2>
-            <form onSubmit={handleSubmitGrade}>
-              <div className="form-group">
-                <label htmlFor="grade">Grade (out of {assignment.max_points} points)*</label>
-                <input
-                  type="number"
-                  id="grade"
-                  name="grade"
-                  value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
-                  min="0"
-                  max={assignment.max_points}
-                  step="0.5"
-                  required
-                />
-              </div>
+            </div>
+
+            {/* Grading Panel */}
+            <div className="grading-panel">
+              <h3>Grade Submission</h3>
               
-              <div className="form-group">
-                <label htmlFor="feedback">Feedback to Student (Optional)</label>
-                <textarea
-                  id="feedback"
-                  name="feedback"
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Provide feedback for the student..."
-                  rows="6"
-                ></textarea>
-              </div>
+              {/* Show existing grade if available */}
+              {submission.is_graded && (
+                <div className="existing-grade">
+                  <h4>Current Grade</h4>
+                  <div className="grade-display">
+                    <span className="current-grade">
+                      {submission.grade}/{assignment.max_points}
+                    </span>
+                    <span className="grade-date">
+                      Graded: {formatDate(submission.graded_at)}
+                    </span>
+                  </div>
+                  {submission.feedback && (
+                    <div className="existing-feedback">
+                      <strong>Current Feedback:</strong>
+                      <div>{submission.feedback}</div>
+                    </div>
+                  )}
+                  <div className="update-grade-note">
+                    You can update the grade and feedback below
+                  </div>
+                </div>
+              )}
               
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="cancel-btn" 
-                  onClick={() => navigate(`/courses/${courseId}/assignments/${assignmentId}`)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="submit-btn"
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Grade'}
-                </button>
-              </div>
-            </form>
+              <form onSubmit={handleSubmitGrade} className="grading-form">
+                <div className="form-group">
+                  <label htmlFor="grade">
+                    Grade <span className="required">*</span>
+                  </label>
+                  <div className="grade-input-group">
+                    <input
+                      type="number"
+                      id="grade"
+                      name="grade"
+                      value={gradeData.grade}
+                      onChange={handleInputChange}
+                      min="0"
+                      max={assignment.max_points}
+                      step="0.5"
+                      className={`grade-input ${errors.grade ? 'error' : ''}`}
+                      placeholder="0"
+                    />
+                    <span className="grade-separator">/</span>
+                    <span className="max-grade">{assignment.max_points}</span>
+                    {gradeData.grade && (
+                      <span 
+                        className="grade-percentage"
+                        style={{ color: getGradeColor() }}
+                      >
+                        {calculatePercentage()}%
+                      </span>
+                    )}
+                  </div>
+                  {errors.grade && (
+                    <span className="error-message">{errors.grade}</span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="feedback">
+                    Feedback
+                  </label>
+                  <textarea
+                    id="feedback"
+                    name="feedback"
+                    value={gradeData.feedback}
+                    onChange={handleInputChange}
+                    className="feedback-textarea"
+                    placeholder="Provide feedback to the student about their submission..."
+                    rows="6"
+                  />
+                  <small className="feedback-help">
+                    Give constructive feedback to help the student improve
+                  </small>
+                </div>
+
+                <div className="grading-actions">
+                  <button
+                    type="submit"
+                    className="submit-grade-btn"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="spinner"></span>
+                        Submitting Grade...
+                      </>
+                    ) : (
+                      submission.is_graded ? 'Update Grade' : 'Submit Grade'
+                    )}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    className="back-btn"
+                    onClick={() => navigate(`/assignments/${assignmentId}`)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>

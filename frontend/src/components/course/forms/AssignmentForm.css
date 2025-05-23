@@ -1,0 +1,335 @@
+/* src/components/course/forms/AssignmentForm.css */
+.assignment-form-modal {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.assignment-form {
+    padding: 30px;
+}
+
+/* Date input styling */
+.form-group input[type="datetime-local"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: inherit;
+}
+
+.form-group input[type="datetime-local"]:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Due date section highlighting */
+.due-date-section {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.due-date-section::before {
+    content: '⏰';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    border: 2px solid #f59e0b;
+}
+
+.due-date-section label {
+    color: #92400e !important;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.due-date-section .form-help {
+    color: #b45309;
+    font-weight: 500;
+}
+
+/* Points section styling */
+.points-section {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.points-section::before {
+    content: '🎯';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    border: 2px solid #3b82f6;
+}
+
+.points-section label {
+    color: #1e40af !important;
+    font-weight: 700;
+}
+
+/* Instructions section styling */
+.instructions-section {
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.instructions-section::before {
+    content: '📋';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    border: 2px solid #0ea5e9;
+}
+
+.instructions-section label {
+    color: #0c4a6e !important;
+    font-weight: 600;
+}
+
+.instructions-section textarea {
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(14, 165, 233, 0.3);
+}
+
+.instructions-section textarea:focus {
+    background: white;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* Late submissions toggle */
+.late-submissions-section {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 2px solid #ef4444;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.late-submissions-section::before {
+    content: '⚠️';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    border: 2px solid #ef4444;
+}
+
+.late-submissions-section .checkbox-text {
+    color: #991b1b;
+    font-weight: 600;
+}
+
+.late-submissions-section .checkbox-text small {
+    color: #dc2626;
+}
+
+/* Assignment tips section */
+.assignment-tips {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    border: 1px solid #10b981;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.assignment-tips h4 {
+    color: #065f46;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.assignment-tips h4::before {
+    content: '💡';
+    font-size: 1.2rem;
+}
+
+.assignment-tips ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #047857;
+}
+
+.assignment-tips li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+/* Enhanced form validation */
+.form-group.has-error {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+.form-group input.error,
+.form-group textarea.error,
+.form-group select.error {
+    border-color: #dc2626;
+    animation: pulse-error 2s infinite;
+}
+
+@keyframes pulse-error {
+
+    0%,
+    100% {
+        border-color: #dc2626;
+    }
+
+    50% {
+        border-color: #f87171;
+    }
+}
+
+/* Success state for completed fields */
+.form-group input.valid,
+.form-group textarea.valid,
+.form-group select.valid {
+    border-color: #10b981;
+}
+
+.form-group input.valid::after,
+.form-group textarea.valid::after,
+.form-group select.valid::after {
+    content: '✓';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #10b981;
+    font-weight: bold;
+}
+
+/* Progress indicator */
+.form-progress {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e5e7eb;
+    margin: -30px -30px 20px -30px;
+    z-index: 10;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .assignment-form-modal {
+        max-width: 95vw;
+    }
+
+    .assignment-form {
+        padding: 20px;
+    }
+
+    .due-date-section,
+    .points-section,
+    .instructions-section,
+    .late-submissions-section {
+        padding: 15px;
+    }
+
+    .due-date-section::before,
+    .points-section::before,
+    .instructions-section::before,
+    .late-submissions-section::before {
+        left: 15px;
+    }
+
+    .form-progress {
+        margin: -20px -20px 15px -20px;
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .assignment-form {
+        padding: 15px;
+    }
+
+    .assignment-tips {
+        padding: 15px;
+    }
+
+    .due-date-section,
+    .points-section,
+    .instructions-section,
+    .late-submissions-section {
+        padding: 12px;
+    }
+}
