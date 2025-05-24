@@ -43,7 +43,6 @@ export class AuthService {
       message: 'Login successful',
     };
   }
-
   async validateOAuthUser(oauthUser: any): Promise<User> {
     // Try to find user by email
     let user = await this.usersService.findByEmailForAuth(oauthUser.email);
@@ -62,8 +61,8 @@ export class AuthService {
       email: oauthUser.email,
       firstName: oauthUser.firstName,
       lastName: oauthUser.lastName,
-      // Generate a random password that won't be used (user will login via OAuth)
-      password: Math.random().toString(36).slice(-12) + 'Aa1!',
+      // Use the same default password as in server.js
+      password: '123456789',
       role: UserRole.STUDENT, // Default role for OAuth users
       googleId: oauthUser.googleId,
     };
@@ -73,6 +72,5 @@ export class AuthService {
     if (!savedUser) {
       throw new InternalServerErrorException('Failed to create or retrieve OAuth user');
     }
-    return savedUser;
-  }
-} 
+    return savedUser;  }
+}
