@@ -1,4 +1,14 @@
-import { Controller, Post, Delete, Get, Param, Body, UseGuards, Request, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Delete,
+  Get,
+  Param,
+  Body,
+  UseGuards,
+  Request,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -15,10 +25,7 @@ export class EnrollmentsController {
   @Post('enroll')
   @UseGuards(RolesGuard)
   @Roles(UserRole.STUDENT)
-  async enrollInCourse(
-    @Request() req,
-    @Body() enrollCourseDto: EnrollCourseDto,
-  ): Promise<any> {
+  async enrollInCourse(@Request() req, @Body() enrollCourseDto: EnrollCourseDto): Promise<any> {
     return this.enrollmentsService.enrollStudent(req.user.userId, enrollCourseDto);
   }
 
@@ -33,9 +40,7 @@ export class EnrollmentsController {
     return { message: 'Successfully left the course' };
   }
   @Get('my-courses')
-  async getMyEnrolledCourses(
-    @Request() req,
-  ): Promise<any[]> {
+  async getMyEnrolledCourses(@Request() req): Promise<any[]> {
     return this.enrollmentsService.findStudentEnrollments(req.user.userId);
   }
 
@@ -50,4 +55,4 @@ export class EnrollmentsController {
     const instructorId = req.user.role === UserRole.INSTRUCTOR ? req.user.userId : undefined;
     return this.enrollmentsService.findEnrolledStudentsByCourse(courseId, instructorId);
   }
-} 
+}

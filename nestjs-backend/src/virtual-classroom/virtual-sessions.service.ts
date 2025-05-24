@@ -1,6 +1,21 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, MoreThan, LessThan, Equal, Between, In, IsNull } from 'typeorm';
+import {
+  Repository,
+  FindOptionsWhere,
+  MoreThan,
+  LessThan,
+  Equal,
+  Between,
+  In,
+  IsNull,
+} from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -21,11 +36,25 @@ export class VirtualSessionsService {
     private readonly virtualSessionRepository: Repository<VirtualSession>,
     @InjectRepository(SessionRegistration)
     private readonly registrationRepository: Repository<SessionRegistration>,
-    private readonly coursesService: CoursesService
-  ) {}  async create(instructorId: number, createDto: CreateVirtualSessionDto): Promise<VirtualSession> {
-    const { courseId, title, description, startNow, sessionDate, startTime, endTime, maxParticipants, isRecorded, password } = createDto;
+    private readonly coursesService: CoursesService,
+  ) {}
+  async create(instructorId: number, createDto: CreateVirtualSessionDto): Promise<VirtualSession> {
+    const {
+      courseId,
+      title,
+      description,
+      startNow,
+      sessionDate,
+      startTime,
+      endTime,
+      maxParticipants,
+      isRecorded,
+      password,
+    } = createDto;
 
-    console.log(`Creating virtual session with instructorId: ${instructorId}, title: ${title}, courseId: ${courseId}`);
+    console.log(
+      `Creating virtual session with instructorId: ${instructorId}, title: ${title}, courseId: ${courseId}`,
+    );
 
     // Verify the course exists
     await this.coursesService.findOne(courseId);
@@ -41,10 +70,12 @@ export class VirtualSessionsService {
       courseId,
       instructorId, // Ensure instructor_id is set properly
       maxParticipants: maxParticipants || 30,
-      isRecorded: isRecorded !== undefined ? isRecorded : true
+      isRecorded: isRecorded !== undefined ? isRecorded : true,
     });
 
-    console.log(`Session entity created with instructor_id: ${instructorId}, session.instructorId: ${session.instructorId}`);
+    console.log(
+      `Session entity created with instructor_id: ${instructorId}, session.instructorId: ${session.instructorId}`,
+    );
 
     // Handle password if provided
     if (password) {
@@ -62,40 +93,39 @@ export class VirtualSessionsService {
         throw new BadRequestException('Session date and start time are required');
       }
       session.status = SessionStatus.SCHEDULED;
-      
+
       try {
         // Handle date format flexibly - try to parse the date string
         let parsedDate: Date;
-        
+
         // Try ISO format first
         if (/^\d{4}-\d{2}-\d{2}/.test(sessionDate)) {
           parsedDate = new Date(sessionDate);
-        } 
+        }
         // Try MM/DD/YYYY format
         else if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(sessionDate)) {
           const [month, day, year] = sessionDate.split('/');
           parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         }
-        // Try DD/MM/YYYY format 
+        // Try DD/MM/YYYY format
         else if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(sessionDate)) {
           const [day, month, year] = sessionDate.split('/');
           parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        }
-        else {
+        } else {
           // Default to current date if parse fails
           parsedDate = new Date(sessionDate);
         }
-        
+
         if (isNaN(parsedDate.getTime())) {
           throw new Error('Invalid date format');
         }
-        
+
         session.sessionDate = parsedDate;
       } catch (error) {
         this.logger.error(`Error parsing session date: ${sessionDate}`, error);
         throw new BadRequestException('Invalid date format. Please use YYYY-MM-DD format.');
       }
-      
+
       session.startTime = startTime;
       // Only set endTime if it's provided
       if (endTime) {
@@ -106,20 +136,24 @@ export class VirtualSessionsService {
     return this.virtualSessionRepository.save(session);
   }
 
-  async update(id: number, updateDto: UpdateVirtualSessionDto, userId: number): Promise<VirtualSession> {
+  async update(
+    id: number,
+    updateDto: UpdateVirtualSessionDto,
+    userId: number,
+  ): Promise<VirtualSession> {
     const session = await this.findSessionById(id);
-    
+
     // Check if user is the instructor for this session
     if (session.instructorId !== userId) {
       throw new ForbiddenException('Only the session instructor can update this session');
     }
-    
+
     // Update the session properties
     const updatedSession = {
       ...session,
-      ...updateDto
+      ...updateDto,
     };
-    
+
     // Handle password update if provided
     if (updateDto.password !== undefined) {
       if (updateDto.password) {
@@ -129,31 +163,35 @@ export class VirtualSessionsService {
         updatedSession.password = '';
       }
     }
-    
+
     return this.virtualSessionRepository.save(updatedSession);
   }
 
   async remove(id: number, userId: number): Promise<void> {
     const session = await this.findSessionById(id);
-    
+
     // Check if user is the instructor for this session
     if (session.instructorId !== userId) {
       throw new ForbiddenException('Only the session instructor can delete this session');
     }
-    
+
     // Don't allow deletion of active or completed sessions
     if (session.status === SessionStatus.ACTIVE || session.status === SessionStatus.COMPLETED) {
       throw new BadRequestException('Cannot delete active or completed sessions');
     }
-    
+
     await this.virtualSessionRepository.remove(session);
   }
 
-  async findAll(options: any = {}, userId?: number, userRole?: string): Promise<SessionResponseDto[]> {
+  async findAll(
+    options: any = {},
+    userId?: number,
+    userRole?: string,
+  ): Promise<SessionResponseDto[]> {
     const { upcoming, past, status, courseId, instructorId, search } = options;
 
     // Build query conditions
-    let where: FindOptionsWhere<VirtualSession> = {};
+    const where: FindOptionsWhere<VirtualSession> = {};
 
     if (status) {
       where.status = status;
@@ -186,31 +224,37 @@ export class VirtualSessionsService {
     const sessions = await this.virtualSessionRepository.find({
       where,
       relations: ['course', 'instructor'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
 
     // For students, get their registration status for each session
-    const sessionsWithEnrollment = await Promise.all(sessions.map(async (session) => {
-      let enrollmentStatus: RegistrationStatus | undefined = undefined;
-      if (userId && userRole === UserRole.STUDENT) {
-        const registration = await this.registrationRepository.findOne({
-          where: { sessionId: session.id, userId }
-        });
-        
-        if (registration) {
-          enrollmentStatus = registration.status;
+    const sessionsWithEnrollment = await Promise.all(
+      sessions.map(async (session) => {
+        let enrollmentStatus: RegistrationStatus | undefined = undefined;
+        if (userId && userRole === UserRole.STUDENT) {
+          const registration = await this.registrationRepository.findOne({
+            where: { sessionId: session.id, userId },
+          });
+
+          if (registration) {
+            enrollmentStatus = registration.status;
+          }
         }
-      }
-      
-      return this.mapToResponseDto(session, enrollmentStatus);
-    }));
+
+        return this.mapToResponseDto(session, enrollmentStatus);
+      }),
+    );
 
     return sessionsWithEnrollment;
   }
-  async findOne(id: number, userId?: number, userRole?: string): Promise<SessionDetailsResponseDto> {
+  async findOne(
+    id: number,
+    userId?: number,
+    userRole?: string,
+  ): Promise<SessionDetailsResponseDto> {
     const session = await this.virtualSessionRepository.findOne({
       where: { id },
-      relations: ['course', 'instructor']
+      relations: ['course', 'instructor'],
     });
 
     if (!session) {
@@ -221,7 +265,12 @@ export class VirtualSessionsService {
       id: session.id,
       roomId: session.roomId,
       course: session.course ? { id: session.course.id, title: session.course.title } : null,
-      instructor: session.instructor ? { id: session.instructor.id, name: `${session.instructor.firstName} ${session.instructor.lastName}` } : null
+      instructor: session.instructor
+        ? {
+            id: session.instructor.id,
+            name: `${session.instructor.firstName} ${session.instructor.lastName}`,
+          }
+        : null,
     });
 
     let enrollmentStatus: RegistrationStatus | undefined;
@@ -229,9 +278,9 @@ export class VirtualSessionsService {
     // Check if student is registered
     if (userId && userRole === UserRole.STUDENT) {
       const registration = await this.registrationRepository.findOne({
-        where: { sessionId: id, userId }
+        where: { sessionId: id, userId },
       });
-      
+
       if (registration) {
         enrollmentStatus = registration.status;
       }
@@ -239,50 +288,55 @@ export class VirtualSessionsService {
 
     // Get participant count for the session
     const participantCount = await this.registrationRepository.count({
-      where: { sessionId: id, status: In([RegistrationStatus.REGISTERED, RegistrationStatus.ATTENDED]) }
+      where: {
+        sessionId: id,
+        status: In([RegistrationStatus.REGISTERED, RegistrationStatus.ATTENDED]),
+      },
     });
 
     // Get registered participants for instructors
     const participants = await this.registrationRepository.find({
       where: { sessionId: id },
-      relations: ['user']
+      relations: ['user'],
     });
 
     // Transform participants to match the DTO
-    const mappedParticipants = participants.map(p => ({
+    const mappedParticipants = participants.map((p) => ({
       id: p.id,
       userId: p.userId,
       username: p.user ? `${p.user.firstName} ${p.user.lastName}` : 'Unknown',
       email: p.user ? p.user.email : '',
       registrationDate: p.registrationDate,
-      status: p.status
+      status: p.status,
     }));
 
     // Create a new object with all the necessary properties explicitly assigned
     const sessionWithExactFormat = {
       ...session,
       courseTitle: session.course ? session.course.title : '',
-      instructorName: session.instructor ? `${session.instructor.firstName} ${session.instructor.lastName}` : 'Unknown'
+      instructorName: session.instructor
+        ? `${session.instructor.firstName} ${session.instructor.lastName}`
+        : 'Unknown',
     };
 
     // Convert to response DTO using the updated session object
     const baseResponse = this.mapToResponseDto(sessionWithExactFormat, enrollmentStatus);
-    
+
     console.log('FindOne - returning response with course and instructor details:', {
       courseTitle: baseResponse.courseTitle,
-      instructorName: baseResponse.instructorName
+      instructorName: baseResponse.instructorName,
     });
-    
+
     return {
       ...baseResponse,
       participantCount,
-      participants: mappedParticipants
+      participants: mappedParticipants,
     };
   }
 
   private async findSessionById(id: number): Promise<VirtualSession> {
     const session = await this.virtualSessionRepository.findOne({
-      where: { id }
+      where: { id },
     });
 
     if (!session) {
@@ -292,7 +346,11 @@ export class VirtualSessionsService {
     return session;
   }
 
-  async registerForSession(sessionId: number, userId: number, password?: string): Promise<SessionRegistration> {
+  async registerForSession(
+    sessionId: number,
+    userId: number,
+    password?: string,
+  ): Promise<SessionRegistration> {
     const session = await this.findSessionById(sessionId);
 
     // Check if session is accepting registrations
@@ -314,7 +372,7 @@ export class VirtualSessionsService {
 
     // Check if already registered
     const existingRegistration = await this.registrationRepository.findOne({
-      where: { sessionId, userId }
+      where: { sessionId, userId },
     });
 
     if (existingRegistration) {
@@ -323,7 +381,7 @@ export class VirtualSessionsService {
 
     // Check max participants
     const participantCount = await this.registrationRepository.count({
-      where: { sessionId }
+      where: { sessionId },
     });
 
     if (session.maxParticipants && participantCount >= session.maxParticipants) {
@@ -334,7 +392,7 @@ export class VirtualSessionsService {
     const registration = this.registrationRepository.create({
       sessionId,
       userId,
-      status: RegistrationStatus.REGISTERED
+      status: RegistrationStatus.REGISTERED,
     });
 
     return this.registrationRepository.save(registration);
@@ -369,15 +427,18 @@ export class VirtualSessionsService {
       const currentTime = now.toTimeString().split(' ')[0];
 
       // Find scheduled sessions that should be active (past start time)
-      const scheduledSessions = await this.virtualSessionRepository.createQueryBuilder('session')
+      const scheduledSessions = await this.virtualSessionRepository
+        .createQueryBuilder('session')
         .where('session.status = :status', { status: SessionStatus.SCHEDULED })
-        .andWhere('(session.sessionDate < :currentDate OR (session.sessionDate = :currentDate AND session.startTime <= :currentTime))',
-          { currentDate, currentTime })
+        .andWhere(
+          '(session.sessionDate < :currentDate OR (session.sessionDate = :currentDate AND session.startTime <= :currentTime))',
+          { currentDate, currentTime },
+        )
         .getMany();
 
       if (scheduledSessions.length > 0) {
         this.logger.log(`Starting ${scheduledSessions.length} scheduled sessions`);
-        
+
         for (const session of scheduledSessions) {
           session.status = SessionStatus.ACTIVE;
           session.actualStartTime = now;
@@ -386,16 +447,19 @@ export class VirtualSessionsService {
       }
 
       // Find active sessions that should be completed (past end time)
-      const activeSessions = await this.virtualSessionRepository.createQueryBuilder('session')
+      const activeSessions = await this.virtualSessionRepository
+        .createQueryBuilder('session')
         .where('session.status = :status', { status: SessionStatus.ACTIVE })
         .andWhere('session.endTime IS NOT NULL')
-        .andWhere('(session.sessionDate < :currentDate OR (session.sessionDate = :currentDate AND session.endTime <= :currentTime))',
-          { currentDate, currentTime })
+        .andWhere(
+          '(session.sessionDate < :currentDate OR (session.sessionDate = :currentDate AND session.endTime <= :currentTime))',
+          { currentDate, currentTime },
+        )
         .getMany();
 
       if (activeSessions.length > 0) {
         this.logger.log(`Completing ${activeSessions.length} active sessions past end time`);
-        
+
         for (const session of activeSessions) {
           session.status = SessionStatus.COMPLETED;
           session.actualEndTime = now;
@@ -404,15 +468,18 @@ export class VirtualSessionsService {
       }
 
       // Find active sessions from past days and complete them if they've been active for more than 24 hours
-      const pastActiveSessions = await this.virtualSessionRepository.createQueryBuilder('session')
+      const pastActiveSessions = await this.virtualSessionRepository
+        .createQueryBuilder('session')
         .where('session.status = :status', { status: SessionStatus.ACTIVE })
         .andWhere('session.actualStartTime IS NOT NULL')
-        .andWhere('session.actualStartTime < :dayAgo', { dayAgo: new Date(now.getTime() - 24 * 60 * 60 * 1000) }) // 24 hours ago
+        .andWhere('session.actualStartTime < :dayAgo', {
+          dayAgo: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+        }) // 24 hours ago
         .getMany();
 
       if (pastActiveSessions.length > 0) {
         this.logger.log(`Completing ${pastActiveSessions.length} outdated active sessions`);
-        
+
         for (const session of pastActiveSessions) {
           session.status = SessionStatus.COMPLETED;
           session.actualEndTime = now;
@@ -428,22 +495,29 @@ export class VirtualSessionsService {
   }
 
   private async getStudentEnrolledSessions(userId: number): Promise<number[]> {
-    // This is a placeholder - in reality, you'd query enrollments 
+    // This is a placeholder - in reality, you'd query enrollments
     // and return session IDs the student is eligible to view
     return [1, 2, 3]; // Return some IDs to avoid empty array issues in tests
   }
-  private mapToResponseDto(session: VirtualSession, enrollmentStatus?: RegistrationStatus): SessionResponseDto {
+  private mapToResponseDto(
+    session: VirtualSession,
+    enrollmentStatus?: RegistrationStatus,
+  ): SessionResponseDto {
     // Log the session object before mapping
     console.log('mapToResponseDto - source session:', {
       id: session.id,
       title: session.title,
       roomId: session.roomId,
       courseId: session.courseId,
-      courseTitle: session.courseTitle || (session.course?.title),
+      courseTitle: session.courseTitle || session.course?.title,
       instructorId: session.instructorId,
-      instructorName: session.instructorName || (session.instructor ? `${session.instructor.firstName} ${session.instructor.lastName}` : 'Unknown')
+      instructorName:
+        session.instructorName ||
+        (session.instructor
+          ? `${session.instructor.firstName} ${session.instructor.lastName}`
+          : 'Unknown'),
     });
-    
+
     const responseDto: SessionResponseDto = {
       id: session.id,
       title: session.title,
@@ -456,16 +530,20 @@ export class VirtualSessionsService {
       actualStartTime: session.actualStartTime,
       actualEndTime: session.actualEndTime,
       courseId: session.courseId,
-      courseTitle: session.courseTitle || (session.course?.title || ''),
+      courseTitle: session.courseTitle || session.course?.title || '',
       instructorId: session.instructorId,
-      instructorName: session.instructorName || (session.instructor ? `${session.instructor.firstName} ${session.instructor.lastName}` : 'Unknown'),
+      instructorName:
+        session.instructorName ||
+        (session.instructor
+          ? `${session.instructor.firstName} ${session.instructor.lastName}`
+          : 'Unknown'),
       isRecorded: session.isRecorded,
       recordingUrl: session.recordingUrl,
       enrollmentStatus: enrollmentStatus,
       maxParticipants: session.maxParticipants || 0,
       participantCount: session.maxParticipants && enrollmentStatus ? 1 : 0,
       createdAt: session.createdAt,
-      updatedAt: session.updatedAt
+      updatedAt: session.updatedAt,
     };
 
     return responseDto;

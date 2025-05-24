@@ -25,22 +25,15 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
     UsersModule,
     forwardRef(() => EnrollmentsModule),
   ],
-  providers: [
-    CoursesService,
-    CourseModulesService,
-    LessonsService
-  ],  controllers: [
+  providers: [CoursesService, CourseModulesService, LessonsService],
+  controllers: [
     CoursesController,
     CourseModulesController,
     LessonsController,
     LessonMaterialsController,
     StudentManagementController,
-    CourseStatisticsController
+    CourseStatisticsController,
   ],
-  exports: [
-    CoursesService,
-    CourseModulesService,
-    LessonsService
-  ]
+  exports: [CoursesService, CourseModulesService, LessonsService],
 })
 export class CoursesModule {}

@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SessionPoll } from './entities/session-poll.entity';
@@ -180,4 +185,4 @@ export class SessionPollsService {
     poll.endedAt = new Date();
     await this.pollRepository.save(poll);
   }
-} 
+}
