@@ -15,6 +15,7 @@ import { MailerModule } from './mailer/mailer.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AssessmentsModule } from './assessments/assessments.module';
 import configuration from './config/configuration';
+import { DiscussionsModule } from './discussions/discussions.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import configuration from './config/configuration';
     MailerModule,
     UploadsModule,
     AssessmentsModule,
+    DiscussionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
