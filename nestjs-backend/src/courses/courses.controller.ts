@@ -1,13 +1,13 @@
-import { 
-  Body, 
-  Controller, 
-  Delete, 
-  Get, 
-  Param, 
-  Post, 
-  Put, 
-  Query, 
-  Request, 
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Request,
   UseGuards,
   NotFoundException,
   ParseIntPipe,
@@ -38,18 +38,18 @@ import { CourseModule } from './entities/course-module.entity';
 
 // Configure multer storage for lesson materials
 const lessonStorage = diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     const courseId = req.params.courseId;
     const dir = path.join(process.cwd(), 'uploads', 'lessons', courseId);
-    
+
     // Create directory if it doesn't exist
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     cb(null, dir);
   },
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     // Create unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
@@ -62,7 +62,7 @@ export class CoursesController {
   constructor(
     private readonly coursesService: CoursesService,
     private readonly dataSource: DataSource
-  ) {}
+  ) { }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -79,16 +79,16 @@ export class CoursesController {
         LEFT JOIN departments d ON c.department_id = d.id
         ORDER BY c.created_at DESC
       `);
-      
+
       // TypeORM raw query returns the results directly
       const courses = coursesResult || [];
-      
+
       console.log(`Found ${courses.length} courses`);
-      
+
       // Get the baseUrl just like Express does
       const baseUrl = `http://${req.headers.host}`;
       console.log(`Using baseUrl: ${baseUrl}`);
-      
+
       // Format the response exactly like Express does
       const formattedCourses = courses.map(course => ({
         id: course.id,
@@ -102,12 +102,12 @@ export class CoursesController {
         startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
         endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
         status: course.status || 'draft',
-        thumbnailUrl: course.thumbnail_url ? 
-          (course.thumbnail_url.startsWith('http') ? course.thumbnail_url : `${baseUrl}${course.thumbnail_url}`) 
+        thumbnailUrl: course.thumbnail_url ?
+          (course.thumbnail_url.startsWith('http') ? course.thumbnail_url : `${baseUrl}${course.thumbnail_url}`)
           : null,
         isFeatured: course.is_featured === 1
       }));
-      
+
       console.log(`Formatted ${formattedCourses.length} courses`);
       return formattedCourses;
     } catch (error) {
@@ -134,7 +134,7 @@ export class CoursesController {
   @Get('public')
   async findAllPublic(): Promise<CourseResponseDto[]> {
     const courses = await this.coursesService.findAllPublicCourses();
-    return Promise.all(courses.map(course => 
+    return Promise.all(courses.map(course =>
       this.coursesService.toCourseResponseDto(course)
     ));
   }
@@ -154,20 +154,20 @@ export class CoursesController {
         LEFT JOIN departments d ON c.department_id = d.id
         WHERE c.id = ?
       `, [id]);
-      
+
       const courses = coursesResult || [];
-      
+
       if (courses.length === 0) {
         console.log(`No course found with ID: ${id}`);
         throw new NotFoundException('Course not found');
       }
-      
+
       const course = courses[0];
       console.log(`Found course: ${course.title}`);
-      
+
       // Get the baseUrl just like Express does
       const baseUrl = `http://${req.headers.host}`;
-      
+
       return {
         id: course.id,
         code: course.code,
@@ -180,7 +180,7 @@ export class CoursesController {
         startDate: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : null,
         endDate: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : null,
         status: course.status || 'draft',
-        thumbnailUrl: course.thumbnail_url ? 
+        thumbnailUrl: course.thumbnail_url ?
           (course.thumbnail_url.startsWith('http') ? course.thumbnail_url : `${baseUrl}${course.thumbnail_url}`)
           : null,
         isFeatured: course.is_featured === 1 // Convert to boolean
@@ -191,14 +191,14 @@ export class CoursesController {
     }
   }
 
- @Get(':id/detail')
+  @Get(':id/detail')
   async getCourseDetail(
     @Param('id', ParseIntPipe) courseId: number,
     @Request() req,
   ): Promise<any> {
     try {
       console.log(`Fetching details for course: ${courseId}`);
-      
+
       // Get course info with instructor and department
       const courses = await this.dataSource.query(
         `SELECT c.*, 
@@ -210,13 +210,13 @@ export class CoursesController {
         WHERE c.id = ?`,
         [courseId],
       );
-      
+
       if (courses.length === 0) {
         return { message: 'Course not found' };
       }
-      
+
       const course = courses[0];
-      
+
       // Format response
       const formattedCourse = {
         id: course.id,
@@ -227,17 +227,17 @@ export class CoursesController {
         department: course.department_name,
         departmentId: course.department_id,
         description: course.description,
-        startDate: course.start_date 
+        startDate: course.start_date
           ? new Date(course.start_date).toISOString().split('T')[0]
           : null,
-        endDate: course.end_date 
+        endDate: course.end_date
           ? new Date(course.end_date).toISOString().split('T')[0]
           : null,
         status: course.status.charAt(0).toUpperCase() + course.status.slice(1),
         thumbnail: course.thumbnail_url,
         isFeatured: course.is_featured === 1,
       };
-      
+
       return formattedCourse;
     } catch (error) {
       console.error('Error fetching course details:', error);
@@ -245,7 +245,7 @@ export class CoursesController {
     }
   }
 
-  
+
   @Get(':id/students')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
@@ -260,12 +260,12 @@ export class CoursesController {
           'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
           [courseId, req.user.userId]
         );
-        
+
         if (courses.length === 0) {
           throw new ForbiddenException('You can only view students in your own courses');
         }
       }
-      
+
       // Get enrolled students with more details
       const students = await this.dataSource.query(`
         SELECT u.id, u.first_name, u.last_name, u.email, 
@@ -281,7 +281,7 @@ export class CoursesController {
         WHERE e.course_id = ?
         ORDER BY u.last_name, u.first_name
       `, [courseId, courseId, courseId]);
-      
+
       return students;
     } catch (error) {
       if (error instanceof ForbiddenException || error instanceof NotFoundException) {
@@ -307,12 +307,12 @@ export class CoursesController {
           'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
           [courseId, req.user.userId]
         );
-        
+
         if (courses.length === 0) {
           throw new ForbiddenException('You can only view students in your own courses');
         }
       }
-      
+
       // Get student details
       const students = await this.dataSource.query(`
         SELECT u.id, u.first_name, u.last_name, u.email, 
@@ -321,13 +321,13 @@ export class CoursesController {
         JOIN users u ON e.student_id = u.id
         WHERE e.course_id = ? AND e.student_id = ?
       `, [courseId, studentId]);
-      
+
       if (students.length === 0) {
         throw new NotFoundException('Student not enrolled in this course');
       }
-      
+
       const student = students[0];
-      
+
       // Get assignment submissions
       const submissions = await this.dataSource.query(`
         SELECT s.*, a.title as assignment_title, a.due_date
@@ -336,7 +336,7 @@ export class CoursesController {
         WHERE s.student_id = ? AND a.course_id = ?
         ORDER BY s.submission_date DESC
       `, [studentId, courseId]);
-      
+
       // Get quiz attempts
       const quizAttempts = await this.dataSource.query(`
         SELECT qa.*, q.title as quiz_title
@@ -345,7 +345,7 @@ export class CoursesController {
         WHERE qa.student_id = ? AND q.course_id = ?
         ORDER BY qa.start_time DESC
       `, [studentId, courseId]);
-      
+
       // Get discussion activity
       const discussionPosts = await this.dataSource.query(`
         SELECT dp.*, d.title as discussion_title
@@ -354,7 +354,7 @@ export class CoursesController {
         WHERE dp.user_id = ? AND d.course_id = ?
         ORDER BY dp.created_at DESC
       `, [studentId, courseId]);
-      
+
       return {
         student,
         submissions,
@@ -363,7 +363,7 @@ export class CoursesController {
         // Calculate stats
         stats: {
           assignmentCompletionRate: submissions.length,
-          quizAvgScore: quizAttempts.length > 0 ? 
+          quizAvgScore: quizAttempts.length > 0 ?
             quizAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) / quizAttempts.length : 0,
           discussionParticipation: discussionPosts.length
         }
@@ -378,7 +378,7 @@ export class CoursesController {
   }
 
   // NEW: Consolidated from course-statistics-api.controller.ts
-   @Get(':id/statistics')
+  @Get(':id/statistics')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
   async getCourseStatistics(
@@ -392,12 +392,12 @@ export class CoursesController {
           'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
           [courseId, req.user.userId]
         );
-        
+
         if (courses.length === 0) {
           throw new ForbiddenException('You can only view statistics for your own courses');
         }
       }
-      
+
       // Get enrollment stats
       const enrollmentStats = await this.dataSource.query(`
         SELECT 
@@ -408,7 +408,7 @@ export class CoursesController {
         FROM enrollments
         WHERE course_id = ?
       `, [courseId]);
-      
+
       // Get assignment stats
       const assignmentStats = await this.dataSource.query(`
         SELECT
@@ -420,7 +420,7 @@ export class CoursesController {
         LEFT JOIN submissions s ON a.id = s.assignment_id
         WHERE a.course_id = ?
       `, [courseId]);
-      
+
       // Get quiz stats
       const quizStats = await this.dataSource.query(`
         SELECT
@@ -432,7 +432,7 @@ export class CoursesController {
         LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
         WHERE q.course_id = ?
       `, [courseId]);
-      
+
       // Get discussion stats
       const discussionStats = await this.dataSource.query(`
         SELECT
@@ -443,7 +443,7 @@ export class CoursesController {
         LEFT JOIN discussion_posts dp ON d.id = dp.discussion_id
         WHERE d.course_id = ?
       `, [courseId]);
-      
+
       // Get completion trend over time (last 6 months)
       const completionTrend = await this.dataSource.query(`
         SELECT 
@@ -455,7 +455,7 @@ export class CoursesController {
         GROUP BY DATE_FORMAT(e.enrollment_date, '%Y-%m')
         ORDER BY month
       `, [courseId]);
-      
+
       return {
         enrollmentStats: enrollmentStats[0],
         assignmentStats: assignmentStats[0],
@@ -493,7 +493,7 @@ export class CoursesController {
         ORDER BY d.created_at DESC`,
         [courseId],
       );
-      
+
       // Format discussions
       return discussions.map((discussion) => ({
         id: discussion.id,
@@ -573,11 +573,11 @@ export class CoursesController {
   ): Promise<{ message: string }> {
     try {
       console.log(`Batch deleting courses with IDs: ${JSON.stringify(courseIds)}`);
-      
+
       if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
         throw new BadRequestException('No course IDs provided for deletion');
       }
-      
+
       await this.coursesService.batchDelete(courseIds, req.user.id, req.user.role);
       return { message: `${courseIds.length} courses deleted successfully` };
     } catch (error) {
@@ -600,71 +600,71 @@ export class CoursesController {
     console.log('Creating lesson for course:', courseId);
     console.log('DTO:', JSON.stringify(createLessonDto));
     console.log('Files:', files ? files.length : 0);
-    
+
     // Create a direct connection for transaction
     const connection = await this.dataSource.createQueryRunner();
     await connection.connect();
     await connection.startTransaction();
-    
+
     try {
       const { moduleId, title, description, content, contentType, videoUrl } = createLessonDto;
       const userId = req.user.id;
-      
+
       // Validate input
       if (!title || !moduleId) {
         throw new BadRequestException('Lesson title and module ID are required');
       }
-      
+
       // Check if user is an admin or the instructor of the course
       if (req.user.role !== UserRole.ADMIN) {
         const courseCheck = await connection.query(
           'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
           [courseId, userId]
         );
-        
+
         console.log('Course check result:', JSON.stringify(courseCheck));
-        
+
         if (!courseCheck || courseCheck.length === 0) {
           await connection.rollbackTransaction();
           throw new BadRequestException('You can only add lessons to your own courses');
         }
       }
-      
+
       // Verify the module belongs to the course
       const moduleCheck = await connection.query(
         'SELECT * FROM course_modules WHERE id = ? AND course_id = ?',
         [moduleId, courseId]
       );
-      
+
       console.log('Module check result:', JSON.stringify(moduleCheck));
-      
+
       if (!moduleCheck || moduleCheck.length === 0) {
         await connection.rollbackTransaction();
         throw new NotFoundException('Module not found or does not belong to this course');
       }
-      
+
       // Get the next order index
       const orderResult = await connection.query(
         'SELECT MAX(order_index) as max_order FROM lessons WHERE module_id = ?',
         [moduleId]
       );
-      
+
       console.log('Order result:', JSON.stringify(orderResult));
-      
+
       // Safely handle the max_order value
       let nextOrder = 1; // Default to 1 if no results
       if (orderResult && orderResult.length > 0 && orderResult[0].max_order !== null) {
         nextOrder = parseInt(orderResult[0].max_order) + 1;
       }
-      
+
       console.log('Next order index:', nextOrder);
-      
+
       // Process video URL for video content type
       let finalContent = content;
       if (contentType === 'video' && videoUrl) {
         finalContent = videoUrl;
       }
-      
+
       // Insert the lesson
       try {
         const insertQuery = `
@@ -674,36 +674,36 @@ export class CoursesController {
         `;
         console.log('Insert query:', insertQuery);
         console.log('Insert params:', [moduleId, title, description || null, contentType, finalContent || null, nextOrder, 1]);
-        
+
         const lessonResult = await connection.query(
           insertQuery,
           [moduleId, title, description || null, contentType, finalContent || null, nextOrder, 1]
         );
-        
+
         console.log('Lesson insert result:', JSON.stringify(lessonResult));
-        
+
         // Get inserted ID
         let lessonId = lessonResult.insertId;
         if (!lessonId) {
           // Try to get the ID using a separate query if insertId is not available
           const [lastIdResult] = await connection.query('SELECT LAST_INSERT_ID() as id');
           console.log('Last insert ID result:', JSON.stringify(lastIdResult));
-          
+
           if (lastIdResult && lastIdResult.id) {
             lessonId = lastIdResult.id;
           } else {
             throw new Error('Could not determine lesson ID after insert');
           }
         }
-        
+
         console.log('Lesson ID:', lessonId);
-        
+
         // Process uploaded files as materials if any
         if (files && files.length > 0) {
           for (const file of files) {
             const filePath = `/uploads/lessons/${courseId}/${file.filename}`;
             const fileExt = path.extname(file.originalname).toLowerCase();
-            
+
             // Determine material type based on file extension
             let materialType = 'document'; // Default
             if (['.jpg', '.jpeg', '.png', '.gif', '.svg'].includes(fileExt)) {
@@ -715,7 +715,7 @@ export class CoursesController {
             } else if (['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt'].includes(fileExt)) {
               materialType = 'document';
             }
-            
+
             // Insert the material
             const materialInsertQuery = `
               INSERT INTO lesson_materials 
@@ -724,16 +724,16 @@ export class CoursesController {
             `;
             console.log('Material insert query:', materialInsertQuery);
             console.log('Material insert params:', [lessonId, file.originalname, filePath, materialType]);
-            
+
             const materialResult = await connection.query(
               materialInsertQuery,
               [lessonId, file.originalname, filePath, materialType]
             );
-            
+
             console.log('Material insert result:', JSON.stringify(materialResult));
           }
         }
-        
+
         // If video URL is provided for non-video content type, add it as a material
         if (videoUrl && contentType !== 'video') {
           const videoMaterialQuery = `
@@ -743,18 +743,18 @@ export class CoursesController {
           `;
           console.log('Video material query:', videoMaterialQuery);
           console.log('Video material params:', [lessonId, 'Video Reference', videoUrl, 'video']);
-          
+
           const videoMaterialResult = await connection.query(
             videoMaterialQuery,
             [lessonId, 'Video Reference', videoUrl, 'video']
           );
-          
+
           console.log('Video material insert result:', JSON.stringify(videoMaterialResult));
         }
-        
+
         await connection.commitTransaction();
         console.log('Transaction committed successfully');
-        
+
         return {
           message: 'Lesson created successfully',
           lessonId: lessonId
@@ -764,10 +764,10 @@ export class CoursesController {
         await connection.rollbackTransaction();
         throw insertError;
       }
-      
+
     } catch (error) {
       await connection.rollbackTransaction();
-      
+
       // Clean up uploaded files in case of error
       if (files && files.length > 0) {
         files.forEach(file => {
@@ -776,7 +776,7 @@ export class CoursesController {
           }
         });
       }
-      
+
       console.error('Error creating lesson:', error);
       throw error;
     } finally {
@@ -799,64 +799,61 @@ export class CoursesController {
       description: requestBody.description,
       maxPoints: requestBody.max_points,
       dueDate: requestBody.due_date,
-      allowedFileTypes: requestBody.allowed_file_types,
-      maxFileSize: requestBody.max_file_size,
       allowLateSubmissions: requestBody.allow_late_submissions
     };
-    
+
     // Log incoming data for debugging
     console.log('Creating assignment for course:', courseId);
     console.log('Request body:', JSON.stringify(requestBody));
     console.log('Mapped DTO:', JSON.stringify(createAssignmentDto));
-    
+
     try {
-      const { 
-        lessonId, 
-        title, 
-        description, 
-        maxPoints, 
+      const {
+        lessonId,
+        title,
+        description,
+        maxPoints,
         dueDate,
-        allowedFileTypes,
-        maxFileSize,
         allowLateSubmissions
       } = createAssignmentDto;
-      
+
       // Validation
       if (!title || !lessonId || !dueDate) {
         throw new BadRequestException('Title, lesson, and due date are required');
       }
-      
+
       // For instructors, verify they teach this course
       if (req.user.role === UserRole.INSTRUCTOR) {
         const courses = await this.dataSource.query(
           'SELECT * FROM courses WHERE id = ? AND instructor_id = ?',
           [courseId, req.user.id]
         );
-        
+
         console.log('Course check result:', JSON.stringify(courses));
-        
+
         if (!courses || courses.length === 0) {
           throw new BadRequestException('You can only create assignments for your own courses');
         }
       }
-      
+
       // Verify the module exists for the course
       const moduleCheck = await this.dataSource.query(
-        'SELECT * FROM course_modules WHERE id = ? AND course_id = ?', 
+        'SELECT * FROM course_modules WHERE id = ? AND course_id = ?',
         [lessonId, courseId]
       );
-      
+
       console.log('Module check result:', JSON.stringify(moduleCheck));
-      
+
       if (!moduleCheck || moduleCheck.length === 0) {
         throw new NotFoundException(`Module with ID "${lessonId}" not found for this course`);
       }
-      
-      // Create assignment - directly using SQL like in server.js
+
+      // Create assignment with only columns that exist in the database
+      // Remove allowed_file_types and max_file_size which are causing errors
       const insertQuery = `
         INSERT INTO assignments 
-        (course_id, lesson_id, title, description, max_points, due_date, allowed_file_types, max_file_size, allow_late_submissions)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (course_id, lesson_id, title, description, max_points, due_date, allow_late_submissions)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
       console.log('Insert query:', insertQuery);
       console.log('Insert params:', [
@@ -866,11 +863,9 @@ export class CoursesController {
         description || null,
         maxPoints || 100,
         dueDate,
-        allowedFileTypes || 'pdf,docx',
-        maxFileSize || 5,
-        allowLateSubmissions || false
+        allowLateSubmissions ? 1 : 0
       ]);
-      
+
       const result = await this.dataSource.query(
         insertQuery,
         [
@@ -880,17 +875,15 @@ export class CoursesController {
           description || null,
           maxPoints || 100,
           dueDate,
-          allowedFileTypes || 'pdf,docx',
-          maxFileSize || 5,
           allowLateSubmissions ? 1 : 0
         ]
       );
-      
+
       console.log('Assignment insert result:', JSON.stringify(result));
-      
+
       // Try different approaches to get the insertId
       let assignmentId;
-      
+
       if (result && result.insertId) {
         // Direct access
         assignmentId = result.insertId;
@@ -901,7 +894,7 @@ export class CoursesController {
         // Try to get the last inserted ID
         const [lastIdResult] = await this.dataSource.query('SELECT LAST_INSERT_ID() as id');
         console.log('Last insert ID result:', JSON.stringify(lastIdResult));
-        
+
         if (lastIdResult && lastIdResult.id) {
           assignmentId = lastIdResult.id;
         } else {
@@ -911,7 +904,7 @@ export class CoursesController {
           };
         }
       }
-      
+
       return {
         message: 'Assignment created successfully',
         assignmentId
@@ -927,7 +920,7 @@ export class CoursesController {
   async getAssignmentsForCourse(@Param('courseId') courseId: string, @Request() req) {
     try {
       console.log(`Fetching assignments for course: ${courseId}`);
-      
+
       // Query assignments using raw SQL like in Express
       const assignments = await this.dataSource.query(
         `SELECT a.*, cm.title as lesson_title
@@ -937,13 +930,13 @@ export class CoursesController {
          ORDER BY a.due_date ASC`,
         [courseId]
       );
-      
+
       console.log(`Found ${assignments.length} assignments`);
-      
+
       // For students, include submission status
       if (req.user.role === UserRole.STUDENT) {
         const studentId = req.user.userId;
-        
+
         // Get submission status for each assignment
         for (let assignment of assignments) {
           const submissions = await this.dataSource.query(
@@ -952,7 +945,7 @@ export class CoursesController {
              ORDER BY submission_date DESC LIMIT 1`,
             [assignment.id, studentId]
           );
-          
+
           if (submissions.length > 0) {
             assignment.submission = {
               id: submissions[0].id,
@@ -966,11 +959,11 @@ export class CoursesController {
           }
         }
       }
-      
+
       return assignments;
     } catch (error) {
       console.error('Error fetching assignments:', error);
       throw error;
     }
   }
-} 
+}
