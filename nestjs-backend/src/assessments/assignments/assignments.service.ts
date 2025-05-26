@@ -104,73 +104,74 @@ export class AssignmentsService {
   }
 
   async submitAssignment(
-    assignmentId: number, 
-    studentId: number, 
-    fileInfo: { path: string; type: string; size: number },
-    comments?: string
-  ): Promise<AssignmentSubmission> {
-    const assignment = await this.findAssignmentById(assignmentId);
+  assignmentId: number, 
+  studentId: number, 
+  fileInfo: { path: string; type: string; size: number },
+  comments?: string
+): Promise<AssignmentSubmission> {
+  const assignment = await this.findAssignmentById(assignmentId);
 
-    // Check if past due date
-    const now = new Date();
-    const dueDate = new Date(assignment.dueDate);
-    const isLate = now > dueDate;
+  // Check if past due date
+  const now = new Date();
+  const dueDate = new Date(assignment.dueDate);
+  const isLate = now > dueDate;
 
-    // If late and late submissions not allowed
-    if (isLate && !assignment.allowLateSubmissions) {
-      throw new BadRequestException('Submission deadline has passed');
-    }
-
-    // Check file type
-    const allowedTypes = assignment.allowedFileTypes.split(',');
-    const fileExt = fileInfo.type.split('/')[1].toLowerCase();
-    
-    if (!allowedTypes.includes(fileExt)) {
-      throw new BadRequestException(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`);
-    }
-    
-    // Check file size (bytes to MB conversion)
-    const fileSizeInMB = fileInfo.size / (1024 * 1024);
-    if (fileSizeInMB > assignment.maxFileSize) {
-      throw new BadRequestException(`File too large. Maximum size: ${assignment.maxFileSize} MB`);
-    }
-
-    // Check if student already has a submission and update it if exists
-    let submission = await this.submissionsRepository.findOne({
-      where: {
-        assignmentId,
-        studentId,
-      },
-    });
-
-    if (submission) {
-      Object.assign(submission, {
-        filePath: fileInfo.path,
-        fileType: fileExt,
-        fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
-        comments: comments || submission.comments,
-        isLate,
-        // Reset grade info if resubmitting
-        grade: null,
-        feedback: null,
-        gradedBy: null,
-        gradedAt: null,
-      });
-    } else {
-      // Create new submission
-      submission = this.submissionsRepository.create({
-        assignmentId,
-        studentId,
-        filePath: fileInfo.path,
-        fileType: fileExt,
-        fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
-        comments,
-        isLate,
-      });
-    }
-
-    return this.submissionsRepository.save(submission);
+  // If late and late submissions not allowed
+  if (isLate && !assignment.allowLateSubmissions) {
+    throw new BadRequestException('Submission deadline has passed');
   }
+
+  // Check file type using assignment's allowed file types
+  const allowedTypes = assignment.allowedFileTypes.split(',').map(type => type.trim().toLowerCase());
+  const fileExt = fileInfo.type.split('/').pop()?.toLowerCase() || 
+                  fileInfo.path.split('.').pop()?.toLowerCase() || '';
+  
+  if (!allowedTypes.includes(fileExt)) {
+    throw new BadRequestException(`Invalid file type. Allowed types: ${assignment.allowedFileTypes}`);
+  }
+  
+  // Check file size using assignment's max file size
+  const fileSizeInMB = fileInfo.size / (1024 * 1024);
+  if (fileSizeInMB > assignment.maxFileSize) {
+    throw new BadRequestException(`File too large. Maximum size: ${assignment.maxFileSize} MB`);
+  }
+
+  // Check if student already has a submission and update it if exists
+  let submission = await this.submissionsRepository.findOne({
+    where: {
+      assignmentId,
+      studentId,
+    },
+  });
+
+  if (submission) {
+    Object.assign(submission, {
+      filePath: fileInfo.path,
+      fileType: fileExt,
+      fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
+      comments: comments || submission.comments,
+      isLate,
+      // Reset grade info if resubmitting
+      grade: null,
+      feedback: null,
+      gradedBy: null,
+      gradedAt: null,
+    });
+  } else {
+    // Create new submission
+    submission = this.submissionsRepository.create({
+      assignmentId,
+      studentId,
+      filePath: fileInfo.path,
+      fileType: fileExt,
+      fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
+      comments,
+      isLate,
+    });
+  }
+
+  return this.submissionsRepository.save(submission);
+}
 
   async getStudentAssignmentWithSubmission(assignmentId: number, studentId: number): Promise<any> {
     const assignment = await this.findAssignmentById(assignmentId);

@@ -1,3 +1,4 @@
+// src/assessments/assignments/dto/create-assignment.dto.ts
 import { IsString, IsNumber, IsDate, IsBoolean, IsOptional, IsNotEmpty, Min, IsInt } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
@@ -9,6 +10,11 @@ export class CreateAssignmentDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  // This field exists in server.js
+  @IsString()
+  @IsOptional()
+  instructions?: string;
 
   @IsNumber()
   @Min(1)
@@ -42,7 +48,7 @@ export class CreateAssignmentDto {
     }
     return value;
   })
-  allowedFileTypes?: string = 'pdf,docx';
+  allowedFileTypes?: string = 'pdf,docx,doc,txt';
 
   @IsNumber()
   @Min(1)
@@ -77,4 +83,4 @@ export class CreateAssignmentDto {
     return value;
   })
   lessonId: number;
-} 
+}
