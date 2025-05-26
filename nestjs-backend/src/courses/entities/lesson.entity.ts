@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { CourseModule } from './course-module.entity';
 import { LessonMaterial } from './lesson-material.entity';
 
@@ -44,6 +44,7 @@ export class Lesson {
   moduleId: number;
 
   @ManyToOne(() => CourseModule, module => module.lessons, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'module_id' }) 
   module: CourseModule;
 
   @OneToMany(() => LessonMaterial, material => material.lesson)
@@ -54,4 +55,4 @@ export class Lesson {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}
