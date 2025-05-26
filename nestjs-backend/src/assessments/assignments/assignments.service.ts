@@ -104,74 +104,74 @@ export class AssignmentsService {
   }
 
   async submitAssignment(
-  assignmentId: number, 
-  studentId: number, 
-  fileInfo: { path: string; type: string; size: number },
-  comments?: string
-): Promise<AssignmentSubmission> {
-  const assignment = await this.findAssignmentById(assignmentId);
+    assignmentId: number, 
+    studentId: number, 
+    fileInfo: { path: string; type: string; size: number },
+    comments?: string
+  ): Promise<AssignmentSubmission> {
+    const assignment = await this.findAssignmentById(assignmentId);
 
-  // Check if past due date
-  const now = new Date();
-  const dueDate = new Date(assignment.dueDate);
-  const isLate = now > dueDate;
+    // Check if past due date
+    const now = new Date();
+    const dueDate = new Date(assignment.dueDate);
+    const isLate = now > dueDate;
 
-  // If late and late submissions not allowed
-  if (isLate && !assignment.allowLateSubmissions) {
-    throw new BadRequestException('Submission deadline has passed');
-  }
+    // If late and late submissions not allowed
+    if (isLate && !assignment.allowLateSubmissions) {
+      throw new BadRequestException('Submission deadline has passed');
+    }
 
-  // Check file type using assignment's allowed file types
-  const allowedTypes = assignment.allowedFileTypes.split(',').map(type => type.trim().toLowerCase());
-  const fileExt = fileInfo.type.split('/').pop()?.toLowerCase() || 
-                  fileInfo.path.split('.').pop()?.toLowerCase() || '';
-  
-  if (!allowedTypes.includes(fileExt)) {
-    throw new BadRequestException(`Invalid file type. Allowed types: ${assignment.allowedFileTypes}`);
-  }
-  
-  // Check file size using assignment's max file size
-  const fileSizeInMB = fileInfo.size / (1024 * 1024);
-  if (fileSizeInMB > assignment.maxFileSize) {
-    throw new BadRequestException(`File too large. Maximum size: ${assignment.maxFileSize} MB`);
-  }
+    // Check file type using assignment's allowed file types
+    const allowedTypes = assignment.allowedFileTypes.split(',').map(type => type.trim().toLowerCase());
+    const fileExt = fileInfo.type.split('/').pop()?.toLowerCase() || 
+                    fileInfo.path.split('.').pop()?.toLowerCase() || '';
+    
+    if (!allowedTypes.includes(fileExt)) {
+      throw new BadRequestException(`Invalid file type. Allowed types: ${assignment.allowedFileTypes}`);
+    }
+    
+    // Check file size using assignment's max file size
+    const fileSizeInMB = fileInfo.size / (1024 * 1024);
+    if (fileSizeInMB > assignment.maxFileSize) {
+      throw new BadRequestException(`File too large. Maximum size: ${assignment.maxFileSize} MB`);
+    }
 
-  // Check if student already has a submission and update it if exists
-  let submission = await this.submissionsRepository.findOne({
-    where: {
-      assignmentId,
-      studentId,
-    },
-  });
-
-  if (submission) {
-    Object.assign(submission, {
-      filePath: fileInfo.path,
-      fileType: fileExt,
-      fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
-      comments: comments || submission.comments,
-      isLate,
-      // Reset grade info if resubmitting
-      grade: null,
-      feedback: null,
-      gradedBy: null,
-      gradedAt: null,
+    // Check if student already has a submission and update it if exists
+    let submission = await this.submissionsRepository.findOne({
+      where: {
+        assignmentId,
+        studentId,
+      },
     });
-  } else {
-    // Create new submission
-    submission = this.submissionsRepository.create({
-      assignmentId,
-      studentId,
-      filePath: fileInfo.path,
-      fileType: fileExt,
-      fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
-      comments,
-      isLate,
-    });
-  }
 
-  return this.submissionsRepository.save(submission);
-}
+    if (submission) {
+      Object.assign(submission, {
+        filePath: fileInfo.path,
+        fileType: fileExt,
+        fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
+        comments: comments || submission.comments,
+        isLate,
+        // Reset grade info if resubmitting
+        grade: null,
+        feedback: null,
+        gradedBy: null,
+        gradedAt: null,
+      });
+    } else {
+      // Create new submission
+      submission = this.submissionsRepository.create({
+        assignmentId,
+        studentId,
+        filePath: fileInfo.path,
+        fileType: fileExt,
+        fileSize: Math.round(fileInfo.size / 1024), // Convert bytes to KB
+        comments,
+        isLate,
+      });
+    }
+
+    return this.submissionsRepository.save(submission);
+  }
 
   async getStudentAssignmentWithSubmission(assignmentId: number, studentId: number): Promise<any> {
     const assignment = await this.findAssignmentById(assignmentId);
@@ -189,6 +189,89 @@ export class AssignmentsService {
     };
   }
 
+  // NEW: Enhanced method to get assignment with full details like server.js
+  async getAssignmentWithFullDetails(assignmentId: number, userRole: string, userId?: number): Promise<any> {
+    // Load assignment with all relations
+    const assignment = await this.assignmentsRepository.findOne({
+      where: { id: assignmentId },
+      relations: ['course', 'lesson', 'submissions', 'submissions.student'],
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Assignment not found');
+    }
+
+    // Get submission count
+    const submissionCount = await this.submissionsRepository.count({
+      where: { assignmentId },
+    });
+
+    // Format the response to match server.js structure
+    const formattedAssignment = {
+      id: assignment.id,
+      title: assignment.title,
+      description: assignment.description,
+      instructions: assignment.instructions,
+      maxPoints: assignment.maxPoints,
+      dueDate: assignment.dueDate,
+      allowLateSubmissions: assignment.allowLateSubmissions,
+      allowedFileTypes: assignment.allowedFileTypes,
+      maxFileSize: assignment.maxFileSize,
+      createdAt: assignment.createdAt,
+      updatedAt: assignment.updatedAt,
+      course: {
+        id: assignment.course.id,
+        title: assignment.course.title,
+        code: assignment.course.code,
+      },
+      lesson: assignment.lesson ? {
+        id: assignment.lesson.id,
+        title: assignment.lesson.title,
+      } : null,
+      submissionCount,
+    };
+
+    // For students, include their submission if exists
+    if (userRole === 'student' && userId) {
+      const studentSubmission = await this.submissionsRepository.findOne({
+        where: {
+          assignmentId,
+          studentId: userId,
+        },
+        order: { submissionDate: 'DESC' },
+      });
+
+      formattedAssignment['studentSubmission'] = studentSubmission || null;
+    }
+
+    // For instructors, include all submissions with student details
+    if (userRole === 'instructor' || userRole === 'admin') {
+      const submissions = await this.submissionsRepository.find({
+        where: { assignmentId },
+        relations: ['student'],
+        order: { submissionDate: 'DESC' },
+      });
+
+      formattedAssignment['submissions'] = submissions.map(submission => ({
+        id: submission.id,
+        studentId: submission.studentId,
+        studentName: `${submission.student.firstName} ${submission.student.lastName}`,
+        studentEmail: submission.student.email,
+        submissionDate: submission.submissionDate,
+        filePath: submission.filePath,
+        fileType: submission.fileType,
+        fileSize: submission.fileSize,
+        comments: submission.comments,
+        isLate: submission.isLate,
+        grade: submission.grade,
+        feedback: submission.feedback,
+        gradedAt: submission.gradedAt,
+      }));
+    }
+
+    return formattedAssignment;
+  }
+
   async findAssignmentById(assignmentId: number): Promise<Assignment> {
     const assignment = await this.assignmentsRepository.findOne({
       where: { id: assignmentId },
@@ -202,16 +285,40 @@ export class AssignmentsService {
     return assignment;
   }
 
-  async findAssignmentsByCourse(courseId: number): Promise<Assignment[]> {
-    return this.assignmentsRepository.find({
+  async findAssignmentsByCourse(courseId: number): Promise<any[]> {
+    const assignments = await this.assignmentsRepository.find({
       where: { courseId },
+      relations: ['lesson'],
       order: { dueDate: 'ASC' },
     });
+
+    // Get submission counts for each assignment
+    const assignmentsWithCounts = await Promise.all(
+      assignments.map(async (assignment) => {
+        const submissionCount = await this.submissionsRepository.count({
+          where: { assignmentId: assignment.id },
+        });
+
+        return {
+          id: assignment.id,
+          title: assignment.title,
+          description: assignment.description,
+          maxPoints: assignment.maxPoints,
+          dueDate: assignment.dueDate,
+          allowLateSubmissions: assignment.allowLateSubmissions,
+          lessonTitle: assignment.lesson?.title || 'No lesson',
+          submissionCount,
+        };
+      })
+    );
+
+    return assignmentsWithCounts;
   }
 
   async findById(id: number): Promise<Assignment | null> {
     return this.assignmentsRepository.findOne({
-      where: { id }
+      where: { id },
+      relations: ['course', 'lesson'],
     });
   }
-} 
+}

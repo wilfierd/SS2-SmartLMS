@@ -45,6 +45,7 @@ export class AssignmentsController {
       lessonId: lessonId,
       title: requestBody.title,
       description: requestBody.description,
+      instructions: requestBody.instructions,
       maxPoints: requestBody.max_points || requestBody.maxPoints,
       dueDate: requestBody.due_date || requestBody.dueDate,
       allowedFileTypes: requestBody.allowed_file_types || requestBody.allowedFileTypes,
@@ -121,24 +122,84 @@ export class AssignmentsController {
   @UseGuards(JwtAuthGuard)
   async getAssignmentsForCourse(
     @Param('courseId', ParseIntPipe) courseId: number,
+    @Request() req: any,
   ) {
-    return this.assignmentsService.findAssignmentsByCourse(courseId);
+    const assignments = await this.assignmentsService.findAssignmentsByCourse(courseId);
+    
+    // For students, include submission status
+    if (req.user.role === UserRole.STUDENT) {
+      const studentId = req.user.userId;
+      
+      // Get submission status for each assignment
+      for (let assignment of assignments) {
+        const submission = await this.assignmentsService.getStudentAssignmentWithSubmission(
+          assignment.id, 
+          studentId
+        );
+        
+        if (submission.submission) {
+          assignment['submission'] = {
+            id: submission.submission.id,
+            date: submission.submission.submissionDate,
+            isLate: submission.submission.isLate,
+            grade: submission.submission.grade,
+            status: submission.submission.grade ? 'graded' : 'submitted'
+          };
+        } else {
+          assignment['submission'] = null;
+        }
+      }
+    }
+    
+    return assignments;
   }
 
+  // FIXED: Enhanced assignment details endpoint
   @Get(':assignmentId')
   @UseGuards(JwtAuthGuard)
   async getAssignment(
     @Param('assignmentId', ParseIntPipe) assignmentId: number,
     @Request() req: any,
   ) {
-    if (req.user.role === UserRole.STUDENT) {
-      return this.assignmentsService.getStudentAssignmentWithSubmission(
+    try {
+      // Get assignment with full details using the enhanced service method
+      const assignment = await this.assignmentsService.getAssignmentWithFullDetails(
         assignmentId, 
+        req.user.role,
         req.user.userId
       );
+
+      // Format the response to match exactly what server.js returns
+      const response = {
+        id: assignment.id,
+        title: assignment.title,
+        description: assignment.description,
+        instructions: assignment.instructions,
+        max_points: assignment.maxPoints,
+        due_date: assignment.dueDate,
+        allow_late_submissions: assignment.allowLateSubmissions,
+        allowed_file_types: assignment.allowedFileTypes,
+        max_file_size: assignment.maxFileSize,
+        created_at: assignment.createdAt,
+        updated_at: assignment.updatedAt,
+        course_title: assignment.course.title,
+        course_id: assignment.course.id,
+        lesson_title: assignment.lesson?.title || null,
+        lesson_id: assignment.lesson?.id || null,
+      };
+
+      // Add submission-related data based on user role
+      if (req.user.role === UserRole.STUDENT) {
+        response['submission'] = assignment.studentSubmission;
+      } else {
+        response['submissions'] = assignment.submissions || [];
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error fetching assignment:', error);
+      throw error;
     }
-    
-    return this.assignmentsService.findAssignmentById(assignmentId);
   }
 
   @Post(':assignmentId/submit')
@@ -147,7 +208,7 @@ export class AssignmentsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './backend/uploads/assignments',
+        destination: './uploads/assignments',
         filename: (req: any, file: any, callback: any) => {
           const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
           const ext = extname(file.originalname);
@@ -187,4 +248,4 @@ export class AssignmentsController {
       submitAssignmentDto.comments
     );
   }
-} 
+}

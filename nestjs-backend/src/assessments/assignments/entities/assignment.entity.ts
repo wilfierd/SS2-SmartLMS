@@ -1,7 +1,6 @@
-// src/assessments/assignments/entities/assignment.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Course } from '../../../courses/entities/course.entity';
-import { Lesson } from '../../../courses/entities/lesson.entity';  // Keep this - it's correct
+import { Lesson } from '../../../courses/entities/lesson.entity';
 import { AssignmentSubmission } from './assignment-submission.entity';
 
 @Entity('assignments')
@@ -27,7 +26,6 @@ export class Assignment {
   @Column({ name: 'allow_late_submissions', default: false })
   allowLateSubmissions: boolean;
 
-  // Add these columns to your database
   @Column({ name: 'allowed_file_types', default: 'pdf,docx,doc,txt' })
   allowedFileTypes: string;
 
@@ -37,7 +35,7 @@ export class Assignment {
   @Column({ name: 'course_id' })
   courseId: number;
 
-  @Column({ name: 'lesson_id' })
+  @Column({ name: 'lesson_id', nullable: true })
   lessonId: number;
 
   @CreateDateColumn({ name: 'created_at' })
@@ -46,15 +44,15 @@ export class Assignment {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => Course)
+  // Relations
+  @ManyToOne(() => Course, course => course.id, { eager: false })
   @JoinColumn({ name: 'course_id' })
   course: Course;
 
-  // This is CORRECT - lesson_id refers to lessons.id
-  @ManyToOne(() => Lesson)
+  @ManyToOne(() => Lesson, lesson => lesson.id, { eager: false, nullable: true })
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
-  @OneToMany(() => AssignmentSubmission, submission => submission.assignment)
+  @OneToMany(() => AssignmentSubmission, submission => submission.assignment, { cascade: true })
   submissions: AssignmentSubmission[];
 }
