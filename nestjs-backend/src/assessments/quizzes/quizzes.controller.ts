@@ -98,6 +98,7 @@ export class QuizzesController {
     return this.quizzesService.remove(+id, req.user.userId);
   }
 
+
   @Post(':id/start')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STUDENT)
@@ -105,10 +106,10 @@ export class QuizzesController {
   @ApiParam({ name: 'courseId', type: 'number' })
   @ApiParam({ name: 'id', type: 'number' })
   async startAttempt(
-    @Param('id') id: string,
-    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequestWithUser,
   ) {
-    return this.quizzesService.startAttempt(+id, req.user.userId);
+    return this.quizzesService.startAttempt(id, req.user.userId);
   }
 
   @Post('attempts/:attemptId/submit')
@@ -118,12 +119,12 @@ export class QuizzesController {
   @ApiParam({ name: 'courseId', type: 'number' })
   @ApiParam({ name: 'attemptId', type: 'number' })
   async submitAttempt(
-    @Param('attemptId') attemptId: string,
+    @Param('attemptId', ParseIntPipe) attemptId: number,
     @Body() submitDto: { responses: any[] },
-    @Request() req,
+    @Request() req: RequestWithUser,
   ) {
     return this.quizzesService.submitAttempt(
-      +attemptId,
+      attemptId,
       req.user.userId,
       submitDto.responses,
     );
@@ -135,15 +136,16 @@ export class QuizzesController {
   @ApiParam({ name: 'courseId', type: 'number' })
   @ApiParam({ name: 'id', type: 'number' })
   async getAttempts(
-    @Param('id') id: string,
-    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequestWithUser,
   ) {
     return this.quizzesService.getAttempts(
-      +id,
+      id,
       req.user.userId,
       req.user.role,
     );
   }
+
 }
 
 // Controller for tests (reuses quiz functionality but with different settings)
@@ -222,23 +224,29 @@ export class TestsController {
   @Post(':id/start')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STUDENT)
+  @ApiOperation({ summary: 'Start a quiz attempt' })
+  @ApiParam({ name: 'courseId', type: 'number' })
+  @ApiParam({ name: 'id', type: 'number' })
   async startAttempt(
-    @Param('id') id: string,
-    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequestWithUser,
   ) {
-    return this.quizzesService.startAttempt(+id, req.user.userId);
+    return this.quizzesService.startAttempt(id, req.user.userId);
   }
 
   @Post('attempts/:attemptId/submit')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STUDENT)
+  @ApiOperation({ summary: 'Submit answers for a quiz attempt' })
+  @ApiParam({ name: 'courseId', type: 'number' })
+  @ApiParam({ name: 'attemptId', type: 'number' })
   async submitAttempt(
-    @Param('attemptId') attemptId: string,
+    @Param('attemptId', ParseIntPipe) attemptId: number,
     @Body() submitDto: { responses: any[] },
-    @Request() req,
+    @Request() req: RequestWithUser,
   ) {
     return this.quizzesService.submitAttempt(
-      +attemptId,
+      attemptId,
       req.user.userId,
       submitDto.responses,
     );
@@ -246,14 +254,19 @@ export class TestsController {
 
   @Get(':id/attempts')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get all attempts for a quiz' })
+  @ApiParam({ name: 'courseId', type: 'number' })
+  @ApiParam({ name: 'id', type: 'number' })
   async getAttempts(
-    @Param('id') id: string,
-    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: RequestWithUser,
   ) {
     return this.quizzesService.getAttempts(
-      +id,
+      id,
       req.user.userId,
       req.user.role,
     );
   }
+
+
 } 

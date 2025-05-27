@@ -136,6 +136,7 @@ export class QuizzesService {
     await this.quizRepository.remove(quiz);
   }
 
+
   async startAttempt(quizId: number, userId: number): Promise<QuizAttempt> {
     const quiz = await this.quizRepository.findOne({
       where: { id: quizId },
@@ -283,7 +284,7 @@ export class QuizzesService {
         order: { startTime: 'DESC' },
       });
     }
-  }
+}
 
   private async addQuestionsToQuiz(quizId: number, questions: any[]): Promise<void> {
     for (let i = 0; i < questions.length; i++) {
