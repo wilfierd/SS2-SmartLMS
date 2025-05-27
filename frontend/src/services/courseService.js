@@ -100,16 +100,14 @@ class CourseService {
   }
 
   // Assignment Operations
-    async getAssignment(assignmentId) {
-    const response = await fetch(`${this.baseURL}/assignments/${assignmentId}`, {
-      headers: this.getHeaders(),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to get assignment');
-    }
-    
-    return response.json();
+  async getAssignments(courseId) {
+    const response = await this.api.get(`/courses/${courseId}/assignments`);
+    return response.data;
+  }
+
+  async getAssignment(assignmentId) {
+    const response = await this.api.get(`/assignments/${assignmentId}`);
+    return response.data;
   }
 
   async createAssignment(courseId, assignmentData) {
@@ -127,39 +125,26 @@ class CourseService {
     return response.data;
   }
 
-  async submitAssignment(assignmentId, { file, submission_text }) {
-  const formData = new FormData();
-  if (file) {
-    formData.append('file', file);
-  }
-  if (submission_text) {
-    formData.append('comments', submission_text);
-  }
-  
-    const response = await fetch(`${this.baseURL}/assignments/${assignmentId}/submit`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        // Don't set Content-Type for FormData
-      },
-      body: formData,
-    });
-    if (!response.ok) {
-      throw new Error('Failed to submit assignment');
+  async submitAssignment(assignmentId, submissionData) {
+    const formData = new FormData();
+    
+    if (submissionData.file) {
+      formData.append('file', submissionData.file);
     }
-    return response.json();
+    
+    if (submissionData.comments) {
+      formData.append('comments', submissionData.comments);
+    }
+
+    const response = await this.api.post(`/assignments/${assignmentId}/submit`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
   }
 
   async gradeSubmission(submissionId, gradeData) {
-    const response = await fetch(`${this.baseURL}/submissions/${submissionId}/grade`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(gradeData),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to grade submission');
-    }
-    return response.json();
+    const response = await this.api.post(`/submissions/${submissionId}/grade`, gradeData);
+    return response.data;
   }
 
   // Quiz Operations
@@ -168,16 +153,9 @@ class CourseService {
     return response.data;
   }
 
-    async getQuiz(quizId) {
-    const response = await fetch(`${this.baseURL}/quizzes/${quizId}`, {
-      headers: this.getHeaders(),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to get quiz');
-    }
-
-    return response.json();
+  async getQuiz(quizId) {
+    const response = await this.api.get(`/quizzes/${quizId}`);
+    return response.data;
   }
 
   async createQuiz(courseId, quizData) {
@@ -196,32 +174,14 @@ class CourseService {
   }
 
   async startQuiz(quizId) {
-    const response = await fetch(`${this.baseURL}/quizzes/${quizId}/start`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to start quiz');
-    }
-    
-    return response.json();
+    const response = await this.api.post(`/quizzes/${quizId}/start`);
+    return response.data;
   }
 
   async submitQuizAttempt(attemptId, responses) {
-    const response = await fetch(`${this.baseURL}/quiz-attempts/${attemptId}/submit`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({ responses }),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to submit quiz');
-    }
-    
-    return response.json();
+    const response = await this.api.post(`/quiz-attempts/${attemptId}/submit`, { responses });
+    return response.data;
   }
-
 
   // Student Operations
   async getEnrolledStudents(courseId) {
