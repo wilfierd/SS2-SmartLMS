@@ -1,11 +1,11 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
   UseGuards,
   Request,
   ParseIntPipe
@@ -22,7 +22,7 @@ import { RequestWithUser } from '../../common/interfaces/request-with-user.inter
 @ApiTags('quizzes')
 @Controller('courses/:courseId/quizzes')
 export class QuizzesController {
-  constructor(private readonly quizzesService: QuizzesService) {}
+  constructor(private readonly quizzesService: QuizzesService) { }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -48,13 +48,12 @@ export class QuizzesController {
     createQuizDto.timeLimitMinutes = createQuizDto.timeLimitMinutes || 30;
     // Explicitly set as not a test
     createQuizDto.isTest = false;
-    
+
     return this.quizzesService.create(
       createQuizDto,
       req.user.id,
     );
   }
-
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get a single quiz' })
@@ -64,7 +63,7 @@ export class QuizzesController {
     @Param('id', ParseIntPipe) id: number,
     @Request() req: RequestWithUser,
   ) {
-    return this.quizzesService.findOne(id, req.user.userId);
+    return this.quizzesService.findOne(id, req.user.userId, req.user.role);
   }
 
   @Patch(':id')
@@ -152,7 +151,7 @@ export class QuizzesController {
 @ApiTags('tests')
 @Controller('courses/:courseId/tests')
 export class TestsController {
-  constructor(private readonly quizzesService: QuizzesService) {}
+  constructor(private readonly quizzesService: QuizzesService) { }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -178,7 +177,7 @@ export class TestsController {
     createQuizDto.timeLimitMinutes = createQuizDto.timeLimitMinutes || 60;
     // Explicitly set as a test
     createQuizDto.isTest = true;
-    
+
     return this.quizzesService.create(
       createQuizDto,
       req.user.id,

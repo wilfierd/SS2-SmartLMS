@@ -29,7 +29,7 @@ export class QuizzesService {
     @InjectRepository(QuizResponse)
     private readonly responseRepository: Repository<QuizResponse>,
     private readonly coursesService: CoursesService,
-  ) {}
+  ) { }
 
   async findAll(courseId: number): Promise<Quiz[]> {
     return this.quizRepository.find({
@@ -37,11 +37,10 @@ export class QuizzesService {
       relations: ['questions'],
     });
   }
-
-  async findOne(id: number, userId?: number, userRole?: string): Promise<Quiz> {
+  async findOne(id: number, userId?: number, userRole?: string): Promise<any> {
     const quiz = await this.quizRepository.findOne({
       where: { id },
-      relations: ['questions', 'questions.options', 'questions.fillInAnswer'],
+      relations: ['questions', 'questions.options', 'questions.fillInAnswer', 'course'],
     });
 
     if (!quiz) {
@@ -61,35 +60,51 @@ export class QuizzesService {
         // Remove fill-in-blank answer
         delete (question as any).fillInAnswer;
       });
-    }
-
-    return quiz;
+    }    // Transform to match frontend expectations
+    return {
+      id: quiz.id,
+      title: quiz.title,
+      description: quiz.description,
+      course_title: quiz.course?.title || 'Unknown Course',
+      time_limit_minutes: quiz.timeLimitMinutes,
+      passing_score: quiz.passingScore,
+      max_attempts: quiz.maxAttempts,
+      questions: quiz.questions || [],
+      start_date: quiz.startDate,
+      end_date: quiz.endDate,
+      is_randomized: quiz.isRandomized,
+      courseId: quiz.courseId,
+      lessonId: quiz.lessonId,
+      // Additional fields for students
+      ...(userRole === UserRole.STUDENT && {
+        attempts: 0, // Will be populated separately
+        canTake: true, // Will be calculated separately
+        attemptHistory: [] // Will be populated separately
+      })
+    };
   }
-
-  async create(createQuizDto: CreateQuizDto, instructorId: number): Promise<Quiz> {
+  async create(createQuizDto: CreateQuizDto, instructorId: number): Promise<any> {
     // Check if user is instructor of the course
-    await this.coursesService.checkInstructorAccess(createQuizDto.courseId, instructorId);
+    await this.coursesService.checkInstructorAccess(createQuizDto.courseId, instructorId);    // Create quiz with the new fields
+    const quiz = new Quiz();
+    quiz.courseId = createQuizDto.courseId;
+    quiz.lessonId = createQuizDto.lessonId || null;
+    quiz.title = createQuizDto.title;
+    quiz.description = createQuizDto.description || null;
+    quiz.timeLimitMinutes = createQuizDto.timeLimitMinutes || 30;
+    quiz.passingScore = createQuizDto.passingScore || 70;
+    quiz.maxAttempts = createQuizDto.maxAttempts || 3;
+    quiz.isRandomized = createQuizDto.isRandomized || false;
+    quiz.startDate = createQuizDto.startDate || null;
+    quiz.endDate = createQuizDto.endDate || null;
 
-    // Create quiz with only the fields that exist in the database
-    const quizEntity = this.quizRepository.create({
-      courseId: createQuizDto.courseId,
-      lessonId: createQuizDto.lessonId,
-      title: createQuizDto.title,
-      description: createQuizDto.description,
-      timeLimitMinutes: createQuizDto.timeLimitMinutes || 30,
-      passingScore: createQuizDto.passingScore || 70
-      // Remove fields that don't exist in the database
-    });
-    
-    // Then save it to get an actual quiz object with ID
-    const quiz = await this.quizRepository.save(quizEntity);
-
-    // Add questions if provided
+    // Save it to get an actual quiz object with ID
+    const savedQuiz = await this.quizRepository.save(quiz);    // Add questions if provided
     if (createQuizDto.questions && createQuizDto.questions.length > 0) {
-      await this.addQuestionsToQuiz(quiz.id, createQuizDto.questions);
+      await this.addQuestionsToQuiz(savedQuiz.id, createQuizDto.questions);
     }
 
-    return this.findOne(quiz.id);
+    return this.findOne(savedQuiz.id, instructorId, UserRole.INSTRUCTOR);
   }
 
   async update(id: number, updateQuizDto: any, userId: number): Promise<Quiz> {
@@ -112,7 +127,7 @@ export class QuizzesService {
     if (updateQuizDto.questions && updateQuizDto.questions.length > 0) {
       // Remove existing questions
       await this.questionRepository.delete({ quizId: id });
-      
+
       // Add new questions
       await this.addQuestionsToQuiz(id, updateQuizDto.questions);
     }
@@ -199,9 +214,9 @@ export class QuizzesService {
     // Process each response
     for (const response of responses) {
       const question = questions.find(q => q.id === response.questionId);
-      
+
       if (!question) continue;
-      
+
       totalPoints += question.points;
       let isCorrect = false;
 
@@ -226,7 +241,7 @@ export class QuizzesService {
           const correctAnswer = question.fillInAnswer.answerText.toLowerCase().trim();
           const submittedAnswer = response.textAnswer.toLowerCase().trim();
           isCorrect = correctAnswer === submittedAnswer;
-          
+
           if (isCorrect) earnedPoints += question.points;
 
           // Save response
@@ -276,7 +291,7 @@ export class QuizzesService {
     } else {
       // Instructors need access to the course
       await this.coursesService.checkInstructorAccess(quiz.courseId, userId);
-      
+
       // Return all attempts
       return this.attemptRepository.find({
         where: { quizId },
@@ -284,18 +299,18 @@ export class QuizzesService {
         order: { startTime: 'DESC' },
       });
     }
-}
+  }
 
   private async addQuestionsToQuiz(quizId: number, questions: any[]): Promise<void> {
     for (let i = 0; i < questions.length; i++) {
       const questionData = questions[i];
-      
+
       // Make sure we have the required questionText
       if (!questionData.questionText) {
         // Use a default question text to prevent DB errors
         questionData.questionText = 'Default question text';
       }
-      
+
       // Create question with proper data - notice that question_text needs to be explicitly provided
       // as it doesn't have a default value in the database
       const question = this.questionRepository.create({
@@ -305,9 +320,9 @@ export class QuizzesService {
         points: questionData.points || 1,
         orderIndex: i
       });
-      
+
       await this.questionRepository.save(question);
-      
+
       // Handle different question types
       if (question.questionType === 'multiple_choice' && questionData.options) {
         await this.addOptionsToQuestion(question.id, questionData.options);

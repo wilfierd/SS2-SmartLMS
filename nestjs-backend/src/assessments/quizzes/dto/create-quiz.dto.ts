@@ -59,10 +59,23 @@ export class CreateQuizDto {
   @IsOptional()
   @IsNumber()
   timeLimitMinutes?: number;
-
   @IsOptional()
   @IsNumber()
   passingScore?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxAttempts?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isRandomized?: boolean;
+
+  @IsOptional()
+  startDate?: Date;
+
+  @IsOptional()
+  endDate?: Date;
 
   // Virtual field to determine if this is a test or quiz
   // Used by controllers, not directly saved to DB
