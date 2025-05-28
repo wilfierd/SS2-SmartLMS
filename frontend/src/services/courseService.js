@@ -144,8 +144,7 @@ class CourseService {
 
   async gradeSubmission(submissionId, gradeData) {
     const response = await this.api.post(`/submissions/${submissionId}/grade`, gradeData);
-    return response.data;
-  }
+    return response.data;  }
 
   // Quiz Operations
   async getQuizzes(courseId) {
@@ -153,8 +152,8 @@ class CourseService {
     return response.data;
   }
 
-  async getQuiz(quizId) {
-    const response = await this.api.get(`/quizzes/${quizId}`);
+  async getQuiz(courseId, quizId) {
+    const response = await this.api.get(`/courses/${courseId}/quizzes/${quizId}`);
     return response.data;
   }
 
@@ -163,23 +162,22 @@ class CourseService {
     return response.data;
   }
 
-  async updateQuiz(quizId, quizData) {
-    const response = await this.api.put(`/quizzes/${quizId}`, quizData);
+  async updateQuiz(courseId, quizId, quizData) {
+    const response = await this.api.patch(`/courses/${courseId}/quizzes/${quizId}`, quizData);
     return response.data;
   }
 
-  async deleteQuiz(quizId) {
-    const response = await this.api.delete(`/quizzes/${quizId}`);
+  async deleteQuiz(courseId, quizId) {
+    const response = await this.api.delete(`/courses/${courseId}/quizzes/${quizId}`);
     return response.data;
   }
 
-  async startQuiz(quizId) {
-    const response = await this.api.post(`/quizzes/${quizId}/start`);
+  async startQuiz(courseId, quizId) {
+    const response = await this.api.post(`/courses/${courseId}/quizzes/${quizId}/start`);
     return response.data;
   }
-
-  async submitQuizAttempt(attemptId, responses) {
-    const response = await this.api.post(`/quiz-attempts/${attemptId}/submit`, { responses });
+  async submitQuizAttempt(courseId, attemptId, responses) {
+    const response = await this.api.post(`/courses/${courseId}/quizzes/attempts/${attemptId}/submit`, { responses });
     return response.data;
   }
 

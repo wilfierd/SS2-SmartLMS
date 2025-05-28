@@ -1,6 +1,6 @@
 // src/components/quiz/QuizDetail.js
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
 import Sidebar from '../common/Sidebar';
 import Header from '../common/Header';
@@ -11,9 +11,12 @@ import './QuizDetail.css';
 const QuizDetail = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { auth } = useContext(AuthContext);
   
-  const [quiz, setQuiz] = useState(null);
+  // Get courseId from navigation state
+  const courseId = location.state?.courseId;
+    const [quiz, setQuiz] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentAttempt, setCurrentAttempt] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -21,8 +24,13 @@ const QuizDetail = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!courseId) {
+      notification.error('Course ID not found. Please navigate from course page.');
+      navigate(-1);
+      return;
+    }
     fetchQuiz();
-  }, [quizId]);
+  }, [quizId, courseId]);
 
   // Timer effect
   useEffect(() => {
@@ -40,11 +48,10 @@ const QuizDetail = () => {
       return () => clearInterval(timer);
     }
   }, [currentAttempt, timeLeft]);
-
   const fetchQuiz = async () => {
     try {
       setIsLoading(true);
-      const data = await courseService.getQuiz(quizId);
+      const data = await courseService.getQuiz(courseId, quizId);
       setQuiz(data);
     } catch (error) {
       notification.error('Failed to load quiz');
@@ -54,10 +61,9 @@ const QuizDetail = () => {
       setIsLoading(false);
     }
   };
-
   const handleStartQuiz = async () => {
     try {
-      const response = await courseService.startQuiz(quizId);
+      const response = await courseService.startQuiz(courseId, quizId);
       setCurrentAttempt(response);
       setTimeLeft(quiz.time_limit_minutes * 60); // Convert to seconds
       
@@ -91,9 +97,7 @@ const QuizDetail = () => {
         questionId: parseInt(questionId),
         selectedOptionId: answer,
         textAnswer: typeof answer === 'string' ? answer : null
-      }));
-
-      const result = await courseService.submitQuizAttempt(currentAttempt.attemptId, formattedAnswers);
+      }));      const result = await courseService.submitQuizAttempt(courseId, currentAttempt.attemptId, formattedAnswers);
       
       notification.success(`Quiz submitted! Score: ${result.score.toFixed(1)}%`);
       setCurrentAttempt(null);

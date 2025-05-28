@@ -77,14 +77,12 @@ const CourseDetail = () => {
     if (!module?.lessons) return null;
     
     return module.lessons.find(l => l.id === selectedLesson);
-  };
-
-  // Navigate to assignment or quiz
+  };  // Navigate to assignment or quiz
   const navigateToAssessment = (type, id) => {
     if (type === 'assignment') {
       navigate(`/assignments/${id}`);
     } else if (type === 'quiz') {
-      navigate(`/quizzes/${id}`);
+      navigate(`/quizzes/${id}`, { state: { courseId } });
     }
   };
 
@@ -265,27 +263,59 @@ const CourseDetail = () => {
                                   )}
                                 </li>
                               ))
-                            }
-                            
-                            {/* Show quizzes for this module */}
-                            {quizzes.quizzes
-                              .filter(q => q.lesson_id && module.lessons.some(l => l.id === q.lesson_id))
+                            }                            {/* Show quizzes for this module */}
+                            {quizzes.quizzes && quizzes.quizzes
+                              .filter(q => {
+                                // First try: filter by lessonId if it exists (NestJS uses camelCase)
+                                if (q.lessonId && module.lessons && module.lessons.some(l => l.id === q.lessonId)) {
+                                  return true;
+                                }
+                                
+                                // Second try: for quizzes without specific lesson, show in first module
+                                if (!q.lessonId && module.id === modules.modules[0]?.id) {
+                                  return true;
+                                }
+                                
+                                return false;
+                              })
                               .map(quiz => (
                                 <li 
                                   key={`quiz-${quiz.id}`}
                                   className="assessment-item quiz-item"
                                   onClick={() => navigateToAssessment('quiz', quiz.id)}
-                                >
-                                  <span className="session-icon">🧩</span>
+                                >                                  <span className="session-icon">🧩</span>
                                   Quiz: {quiz.title}
-                                  {quiz.bestScore && (
-                                    <span className="quiz-score">
-                                      Best: {quiz.bestScore}%
+                                  {quiz.attempts > 0 ? (
+                                    <span className="quiz-status">
+                                      {quiz.highestScore ? (
+                                        <>
+                                          {quiz.highestScore >= quiz.passingScore ? '✅' : '❌'}
+                                          <span className="quiz-score">
+                                            Best: {quiz.highestScore}%
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          📝
+                                          <span className="quiz-attempts">
+                                            {quiz.attempts} attempt{quiz.attempts > 1 ? 's' : ''}
+                                          </span>
+                                        </>
+                                      )}
+                                    </span>
+                                  ) : quiz.canTake === false ? (
+                                    <span className="quiz-status">
+                                      🔒
+                                      <span className="quiz-unavailable">Unavailable</span>
+                                    </span>
+                                  ) : (
+                                    <span className="quiz-status">
+                                      ⭕
+                                      <span className="quiz-not-started">Not Started</span>
                                     </span>
                                   )}
                                 </li>
-                              ))
-                            }
+                              ))                            }
                           </ul>
                         )}
                       </li>
