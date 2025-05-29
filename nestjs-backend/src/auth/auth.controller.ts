@@ -1,4 +1,5 @@
 import { Controller, Post, UseGuards, Request, Body, Get, HttpStatus, UnauthorizedException, Logger, Res } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -7,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { Response } from 'express';
 
+@ApiTags('authentication')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -23,6 +25,28 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          example: 'admin@lms.com',
+          description: 'User email address'
+        },
+        password: {
+          type: 'string',
+          example: 'admin123',
+          description: 'User password'
+        }
+      },
+      required: ['email', 'password']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Login successful', type: LoginResponseDto })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Missing email or password' })
   async login(
     @Request() req,
     @Res({ passthrough: true }) res: Response,
@@ -41,6 +65,7 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
+  @ApiExcludeEndpoint()
   async googleAuth() {
     // This endpoint initiates Google OAuth flow
     // The guard handles the redirect to Google
@@ -48,14 +73,15 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
+  @ApiExcludeEndpoint()
   async googleAuthCallback(@Request() req) {
     // After successful Google authentication, generate JWT
     const loginResponse = await this.authService.login(req.user);
-    
+
     // Redirect to frontend with token
     const frontendUrl = this.configService.get<string>('frontend.url');
     const redirectUrl = `${frontendUrl}/auth/google/success?token=${loginResponse.token}`;
-    
+
     return redirectUrl;
   }
 

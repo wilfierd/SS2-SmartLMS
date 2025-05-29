@@ -15,19 +15,8 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
   const configService = app.get(ConfigService);
-  
   app.use(passport.initialize());
-  
-  // Configure Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('SS2-SmartLMS API')
-    .setDescription('The SmartLMS API endpoints documentation')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
-  
+
   // Log incoming requests
   app.use((req, res, next) => {
     if (req.method !== 'OPTIONS') {
@@ -35,7 +24,7 @@ async function bootstrap() {
     }
     next();
   });
-  
+
   // Define global validation pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: false,
@@ -45,7 +34,7 @@ async function bootstrap() {
       enableImplicitConversion: true
     }
   }));
-  
+
   // Enable CORS
   app.enableCors({
     origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
@@ -53,38 +42,58 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
-  
+
   // Define global prefix
   app.setGlobalPrefix('api', {
     exclude: [
-      '', 
+      '',
       'status'
     ],
   });
-  
+  // Configure Swagger documentation (after global prefix)
+  const config = new DocumentBuilder()
+    .setTitle('SS2-SmartLMS API')
+    .setDescription('The SmartLMS API endpoints documentation.')
+    .setVersion('1.0')
+    .addServer('http://localhost:5000', 'Development server')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth'
+    )
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
   // Create uploads directory if it doesn't exist
   const uploadsDir = join(__dirname, '..', 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
-  
+
   // Create subdirectories for different upload types
   const lessonUploadsDir = join(uploadsDir, 'lessons');
   if (!fs.existsSync(lessonUploadsDir)) {
     fs.mkdirSync(lessonUploadsDir, { recursive: true });
   }
-  
+
   const assignmentUploadsDir = join(uploadsDir, 'assignments');
   if (!fs.existsSync(assignmentUploadsDir)) {
     fs.mkdirSync(assignmentUploadsDir, { recursive: true });
   }
-  
+
   // Setup static file serving for uploads
   app.use('/uploads', express.static(uploadsDir));
-  
+
   // Apply global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
-  
+
   // Start the server on port 5000
   const port = 5000; // Default port
   await app.listen(port);

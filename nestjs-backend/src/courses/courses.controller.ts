@@ -18,6 +18,7 @@ import {
   InternalServerErrorException,
   UnauthorizedException
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -57,6 +58,8 @@ const lessonStorage = diskStorage({
   }
 });
 
+@ApiTags('courses')
+@ApiBearerAuth()
 @Controller('courses')
 export class CoursesController {
   constructor(
@@ -66,6 +69,11 @@ export class CoursesController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get all courses with optional filtering' })
+  @ApiQuery({ name: 'status', required: false, description: 'Filter by course status', example: 'ACTIVE' })
+  @ApiQuery({ name: 'featured', required: false, description: 'Filter featured courses', example: 'true' })
+  @ApiResponse({ status: 200, description: 'List of courses' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Request() req, @Query('status') status?: string, @Query('featured') featured?: string): Promise<any[]> {
     try {
       console.log("Fetching courses...");
@@ -115,10 +123,15 @@ export class CoursesController {
       return [];
     }
   }
-
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
+  @ApiOperation({ summary: 'Create a new course (Admin/Instructor only)' })
+  @ApiBody({ type: CreateCourseDto })
+  @ApiResponse({ status: 201, description: 'Course created successfully', type: CourseResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin or Instructor role required' })
   async create(
     @Body() createCourseDto: CreateCourseDto,
     @Request() req,
@@ -132,6 +145,8 @@ export class CoursesController {
   }
 
   @Get('public')
+  @ApiOperation({ summary: 'Get all public courses (no authentication required)' })
+  @ApiResponse({ status: 200, description: 'List of public courses', type: [CourseResponseDto] })
   async findAllPublic(): Promise<CourseResponseDto[]> {
     const courses = await this.coursesService.findAllPublicCourses();
     return Promise.all(courses.map(course =>
@@ -141,6 +156,11 @@ export class CoursesController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get course by ID' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Course ID' })
+  @ApiResponse({ status: 200, description: 'Course details', type: CourseResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Course not found' })
   async findOne(@Param('id') id: string, @Request() req): Promise<any> {
     try {
       console.log(`Fetching course with ID: ${id}`);

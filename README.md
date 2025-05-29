@@ -189,29 +189,52 @@ http://localhost:5000/api/docs
 ### Key API Endpoints
 
 ```
-Authentication:
-POST /api/auth/login
-POST /api/auth/register
-POST /api/auth/google
-POST /api/auth/logout
+🔐 Authentication:
+POST /api/auth/login           # Login with email/password
+POST /api/auth/google          # Google OAuth login
+GET  /api/auth/google          # Google OAuth redirect
+POST /api/auth/logout          # Logout
 
-Courses:
-GET    /api/courses
-POST   /api/courses
-PUT    /api/courses/:id
-DELETE /api/courses/:id
+👥 Users (Admin Only):
+GET    /api/users              # List all users (admin only)
+GET    /api/users/me           # Get current user profile
+PUT    /api/users/:id          # Update user (admin only)
+DELETE /api/users/:id          # Delete user (admin only)
+POST   /api/users/admin-register # Create new user (admin only)
 
-Assessments:
-GET    /api/quizzes
-POST   /api/quizzes
-GET    /api/assignments
-POST   /api/assignments
+📚 Courses:
+GET    /api/courses            # List courses
+POST   /api/courses            # Create course (instructor/admin)
+GET    /api/courses/:id        # Get course details
+PUT    /api/courses/:id        # Update course (instructor/admin)
+DELETE /api/courses/:id        # Delete course (admin only)
 
-Users:
-GET    /api/users/profile
-PUT    /api/users/profile
-POST   /api/users/change-password
+📝 Assessments:
+GET    /api/quizzes            # List quizzes
+POST   /api/quizzes            # Create quiz (instructor/admin)
+GET    /api/quizzes/:id        # Get quiz details
+PUT    /api/quizzes/:id        # Update quiz (instructor/admin)
+
+GET    /api/assignments        # List assignments
+POST   /api/assignments        # Create assignment (instructor/admin)
+GET    /api/assignments/:id    # Get assignment details
+
+🎓 Virtual Classroom:
+GET    /api/virtual-sessions   # List virtual sessions
+POST   /api/virtual-sessions   # Create session (instructor/admin)
+GET    /api/virtual-sessions/:id # Get session details
 ```
+
+### 🔒 Authentication & Authorization
+
+| Endpoint | Authentication | Authorization |
+|----------|---------------|---------------|
+| `/api/status` | ❌ None | ❌ None |
+| `/api/auth/login` | ❌ None | ❌ None |
+| `/api/users` | ✅ JWT | 👑 Admin only |
+| `/api/users/me` | ✅ JWT | 👤 Any user |
+| `/api/courses` | ✅ JWT | 👤 Any user |
+| `/api/quizzes` | ✅ JWT | 👤 Any user |
 
 ## 📁 Project Structure
 
@@ -376,3 +399,199 @@ For issues and questions:
 ---
 
 **Built with ❤️ using NestJS, React, and TypeScript**
+
+## 📖 Enhanced Swagger API Documentation & Testing
+
+### 🎯 **Complete API Testing Workflow**
+
+The API now includes comprehensive Swagger documentation with proper parameter definitions, authentication requirements, and example requests/responses.
+
+#### **Step 1: Access Swagger UI**
+```bash
+# Start the NestJS backend first
+cd nestjs-backend
+npm run start:dev
+
+# Open Swagger UI in browser
+http://localhost:5000/api/docs
+```
+
+#### **Step 2: Authenticate and Get JWT Token**
+
+1. **Login via Swagger UI:**
+   - Go to **Authentication** section
+   - Click on **POST /api/auth/login**
+   - Click "Try it out"
+   - Use these credentials:
+   ```json
+   {
+     "email": "admin@smartlms.com",
+     "password": "admin123"
+   }
+   ```
+   - Copy the JWT token from the response
+
+2. **Set Authorization Header:**
+   - Click the **🔒 Authorize** button at the top of Swagger UI
+   - Enter: `Bearer YOUR_JWT_TOKEN_HERE`
+   - Click "Authorize"
+
+#### **Step 3: Test Protected Endpoints**
+
+Now you can test all protected endpoints with proper authentication:
+
+##### **👥 User Management (Admin Only)**
+```bash
+# Get all users
+GET /api/users
+# Headers: Authorization: Bearer YOUR_JWT_TOKEN
+
+# Create new user
+POST /api/users/admin-register
+{
+  "email": "newuser@smartlms.com",
+  "password": "Password123!",
+  "firstName": "John",
+  "lastName": "Doe",
+  "role": "STUDENT"
+}
+
+# Get user profile
+GET /api/users/me
+```
+
+##### **📚 Course Management**
+```bash
+# Get all courses
+GET /api/courses
+# Query params: ?status=ACTIVE&featured=true
+
+# Create new course (Admin/Instructor)
+POST /api/courses
+{
+  "title": "Advanced JavaScript",
+  "code": "JS301",
+  "description": "Advanced JavaScript concepts and frameworks",
+  "departmentId": 1,
+  "status": "draft"
+}
+
+# Get course by ID
+GET /api/courses/1
+```
+
+##### **🎓 Enrollment Management**
+```bash
+# Enroll in course (Student only)
+POST /api/enrollments/enroll
+{
+  "courseId": 1,
+  "enrollmentKey": "optional_key"
+}
+
+# Get my enrolled courses
+GET /api/enrollments/my-courses
+
+# Leave course
+DELETE /api/enrollments/leave/1
+```
+
+##### **🏫 Virtual Classroom**
+```bash
+# Create virtual session
+POST /api/virtual-classroom
+{
+  "title": "Live Lecture",
+  "description": "Introduction to React",
+  "scheduledStart": "2024-12-01T10:00:00Z",
+  "courseId": 1
+}
+
+# Get all sessions
+GET /api/virtual-classroom
+
+# Join session
+POST /api/virtual-classroom/1/register
+```
+
+#### **Step 4: Role-Based Testing**
+
+Test different user roles to see authorization in action:
+
+1. **Student Role:**
+   - Can enroll/leave courses
+   - Can access enrolled course content
+   - Cannot create courses or manage users
+
+2. **Instructor Role:**
+   - Can create and manage courses
+   - Can create virtual sessions
+   - Can view enrolled students
+
+3. **Admin Role:**
+   - Full access to all endpoints
+   - Can manage users, courses, and system settings
+
+### 🔧 **Enhanced Features in Swagger UI**
+
+#### **✅ Comprehensive Parameter Documentation**
+- All endpoints now have detailed parameter descriptions
+- Example values for easy testing
+- Required vs optional parameters clearly marked
+- Data type validation and constraints
+
+#### **✅ Authentication Flow**
+- Bearer token authentication configured
+- Authorize button for easy token management
+- Role-based access clearly documented
+
+#### **✅ Response Examples**
+- Detailed response schemas
+- HTTP status codes with descriptions
+- Error response examples
+
+#### **✅ Request Body Schemas**
+- Complete DTO documentation with examples
+- Validation rules and constraints
+- Nested object structures
+
+### 🐛 **Common API Testing Issues & Solutions**
+
+#### **Issue: 404 Not Found**
+```bash
+❌ Wrong: http://localhost:5000/users
+✅ Correct: http://localhost:5000/api/users
+```
+
+#### **Issue: 401 Unauthorized**
+```bash
+# Make sure to include Bearer token:
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+#### **Issue: 403 Forbidden**
+```bash
+# Check user role requirements:
+- Admin only: User management endpoints
+- Instructor/Admin: Course creation
+- Student only: Enrollment endpoints
+```
+
+#### **Issue: Validation Errors**
+```bash
+# Check required fields and formats:
+- Email: Must be valid email format
+- Password: Min 8 chars, uppercase, lowercase, number/special char
+- Dates: ISO string format (2024-12-01T10:00:00Z)
+```
+
+### 📋 **Quick Test Checklist**
+
+- [ ] Login successfully and get JWT token
+- [ ] Set Bearer authorization in Swagger
+- [ ] Test public endpoints (no auth required)
+- [ ] Test protected endpoints with token
+- [ ] Try different user roles
+- [ ] Test CRUD operations for your role
+- [ ] Verify error responses for invalid requests
+- [ ] Test pagination and filtering parameters
