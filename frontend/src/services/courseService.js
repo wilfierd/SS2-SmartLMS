@@ -143,8 +143,9 @@ class CourseService {
   }
 
   async gradeSubmission(submissionId, gradeData) {
-    const response = await this.api.post(`/submissions/${submissionId}/grade`, gradeData);
-    return response.data;  }
+    const response = await this.api.post(`/assignments/submissions/${submissionId}/grade`, gradeData);
+    return response.data;
+  }
 
   // Quiz Operations
   async getQuizzes(courseId) {
@@ -176,6 +177,7 @@ class CourseService {
     const response = await this.api.post(`/courses/${courseId}/quizzes/${quizId}/start`);
     return response.data;
   }
+
   async submitQuizAttempt(courseId, attemptId, responses) {
     const response = await this.api.post(`/courses/${courseId}/quizzes/attempts/${attemptId}/submit`, { responses });
     return response.data;
@@ -291,11 +293,6 @@ class CourseService {
 
   async endVirtualSession(sessionId) {
     const response = await this.api.post(`/virtual-sessions/${sessionId}/end`);
-    return response.data;
-  }
-
-    async submitQuizAttempt(attemptId, responses) {
-    const response = await this.api.post(`/quiz-attempts/${attemptId}/submit`, { answers: responses });
     return response.data;
   }
 

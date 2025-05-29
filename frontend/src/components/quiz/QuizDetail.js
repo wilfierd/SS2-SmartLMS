@@ -16,7 +16,8 @@ const QuizDetail = () => {
   
   // Get courseId from navigation state
   const courseId = location.state?.courseId;
-    const [quiz, setQuiz] = useState(null);
+
+  const [quiz, setQuiz] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentAttempt, setCurrentAttempt] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -48,10 +49,12 @@ const QuizDetail = () => {
       return () => clearInterval(timer);
     }
   }, [currentAttempt, timeLeft]);
+
   const fetchQuiz = async () => {
     try {
       setIsLoading(true);
       const data = await courseService.getQuiz(courseId, quizId);
+      console.log('Fetched quiz data:', data);
       setQuiz(data);
     } catch (error) {
       notification.error('Failed to load quiz');
@@ -61,17 +64,23 @@ const QuizDetail = () => {
       setIsLoading(false);
     }
   };
+
   const handleStartQuiz = async () => {
     try {
+      console.log('Starting quiz with courseId:', courseId, 'quizId:', quizId);
       const response = await courseService.startQuiz(courseId, quizId);
+      console.log('Start quiz response:', response);
+      
       setCurrentAttempt(response);
       setTimeLeft(quiz.time_limit_minutes * 60); // Convert to seconds
       
       // Initialize answers object
       const initialAnswers = {};
-      response.questions.forEach(q => {
-        initialAnswers[q.id] = null;
-      });
+      if (response.questions) {
+        response.questions.forEach(q => {
+          initialAnswers[q.id] = null;
+        });
+      }
       setAnswers(initialAnswers);
       
     } catch (error) {
@@ -81,6 +90,7 @@ const QuizDetail = () => {
   };
 
   const handleAnswerChange = (questionId, answer) => {
+    console.log('Answer changed for question', questionId, ':', answer);
     setAnswers(prev => ({
       ...prev,
       [questionId]: answer
@@ -93,14 +103,24 @@ const QuizDetail = () => {
     setIsSubmitting(true);
     
     try {
-      const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
-        questionId: parseInt(questionId),
-        selectedOptionId: answer,
-        textAnswer: typeof answer === 'string' ? answer : null
-      }));      const result = await courseService.submitQuizAttempt(courseId, currentAttempt.attemptId, formattedAnswers);
+      console.log('Submitting quiz with answers:', answers);
       
+      const formattedAnswers = Object.entries(answers)
+        .filter(([questionId, answer]) => answer !== null && answer !== undefined)
+        .map(([questionId, answer]) => ({
+          questionId: parseInt(questionId),
+          selectedOptionId: typeof answer === 'number' ? answer : null,
+          textAnswer: typeof answer === 'string' ? answer : null
+        }));
+
+      console.log('Formatted answers:', formattedAnswers);
+      
+      const result = await courseService.submitQuizAttempt(courseId, currentAttempt.attemptId, formattedAnswers);
+      
+      console.log('Submit result:', result);
       notification.success(`Quiz submitted! Score: ${result.score.toFixed(1)}%`);
       setCurrentAttempt(null);
+      setAnswers({});
       fetchQuiz(); // Refresh to show updated attempt history
       
     } catch (error) {
@@ -209,7 +229,7 @@ const QuizDetail = () => {
                   </div>
 
                   <div className="quiz-actions">
-                    {quiz.canTake ? (
+                    {quiz.canTake !== false ? (
                       <button 
                         className="start-quiz-btn"
                         onClick={handleStartQuiz}
@@ -246,7 +266,7 @@ const QuizDetail = () => {
               </div>
 
               <div className="quiz-questions">
-                {currentAttempt.questions.map((question, index) => (
+                {currentAttempt.questions && currentAttempt.questions.map((question, index) => (
                   <div key={question.id} className="question-item">
                     <div className="question-header">
                       <h3>Question {index + 1}</h3>
@@ -258,7 +278,7 @@ const QuizDetail = () => {
                     </div>
 
                     <div className="question-options">
-                      {question.type === 'multiple_choice' && question.options.map(option => (
+                      {question.type === 'multiple_choice' && question.options && question.options.map(option => (
                         <label key={option.id} className="option-label">
                           <input
                             type="radio"
@@ -267,22 +287,18 @@ const QuizDetail = () => {
                             checked={answers[question.id] === option.id}
                             onChange={(e) => handleAnswerChange(question.id, parseInt(e.target.value))}
                           />
-                          {option.option_text}
+                          <span>{option.optionText}</span>
                         </label>
                       ))}
 
-                      {question.type === 'true_false' && question.options.map(option => (
-                        <label key={option.id} className="option-label">
-                          <input
-                            type="radio"
-                            name={`question-${question.id}`}
-                            value={option.id}
-                            checked={answers[question.id] === option.id}
-                            onChange={(e) => handleAnswerChange(question.id, parseInt(e.target.value))}
-                          />
-                          {option.option_text}
-                        </label>
-                      ))}
+                      {question.type === 'fill_in_blank' && (
+                        <textarea
+                          value={answers[question.id] || ''}
+                          onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                          placeholder="Enter your answer here..."
+                          rows={3}
+                        />
+                      )}
 
                       {(question.type === 'short_answer' || question.type === 'essay') && (
                         <textarea

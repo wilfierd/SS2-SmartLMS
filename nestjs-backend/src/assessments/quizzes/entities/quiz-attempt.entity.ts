@@ -12,16 +12,18 @@ export class QuizAttempt {
   startTime: Date;
 
   @Column({ name: 'end_time', type: 'datetime', nullable: true })
-  endTime: Date;
+  endTime: Date | null;
 
   @Column({ type: 'float', nullable: true })
   score: number;
 
-  @Column({ nullable: true, default: false })
+  @Column({ name: 'is_passing', default: false })
   passed: boolean;
 
-  @Column({ name: 'is_completed', default: false })
-  isCompleted: boolean;
+  // Computed property - quiz is completed when endTime is set
+  get isCompleted(): boolean {
+    return this.endTime !== null && this.endTime !== undefined;
+  }
 
   @Column({ name: 'quiz_id' })
   quizId: number;
@@ -39,4 +41,4 @@ export class QuizAttempt {
 
   @OneToMany(() => QuizResponse, response => response.attempt)
   responses: QuizResponse[];
-} 
+}
