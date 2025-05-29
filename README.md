@@ -19,7 +19,7 @@
 
 A comprehensive Learning Management System built with modern technologies including NestJS backend, React frontend, and MySQL database. The system supports students, instructors, and administrators with features for course management, assessments, virtual classrooms, and more.
 
-## 🏗️ Architecture
+## ![](https://img.shields.io/badge/-2E86AB.svg?logo=stackshare&logoColor=white) Architecture
 
 - **Backend**: NestJS (TypeScript) - Migrated from Express.js
 - **Frontend**: React.js
@@ -27,14 +27,14 @@ A comprehensive Learning Management System built with modern technologies includ
 - **Authentication**: JWT + Google OAuth2.0
 - **API Documentation**: Swagger/OpenAPI
 
-## 🔧 System Requirements
+## ![](https://img.shields.io/badge/-FF6B6B.svg?logo=checkmarx&logoColor=white) System Requirements
 
 - **Node.js**: v18 or higher (recommended)
 - **MySQL**: v8.0 or higher
 - **npm** or **yarn**: Latest version
 - **TypeScript**: v4.0+ (automatically installed)
 
-## 📦 Installation Instructions
+## <img src="https://cdn-icons-png.flaticon.com/512/3159/3159310.png" width="22" height="22" alt="Setup"> Installation Instructions
 
 ### 1. Clone the Repository
 
@@ -138,7 +138,7 @@ npm start
 
 The application will open automatically at http://localhost:3000
 
-## 👥 Default Login Credentials
+## <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" width="22" height="22" alt="Credentials"> Default Login Credentials
 
 After setting up the database, you can use these default credentials:
 
@@ -156,47 +156,47 @@ After setting up the database, you can use these default credentials:
 
 > **Note**: Students are required to change their password upon first login for security.
 
-## ✨ Key Features
+## <img src="https://cdn-icons-png.flaticon.com/512/1828/1828970.png" width="22" height="22" alt="Features"> Key Features
 
-### 🔐 Authentication & Authorization
+### ![](https://img.shields.io/badge/-2E86AB.svg?logo=shield&logoColor=white) Authentication & Authorization
 - Email/password authentication
 - Google OAuth2.0 integration
 - JWT-based session management
 - Role-based access control (Student, Instructor, Admin)
 - Password reset functionality
 
-### 📚 Course Management
+### ![](https://img.shields.io/badge/-FF6B6B.svg?logo=book&logoColor=white) Course Management
 - Create and manage courses
 - Lesson planning and materials
 - Course modules and structure
 - Student enrollment system
 - Progress tracking
 
-### 📝 Assessment System
+### ![](https://img.shields.io/badge/-4ECDC4.svg?logo=clipboard&logoColor=white) Assessment System
 - **Quiz Creation**: Multiple choice, true/false questions
 - **Assignment Management**: File uploads and submissions
 - **Grading System**: Automated and manual grading
 - **Progress Analytics**: Student performance tracking
 
-### 🎓 Virtual Classroom
+### ![](https://img.shields.io/badge/-FFD93D.svg?logo=video&logoColor=black) Virtual Classroom
 - Live session scheduling
 - Video conferencing integration
 - Session recording capabilities
 - Interactive whiteboard features
 
-### 💬 Communication
+### ![](https://img.shields.io/badge/-6BCF7F.svg?logo=chat&logoColor=white) Communication
 - Discussion forums
 - Direct messaging
 - Announcement system
 - Email notifications
 
-### 📊 Analytics & Reporting
+### ![](https://img.shields.io/badge/-2E86AB.svg?logo=barchart&logoColor=white) Analytics & Reporting
 - Student progress reports
 - Course completion statistics
 - Performance analytics
 - Export capabilities
 
-## 🚀 API Documentation
+## ![](https://img.shields.io/badge/-FF6B6B.svg?logo=swagger&logoColor=white) API Documentation
 
 The NestJS backend automatically generates Swagger documentation available at:
 ```
@@ -206,27 +206,27 @@ http://localhost:5000/api/docs
 ### Key API Endpoints
 
 ```
-🔐 Authentication:
+Authentication:
 POST /api/auth/login           # Login with email/password
 POST /api/auth/google          # Google OAuth login
 GET  /api/auth/google          # Google OAuth redirect
 POST /api/auth/logout          # Logout
 
-👥 Users (Admin Only):
+Users (Admin Only):
 GET    /api/users              # List all users (admin only)
 GET    /api/users/me           # Get current user profile
 PUT    /api/users/:id          # Update user (admin only)
 DELETE /api/users/:id          # Delete user (admin only)
 POST   /api/users/admin-register # Create new user (admin only)
 
-📚 Courses:
+Courses:
 GET    /api/courses            # List courses
 POST   /api/courses            # Create course (instructor/admin)
 GET    /api/courses/:id        # Get course details
 PUT    /api/courses/:id        # Update course (instructor/admin)
 DELETE /api/courses/:id        # Delete course (admin only)
 
-📝 Assessments:
+Assessments:
 GET    /api/quizzes            # List quizzes
 POST   /api/quizzes            # Create quiz (instructor/admin)
 GET    /api/quizzes/:id        # Get quiz details
@@ -236,24 +236,24 @@ GET    /api/assignments        # List assignments
 POST   /api/assignments        # Create assignment (instructor/admin)
 GET    /api/assignments/:id    # Get assignment details
 
-🎓 Virtual Classroom:
+Virtual Classroom:
 GET    /api/virtual-sessions   # List virtual sessions
 POST   /api/virtual-sessions   # Create session (instructor/admin)
 GET    /api/virtual-sessions/:id # Get session details
 ```
 
-### 🔒 Authentication & Authorization
+### Authentication & Authorization
 
 | Endpoint | Authentication | Authorization |
 |----------|---------------|---------------|
-| `/api/status` | ❌ None | ❌ None |
-| `/api/auth/login` | ❌ None | ❌ None |
-| `/api/users` | ✅ JWT | 👑 Admin only |
-| `/api/users/me` | ✅ JWT | 👤 Any user |
-| `/api/courses` | ✅ JWT | 👤 Any user |
-| `/api/quizzes` | ✅ JWT | 👤 Any user |
+| `/api/status` | None | None |
+| `/api/auth/login` | None | None |
+| `/api/users` | JWT | Admin only |
+| `/api/users/me` | JWT | Any user |
+| `/api/courses` | JWT | Any user |
+| `/api/quizzes` | JWT | Any user |
 
-## 📁 Project Structure
+## <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" width="22" height="22" alt="Structure"> Project Structure
 
 ```
 SS2-SmartLMS/
@@ -277,28 +277,7 @@ SS2-SmartLMS/
 └── key.json              # Google OAuth credentials
 ```
 
-## 🛠️ Development Scripts
-
-### Backend (NestJS)
-```bash
-npm run start          # Start production server
-npm run start:dev      # Start development server with hot reload
-npm run start:debug    # Start with debug mode
-npm run build          # Build for production
-npm run test           # Run unit tests
-npm run test:e2e       # Run end-to-end tests
-npm run lint           # Run ESLint
-```
-
-### Frontend (React)
-```bash
-npm start              # Start development server
-npm run build          # Build for production
-npm test               # Run tests
-npm run eject          # Eject from Create React App
-```
-
-## 🔧 Troubleshooting
+## <img src="https://cdn-icons-png.flaticon.com/512/2040/2040504.png" width="22" height="22" alt="Troubleshooting"> Troubleshooting
 
 ### Common Issues
 
@@ -342,77 +321,8 @@ SHOW TABLES;
 ### Environment Variables Checklist
 
 Ensure these variables are set in your `.env` file:
-- ✅ `PORT` (default: 5000)
-- ✅ `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
-- ✅ `JWT_SECRET` (use a strong, random string)
-- ✅ `FRONTEND_URL` (for CORS)
-- ✅ Email configuration (if using notifications)
-
-## 🚀 Deployment
-
-### Production Build
-
-#### Backend
-```bash
-cd nestjs-backend
-npm run build
-npm run start:prod
-```
-
-#### Frontend
-```bash
-cd frontend
-npm run build
-# Deploy the build folder to your web server
-```
-
-### Environment Variables for Production
-```env
-NODE_ENV=production
-PORT=5000
-DB_HOST=your_production_db_host
-JWT_SECRET=your_very_secure_production_jwt_secret
-FRONTEND_URL=https://your-domain.com
-```
-
-## 🆕 Migration from Express.js to NestJS
-
-This project has been migrated from Express.js to NestJS for better:
-- **Type Safety**: Full TypeScript support
-- **Modularity**: Better code organization with modules
-- **Documentation**: Auto-generated Swagger docs
-- **Testing**: Built-in testing framework
-- **Validation**: Automatic request/response validation
-- **Scalability**: Enterprise-ready architecture
-
-### Breaking Changes
-- API base URL changed to `/api/`
-- Response format standardized
-- Enhanced error handling
-- Improved validation
-
-## 📄 License
-
-This project is licensed under the terms of the license included in the LICENSE file.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📞 Support
-
-For issues and questions:
-1. Check the troubleshooting section above
-2. Review the API documentation at `/api/docs`
-3. Open an issue on GitHub
-4. Contact the development team
-
----
-
-**Built with ❤️ using NestJS, React, and TypeScript**
+- ✓ `PORT` (default: 5000)
+- ✓ `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- ✓ `JWT_SECRET` (use a strong, random string)
+- ✓ `FRONTEND_URL` (for CORS)
+- ✓ Email configuration (if using notifications)
