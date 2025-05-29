@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
   question_text TEXT NOT NULL,
   question_type ENUM('multiple_choice', 'true_false', 'short_answer', 'essay') NOT NULL,
   points INT NOT NULL DEFAULT 1,
-  order_index INT NOT NULL,
+  order_index INT NOT NULL DEFAULT 0,
   FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
 );
 
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS quiz_options (
   question_id INT NOT NULL,
   option_text TEXT NOT NULL,
   is_correct BOOLEAN DEFAULT FALSE,
-  order_index INT NOT NULL,
+  order_index INT NOT NULL DEFAULT 0,
   FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE
 );
 

@@ -37,7 +37,7 @@ export class QuizzesService {
       relations: ['questions'],
     });
   }
-  
+
   async findOne(id: number, userId?: number, userRole?: string): Promise<any> {
     const quiz = await this.quizRepository.findOne({
       where: { id },
@@ -128,10 +128,10 @@ export class QuizzesService {
       })
     };
   }
-  
+
   async create(createQuizDto: CreateQuizDto, instructorId: number): Promise<any> {
     // Check if user is instructor of the course
-    await this.coursesService.checkInstructorAccess(createQuizDto.courseId, instructorId);    
+    await this.coursesService.checkInstructorAccess(createQuizDto.courseId, instructorId);
 
     // Create quiz with the new fields
     const quiz = new Quiz();
@@ -147,7 +147,7 @@ export class QuizzesService {
     quiz.endDate = createQuizDto.endDate || null;
 
     // Save it to get an actual quiz object with ID
-    const savedQuiz = await this.quizRepository.save(quiz);    
+    const savedQuiz = await this.quizRepository.save(quiz);
 
     // Add questions if provided
     if (createQuizDto.questions && createQuizDto.questions.length > 0) {
@@ -291,7 +291,7 @@ export class QuizzesService {
     // Process each response
     for (const response of responses) {
       console.log('Processing response:', JSON.stringify(response, null, 2));
-      
+
       const question = questions.find(q => q.id === response.questionId);
 
       if (!question) {
@@ -306,7 +306,7 @@ export class QuizzesService {
         // Find if the selected option is correct
         const option = question.options?.find(o => o.id === response.selectedOptionId);
         console.log('Selected option:', option);
-        
+
         if (option) {
           isCorrect = option.isCorrect;
           if (isCorrect) earnedPoints += question.points;
@@ -407,23 +407,19 @@ export class QuizzesService {
       });
     }
   }
-
   private async addQuestionsToQuiz(quizId: number, questions: any[]): Promise<void> {
     for (let i = 0; i < questions.length; i++) {
       const questionData = questions[i];
 
-      // Make sure we have the required questionText
-      if (!questionData.questionText) {
-        // Use a default question text to prevent DB errors
-        questionData.questionText = 'Default question text';
-      }
+      // Handle both camelCase (backend) and snake_case (frontend) formats
+      const questionText = questionData.questionText || questionData.question_text || 'Default question text';
+      const questionType = questionData.questionType || questionData.question_type || 'multiple_choice';
 
-      // Create question with proper data - notice that question_text needs to be explicitly provided
-      // as it doesn't have a default value in the database
+      // Create question with proper data
       const question = this.questionRepository.create({
         quizId,
-        questionText: questionData.questionText,
-        questionType: questionData.questionType || 'multiple_choice',
+        questionText,
+        questionType,
         points: questionData.points || 1,
         orderIndex: i
       });
@@ -431,9 +427,9 @@ export class QuizzesService {
       const savedQuestion = await this.questionRepository.save(question);
 
       // Handle different question types
-      if (question.questionType === 'multiple_choice' && questionData.options) {
+      if (questionType === 'multiple_choice' && questionData.options) {
         await this.addOptionsToQuestion(savedQuestion.id, questionData.options);
-      } else if (question.questionType === 'fill_in_blank' && questionData.fillInAnswer) {
+      } else if (questionType === 'fill_in_blank' && questionData.fillInAnswer) {
         await this.fillInAnswerRepository.save({
           questionId: savedQuestion.id,
           answerText: questionData.fillInAnswer.answerText || questionData.fillInAnswer,
@@ -441,13 +437,20 @@ export class QuizzesService {
       }
     }
   }
-
   private async addOptionsToQuestion(questionId: number, options: any[]): Promise<void> {
     for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+
+      // Handle both camelCase (backend) and snake_case (frontend) formats
+      const optionText = option.optionText || option.text || '';
+      const isCorrect = option.isCorrect !== undefined ? option.isCorrect :
+        option.is_correct !== undefined ? option.is_correct : false;
+
       await this.optionRepository.save({
         questionId,
-        optionText: options[i].optionText || options[i].text,
-        isCorrect: options[i].isCorrect || false,
+        optionText,
+        isCorrect,
+        orderIndex: i
       });
     }
   }

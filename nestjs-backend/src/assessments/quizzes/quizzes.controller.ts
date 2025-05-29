@@ -31,7 +31,6 @@ export class QuizzesController {
   async findAll(@Param('courseId') courseId: string) {
     return this.quizzesService.findAll(+courseId);
   }
-
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
@@ -44,9 +43,32 @@ export class QuizzesController {
   ) {
     // Ensure courseId from URL is set in the DTO
     createQuizDto.courseId = +courseId;
-    // Set as a quiz (shorter time limit)
+
+    // Map frontend field names to backend field names
+    if (createQuizDto.lesson_id !== undefined) {
+      createQuizDto.lessonId = createQuizDto.lesson_id;
+    }
+    if (createQuizDto.time_limit_minutes !== undefined) {
+      createQuizDto.timeLimitMinutes = createQuizDto.time_limit_minutes;
+    }
+    if (createQuizDto.passing_score !== undefined) {
+      createQuizDto.passingScore = createQuizDto.passing_score;
+    }
+    if (createQuizDto.max_attempts !== undefined) {
+      createQuizDto.maxAttempts = createQuizDto.max_attempts;
+    }
+    if (createQuizDto.is_randomized !== undefined) {
+      createQuizDto.isRandomized = createQuizDto.is_randomized;
+    }
+    if (createQuizDto.start_date !== undefined) {
+      createQuizDto.startDate = createQuizDto.start_date;
+    }
+    if (createQuizDto.end_date !== undefined) {
+      createQuizDto.endDate = createQuizDto.end_date;
+    }
+
+    // Set defaults if not provided
     createQuizDto.timeLimitMinutes = createQuizDto.timeLimitMinutes || 30;
-    // Explicitly set as not a test
     createQuizDto.isTest = false;
 
     return this.quizzesService.create(
@@ -65,7 +87,6 @@ export class QuizzesController {
   ) {
     return this.quizzesService.findOne(id, req.user.userId, req.user.role);
   }
-
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
@@ -77,6 +98,29 @@ export class QuizzesController {
     @Body() updateQuizDto: any,
     @Request() req,
   ) {
+    // Map frontend field names to backend field names
+    if (updateQuizDto.lesson_id !== undefined) {
+      updateQuizDto.lessonId = updateQuizDto.lesson_id;
+    }
+    if (updateQuizDto.time_limit_minutes !== undefined) {
+      updateQuizDto.timeLimitMinutes = updateQuizDto.time_limit_minutes;
+    }
+    if (updateQuizDto.passing_score !== undefined) {
+      updateQuizDto.passingScore = updateQuizDto.passing_score;
+    }
+    if (updateQuizDto.max_attempts !== undefined) {
+      updateQuizDto.maxAttempts = updateQuizDto.max_attempts;
+    }
+    if (updateQuizDto.is_randomized !== undefined) {
+      updateQuizDto.isRandomized = updateQuizDto.is_randomized;
+    }
+    if (updateQuizDto.start_date !== undefined) {
+      updateQuizDto.startDate = updateQuizDto.start_date;
+    }
+    if (updateQuizDto.end_date !== undefined) {
+      updateQuizDto.endDate = updateQuizDto.end_date;
+    }
+
     return this.quizzesService.update(
       +id,
       updateQuizDto,
@@ -160,7 +204,6 @@ export class TestsController {
   async findAll(@Param('courseId') courseId: string) {
     return this.quizzesService.findAll(+courseId);
   }
-
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
@@ -173,6 +216,30 @@ export class TestsController {
   ) {
     // Ensure courseId from URL is set in the DTO
     createQuizDto.courseId = +courseId;
+
+    // Map frontend field names to backend field names
+    if (createQuizDto.lesson_id !== undefined) {
+      createQuizDto.lessonId = createQuizDto.lesson_id;
+    }
+    if (createQuizDto.time_limit_minutes !== undefined) {
+      createQuizDto.timeLimitMinutes = createQuizDto.time_limit_minutes;
+    }
+    if (createQuizDto.passing_score !== undefined) {
+      createQuizDto.passingScore = createQuizDto.passing_score;
+    }
+    if (createQuizDto.max_attempts !== undefined) {
+      createQuizDto.maxAttempts = createQuizDto.max_attempts;
+    }
+    if (createQuizDto.is_randomized !== undefined) {
+      createQuizDto.isRandomized = createQuizDto.is_randomized;
+    }
+    if (createQuizDto.start_date !== undefined) {
+      createQuizDto.startDate = createQuizDto.start_date;
+    }
+    if (createQuizDto.end_date !== undefined) {
+      createQuizDto.endDate = createQuizDto.end_date;
+    }
+
     // Set longer time limit to indicate it's a test
     createQuizDto.timeLimitMinutes = createQuizDto.timeLimitMinutes || 60;
     // Explicitly set as a test
@@ -194,7 +261,6 @@ export class TestsController {
   ) {
     return this.quizzesService.findOne(id, req.user.userId);
   }
-
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
@@ -203,6 +269,29 @@ export class TestsController {
     @Body() updateQuizDto: any,
     @Request() req,
   ) {
+    // Map frontend field names to backend field names
+    if (updateQuizDto.lesson_id !== undefined) {
+      updateQuizDto.lessonId = updateQuizDto.lesson_id;
+    }
+    if (updateQuizDto.time_limit_minutes !== undefined) {
+      updateQuizDto.timeLimitMinutes = updateQuizDto.time_limit_minutes;
+    }
+    if (updateQuizDto.passing_score !== undefined) {
+      updateQuizDto.passingScore = updateQuizDto.passing_score;
+    }
+    if (updateQuizDto.max_attempts !== undefined) {
+      updateQuizDto.maxAttempts = updateQuizDto.max_attempts;
+    }
+    if (updateQuizDto.is_randomized !== undefined) {
+      updateQuizDto.isRandomized = updateQuizDto.is_randomized;
+    }
+    if (updateQuizDto.start_date !== undefined) {
+      updateQuizDto.startDate = updateQuizDto.start_date;
+    }
+    if (updateQuizDto.end_date !== undefined) {
+      updateQuizDto.endDate = updateQuizDto.end_date;
+    }
+
     return this.quizzesService.update(
       +id,
       updateQuizDto,
