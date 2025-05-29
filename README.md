@@ -1,4 +1,21 @@
-# SS2-SmartLMS - Smart Learning Management System
+<div align="center">
+
+![Header](https://capsule-render.vercel.app/api?type=waving&color=2E86AB&height=200&section=header&text=Smart%20LMS&fontSize=60&fontColor=FFFFFF&desc=Smart%20Learning%20Management%20System&descAlign=50&descAlignY=70)
+
+</div>
+
+# Smart Learning Management System
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E.svg?logo=javascript&logoColor=black)](https://www.javascript.com/)
+[![NestJS](https://img.shields.io/badge/NestJS-E0234E.svg?logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![React](https://img.shields.io/badge/React-61DAFB.svg?logo=react&logoColor=black)](https://reactjs.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1.svg?logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Swagger](https://img.shields.io/badge/Swagger-85EA2D.svg?logo=swagger&logoColor=black)](http://localhost:5000/api/docs)
+[![JWT](https://img.shields.io/badge/JWT-000000.svg?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
+[![Google OAuth](https://img.shields.io/badge/Google%20OAuth-4285F4.svg?logo=google&logoColor=white)](https://developers.google.com/identity/protocols/oauth2)
 
 A comprehensive Learning Management System built with modern technologies including NestJS backend, React frontend, and MySQL database. The system supports students, instructors, and administrators with features for course management, assessments, virtual classrooms, and more.
 
