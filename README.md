@@ -1,4 +1,4 @@
-# SS2-SmartLMS - Learning Management System
+# SS2-SmartLMS - Smart Learning Management System
 
 A comprehensive Learning Management System built with modern technologies including NestJS backend, React frontend, and MySQL database. The system supports students, instructors, and administrators with features for course management, assessments, virtual classrooms, and more.
 
