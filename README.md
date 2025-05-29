@@ -1,14 +1,23 @@
 # SS2-SmartLMS - Learning Management System
 
-A comprehensive Learning Management System with support for students, instructors, and administrators.
+A comprehensive Learning Management System built with modern technologies including NestJS backend, React frontend, and MySQL database. The system supports students, instructors, and administrators with features for course management, assessments, virtual classrooms, and more.
 
-## System Requirements
+## 🏗️ Architecture
 
-- Node.js (v14 or higher)
-- MySQL (v8.0 or higher)
-- npm or yarn
+- **Backend**: NestJS (TypeScript) - Migrated from Express.js
+- **Frontend**: React.js
+- **Database**: MySQL with TypeORM
+- **Authentication**: JWT + Google OAuth2.0
+- **API Documentation**: Swagger/OpenAPI
 
-## Installation Instructions
+## 🔧 System Requirements
+
+- **Node.js**: v18 or higher (recommended)
+- **MySQL**: v8.0 or higher
+- **npm** or **yarn**: Latest version
+- **TypeScript**: v4.0+ (automatically installed)
+
+## 📦 Installation Instructions
 
 ### 1. Clone the Repository
 
@@ -17,57 +26,89 @@ git clone https://github.com/yourusername/SS2-SmartLMS.git
 cd SS2-SmartLMS
 ```
 
-### 2. Set Up Backend
+### 2. Set Up NestJS Backend
 
 ```bash
-cd backend
+cd nestjs-backend
 npm install
 ```
 
 ### 3. Configure Backend Environment Variables
 
-Create or edit the .env file in the backend directory:
+Create a `.env` file in the `nestjs-backend` directory:
 
-```
+```env
+# Server Configuration
 PORT=5000
+NODE_ENV=development
+
+# Database Configuration
 DB_HOST=localhost
+DB_PORT=3306
 DB_USER=your_mysql_username
 DB_PASSWORD=your_mysql_password
 DB_NAME=lms_db
-JWT_SECRET=your_secret_key_should_be_long_and_random_replace_this
-NODE_ENV=development
+
+# JWT Configuration
+JWT_SECRET=your_very_long_and_secure_jwt_secret_key_replace_this_in_production
+
+# Email Configuration (for notifications)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_SECURE=false
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
 EMAIL_FROM="LMS Admin <no-reply@lms.com>"
+
+# Frontend URL (for CORS)
 FRONTEND_URL=http://localhost:3000
+
+# Google OAuth (optional - configure if using Google login)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
 
 ### 4. Set Up Database
 
-```bash
-node setupdb.js
+The application will automatically create database tables using TypeORM migrations. Ensure your MySQL server is running and the database exists:
+
+```sql
+CREATE DATABASE lms_db;
 ```
 
-### 5. Set Up Frontend
+### 5. Configure Google OAuth (Optional)
+
+Place your `key.json` file in the project root with your Google OAuth credentials:
+
+```json
+{
+  "oauth_credentials": {
+    "web": {
+      "client_id": "your_google_client_id",
+      "client_secret": "your_google_client_secret",
+      "redirect_uris": ["http://localhost:3000/auth/callback"]
+    }
+  }
+}
+```
+
+### 6. Set Up Frontend
 
 ```bash
 cd ../frontend
 npm install
 ```
 
-### 6. Configure Frontend (API URL and Google Client ID)
-
-The frontend is already configured to use the Google client ID from the key.json file via the config.js file. No additional configuration is needed.
-
-### 7. Start the Backend Server
+### 7. Start the NestJS Backend Server
 
 ```bash
-cd ../backend
-nodemon sever.js
+cd ../nestjs-backend
+npm run start:dev
 ```
+
+The backend will start at http://localhost:5000 with:
+- API endpoints at `http://localhost:5000/api/`
+- Swagger documentation at `http://localhost:5000/api/docs`
 
 ### 8. Start the Frontend Server
 
@@ -78,43 +119,260 @@ cd frontend
 npm start
 ```
 
-The application will open in your browser at http://localhost:3000
+The application will open automatically at http://localhost:3000
 
-## Default Login Credentials
+## 👥 Default Login Credentials
+
+After setting up the database, you can use these default credentials:
 
 ### Admin
-- Email: (Check the database after setup)
-- Password: admin123
+- **Email**: admin@lms.com
+- **Password**: admin123
 
-### Instructor
-- Email: (Check the database after setup)
-- Password: instructor123
+### Instructor  
+- **Email**: instructor@lms.com
+- **Password**: instructor123
 
 ### Student
-- Email: (Check the database after setup)
-- Password: 123456789
+- **Email**: student@lms.com  
+- **Password**: 123456789
 
-Students are required to change their password upon first login.
+> **Note**: Students are required to change their password upon first login for security.
 
-## Features
+## ✨ Key Features
 
-- User authentication (email/password and Google OAuth)
+### 🔐 Authentication & Authorization
+- Email/password authentication
+- Google OAuth2.0 integration
+- JWT-based session management
 - Role-based access control (Student, Instructor, Admin)
-- Dashboard for each user type
-- Course management
-- Session scheduling
-- Student enrollments
 - Password reset functionality
-- User profile management
 
-## Troubleshooting
+### 📚 Course Management
+- Create and manage courses
+- Lesson planning and materials
+- Course modules and structure
+- Student enrollment system
+- Progress tracking
 
-If you encounter the "Google Client ID not configured" error:
-1. Make sure the backend server is running
-2. Check that the Google client ID in config.js matches the one in key.json
-(you can find this file in ours drive)
-3. Restart both frontend and backend servers
+### 📝 Assessment System
+- **Quiz Creation**: Multiple choice, true/false questions
+- **Assignment Management**: File uploads and submissions
+- **Grading System**: Automated and manual grading
+- **Progress Analytics**: Student performance tracking
 
-## License
+### 🎓 Virtual Classroom
+- Live session scheduling
+- Video conferencing integration
+- Session recording capabilities
+- Interactive whiteboard features
+
+### 💬 Communication
+- Discussion forums
+- Direct messaging
+- Announcement system
+- Email notifications
+
+### 📊 Analytics & Reporting
+- Student progress reports
+- Course completion statistics
+- Performance analytics
+- Export capabilities
+
+## 🚀 API Documentation
+
+The NestJS backend automatically generates Swagger documentation available at:
+```
+http://localhost:5000/api/docs
+```
+
+### Key API Endpoints
+
+```
+Authentication:
+POST /api/auth/login
+POST /api/auth/register
+POST /api/auth/google
+POST /api/auth/logout
+
+Courses:
+GET    /api/courses
+POST   /api/courses
+PUT    /api/courses/:id
+DELETE /api/courses/:id
+
+Assessments:
+GET    /api/quizzes
+POST   /api/quizzes
+GET    /api/assignments
+POST   /api/assignments
+
+Users:
+GET    /api/users/profile
+PUT    /api/users/profile
+POST   /api/users/change-password
+```
+
+## 📁 Project Structure
+
+```
+SS2-SmartLMS/
+├── nestjs-backend/          # NestJS TypeScript Backend
+│   ├── src/
+│   │   ├── assessments/     # Quiz & Assignment modules
+│   │   ├── auth/           # Authentication & Authorization
+│   │   ├── courses/        # Course management
+│   │   ├── users/          # User management
+│   │   ├── uploads/        # File upload handling
+│   │   └── main.ts         # Application entry point
+│   ├── uploads/            # Uploaded files storage
+│   └── package.json
+├── frontend/               # React.js Frontend
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── services/       # API service layer
+│   │   └── context/        # React context providers
+│   └── package.json
+├── backend/               # Legacy Express.js (deprecated)
+└── key.json              # Google OAuth credentials
+```
+
+## 🛠️ Development Scripts
+
+### Backend (NestJS)
+```bash
+npm run start          # Start production server
+npm run start:dev      # Start development server with hot reload
+npm run start:debug    # Start with debug mode
+npm run build          # Build for production
+npm run test           # Run unit tests
+npm run test:e2e       # Run end-to-end tests
+npm run lint           # Run ESLint
+```
+
+### Frontend (React)
+```bash
+npm start              # Start development server
+npm run build          # Build for production
+npm test               # Run tests
+npm run eject          # Eject from Create React App
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### Backend Connection Issues
+```bash
+# Check if NestJS server is running
+curl http://localhost:5000/api/status
+
+# View server logs
+cd nestjs-backend
+npm run start:dev
+```
+
+#### Database Connection
+```bash
+# Test MySQL connection
+mysql -u your_username -p -h localhost
+
+# Check if database exists
+SHOW DATABASES;
+USE lms_db;
+SHOW TABLES;
+```
+
+#### Google OAuth Issues
+1. Ensure `key.json` is in the project root
+2. Verify Google client ID matches in both `key.json` and frontend config
+3. Check redirect URIs are properly configured in Google Console
+4. Restart both servers after configuration changes
+
+#### Frontend API Connection
+1. Verify backend is running on port 5000
+2. Check CORS configuration in `main.ts`
+3. Ensure `FRONTEND_URL` environment variable is set correctly
+
+#### File Upload Issues
+1. Check upload directory permissions
+2. Verify multer configuration in uploads module
+3. Ensure file size limits are appropriate
+
+### Environment Variables Checklist
+
+Ensure these variables are set in your `.env` file:
+- ✅ `PORT` (default: 5000)
+- ✅ `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- ✅ `JWT_SECRET` (use a strong, random string)
+- ✅ `FRONTEND_URL` (for CORS)
+- ✅ Email configuration (if using notifications)
+
+## 🚀 Deployment
+
+### Production Build
+
+#### Backend
+```bash
+cd nestjs-backend
+npm run build
+npm run start:prod
+```
+
+#### Frontend
+```bash
+cd frontend
+npm run build
+# Deploy the build folder to your web server
+```
+
+### Environment Variables for Production
+```env
+NODE_ENV=production
+PORT=5000
+DB_HOST=your_production_db_host
+JWT_SECRET=your_very_secure_production_jwt_secret
+FRONTEND_URL=https://your-domain.com
+```
+
+## 🆕 Migration from Express.js to NestJS
+
+This project has been migrated from Express.js to NestJS for better:
+- **Type Safety**: Full TypeScript support
+- **Modularity**: Better code organization with modules
+- **Documentation**: Auto-generated Swagger docs
+- **Testing**: Built-in testing framework
+- **Validation**: Automatic request/response validation
+- **Scalability**: Enterprise-ready architecture
+
+### Breaking Changes
+- API base URL changed to `/api/`
+- Response format standardized
+- Enhanced error handling
+- Improved validation
+
+## 📄 License
 
 This project is licensed under the terms of the license included in the LICENSE file.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📞 Support
+
+For issues and questions:
+1. Check the troubleshooting section above
+2. Review the API documentation at `/api/docs`
+3. Open an issue on GitHub
+4. Contact the development team
+
+---
+
+**Built with ❤️ using NestJS, React, and TypeScript**
