@@ -14,7 +14,7 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private dataSource: DataSource
-  ) {}
+  ) { }
 
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.usersRepository.find({
@@ -39,14 +39,14 @@ export class UsersService {
       WHERE role = 'instructor'
       ORDER BY first_name, last_name
     `);
-    
+
     // Format exactly as Express backend does
     const formattedInstructors = instructors.map(instructor => ({
       id: instructor.id,
       name: `${instructor.first_name || ''} ${instructor.last_name || ''}`.trim(),
       email: instructor.email
     }));
-    
+
     return formattedInstructors;
   }
 
@@ -67,7 +67,7 @@ export class UsersService {
     const existingUser = await this.usersRepository.findOne({
       where: { email: createUserDto.email },
     });
-    
+
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
@@ -90,15 +90,15 @@ export class UsersService {
 
   async adminUpdateUser(id: number, updateUserDto: AdminUpdateUserDto): Promise<UserResponseDto> {
     const user = await this.usersRepository.findOne({ where: { id } });
-    
+
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     // Check if attempting to change the last admin
-    if (user.role === UserRole.ADMIN && 
-        updateUserDto.role && 
-        updateUserDto.role !== UserRole.ADMIN) {
+    if (user.role === UserRole.ADMIN &&
+      updateUserDto.role &&
+      updateUserDto.role !== UserRole.ADMIN) {
       const adminCount = await this.usersRepository.count({ where: { role: UserRole.ADMIN } });
       if (adminCount <= 1) {
         throw new ForbiddenException('Cannot change the last admin user\'s role');
@@ -109,19 +109,19 @@ export class UsersService {
     if (updateUserDto.firstName !== undefined) {
       user.firstName = updateUserDto.firstName;
     }
-    
+
     if (updateUserDto.lastName !== undefined) {
       user.lastName = updateUserDto.lastName;
     }
-    
+
     if (updateUserDto.role !== undefined) {
       user.role = updateUserDto.role;
     }
-    
+
     if (updateUserDto.bio !== undefined) {
       user.bio = updateUserDto.bio;
     }
-    
+
     if (updateUserDto.isPasswordChanged !== undefined) {
       user.isPasswordChanged = updateUserDto.isPasswordChanged;
     }
@@ -139,7 +139,7 @@ export class UsersService {
 
   async adminDeleteUser(id: number): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id } });
-    
+
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -164,7 +164,7 @@ export class UsersService {
     }
 
     // Check for the last admin
-    const adminUsers = await this.usersRepository.find({ 
+    const adminUsers = await this.usersRepository.find({
       where: { role: UserRole.ADMIN },
       select: ['id']
     });
@@ -183,14 +183,14 @@ export class UsersService {
 
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
-    
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     // Verify current password
     const isPasswordValid = await user.comparePassword(changePasswordDto.currentPassword);
-    
+
     if (!isPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
     }
@@ -202,9 +202,23 @@ export class UsersService {
     await this.usersRepository.save(user);
   }
 
+  async updatePassword(userId: number, newPassword: string): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Update password without requiring current password (for password reset)
+    user.passwordHash = newPassword; // Will be hashed by @BeforeUpdate()
+    user.isPasswordChanged = true;
+
+    await this.usersRepository.save(user);
+  }
+
   async updateUserGoogleId(userId: number, googleId: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
-    
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -212,4 +226,4 @@ export class UsersService {
     user.googleId = googleId;
     await this.usersRepository.save(user);
   }
-} 
+}

@@ -34,7 +34,7 @@ export class MailerService {
 
       if (this.options.template) {
         this.templatesDir = this.options.template.dir || path.join(__dirname, 'templates');
-        
+
         // Ensure templates directory exists
         if (!fs.existsSync(this.templatesDir)) {
           fs.mkdirSync(this.templatesDir, { recursive: true });
@@ -69,7 +69,7 @@ export class MailerService {
       if (!this.transporter) {
         this.logger.warn('Email transporter not initialized, attempting to initialize');
         this.initializeTransporter();
-        
+
         if (!this.transporter) {
           throw new Error('Email transporter could not be initialized');
         }
@@ -88,7 +88,7 @@ export class MailerService {
           template: mailOptions.template,
           context: mailOptions.context || {}
         });
-        
+
         this.logger.log(`Email sent successfully to ${mailOptions.to}`);
         return result;
       } else {
@@ -102,11 +102,10 @@ export class MailerService {
       throw error;
     }
   }
-
   // Predefined email types
   async sendPasswordReset(to: string, resetToken: string, username: string): Promise<any> {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+
     return this.sendMail({
       to,
       subject: 'Password Reset Request',
@@ -336,10 +335,10 @@ export class MailerService {
       ];
 
       const writeFileAsync = promisify(fs.writeFile);
-      
+
       for (const template of templates) {
         const filePath = path.join(this.templatesDir, template.name);
-        
+
         if (!fs.existsSync(filePath)) {
           await writeFileAsync(filePath, template.content);
           this.logger.log(`Created template: ${template.name}`);
@@ -356,7 +355,7 @@ export class MailerService {
       if (!this.transporter) {
         this.initializeTransporter();
       }
-      
+
       const verification = await this.transporter.verify();
       this.logger.log('Email transport verified successfully');
       return true;

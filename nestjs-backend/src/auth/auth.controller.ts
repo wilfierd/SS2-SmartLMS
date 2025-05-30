@@ -1,8 +1,11 @@
-import { Controller, Post, UseGuards, Request, Body, Get, HttpStatus, UnauthorizedException, Logger, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { Controller, Post, UseGuards, Request, Body, Get, HttpStatus, UnauthorizedException, Logger, Res, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiExcludeEndpoint, ApiParam } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyResetTokenResponseDto } from './dto/verify-reset-token.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
@@ -85,6 +88,63 @@ export class AuthController {
     return redirectUrl;
   }
 
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset link sent (if email exists)',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'If an account with that email exists, a password reset link has been sent.'
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid email format' })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Get('verify-reset-token/:token')
+  @ApiOperation({ summary: 'Verify password reset token' })
+  @ApiParam({
+    name: 'token',
+    description: 'Password reset token',
+    example: 'abc123def456'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Token verification result',
+    type: VerifyResetTokenResponseDto
+  })
+  async verifyResetToken(@Param('token') token: string): Promise<VerifyResetTokenResponseDto> {
+    return this.authService.verifyResetToken(token);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successful',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Password reset successful. You can now log in with your new password.'
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
   @Post('google')
   async googleTokenAuth(
     @Body('token') token: string,
@@ -115,4 +175,4 @@ export class AuthController {
     });
     return loginResponse;
   }
-} 
+}

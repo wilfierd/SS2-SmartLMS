@@ -40,9 +40,9 @@ export class MailerModule {
       exports: [MailerService],
     };
   }
-
   static register(): DynamicModule {
     return {
+      global: true,
       module: MailerModule,
       imports: [ConfigModule],
       providers: [
