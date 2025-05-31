@@ -101,13 +101,22 @@ export class UploadsService {
     // Return the relative path from the uploads directory
     return `/uploads/assignments/${assignmentId}/${studentId}/${uniqueFilename}`;
   }
-
   async uploadCourseMaterial(file: Express.Multer.File, courseId: number): Promise<string> {
+    const logger = new Logger('UploadsService.uploadCourseMaterial');
+
+    // Validate file buffer exists
+    if (!file.buffer || file.buffer.length === 0) {
+      throw new BadRequestException('No file data received');
+    }
+
+    logger.log(`Uploading course material: ${file.originalname} (${file.size} bytes) for course ${courseId}`);
+
     // Generate directory path for this course's materials
     const dirPath = path.join(this.uploadsDir, 'courses', courseId.toString(), 'materials');
 
     if (!(await existsAsync(dirPath))) {
       await mkdirAsync(dirPath, { recursive: true });
+      logger.log(`Created directory: ${dirPath}`);
     }
 
     // Generate unique filename (keep original name but add timestamp to avoid conflicts)
@@ -115,19 +124,41 @@ export class UploadsService {
     const uniqueFilename = `${Date.now()}-${safeName}`;
     const uploadPath = path.join(dirPath, uniqueFilename);
 
-    // Write file to disk
-    fs.writeFileSync(uploadPath, file.buffer);
+    try {
+      // Write file to disk
+      fs.writeFileSync(uploadPath, file.buffer);
+
+      // Verify file was written correctly
+      const stats = fs.statSync(uploadPath);
+      logger.log(`File written successfully: ${uploadPath} (${stats.size} bytes)`);
+
+      if (stats.size !== file.size) {
+        logger.warn(`File size mismatch: expected ${file.size}, got ${stats.size}`);
+      }
+    } catch (error) {
+      logger.error(`Failed to write file to ${uploadPath}: ${error.message}`);
+      throw new BadRequestException(`Failed to save file: ${error.message}`);
+    }
 
     // Return the relative path from the uploads directory
     return `/uploads/courses/${courseId}/materials/${uniqueFilename}`;
   }
-
   async uploadLessonMaterial(file: Express.Multer.File, lessonId: number): Promise<string> {
+    const logger = new Logger('UploadsService.uploadLessonMaterial');
+
+    // Validate file buffer exists
+    if (!file.buffer || file.buffer.length === 0) {
+      throw new BadRequestException('No file data received');
+    }
+
+    logger.log(`Uploading lesson material: ${file.originalname} (${file.size} bytes) for lesson ${lessonId}`);
+
     // Generate directory path for this lesson's materials
     const dirPath = path.join(this.uploadsDir, 'lessons', lessonId.toString());
 
     if (!(await existsAsync(dirPath))) {
       await mkdirAsync(dirPath, { recursive: true });
+      logger.log(`Created directory: ${dirPath}`);
     }
 
     // Generate unique filename (keep original name but add timestamp to avoid conflicts)
@@ -135,8 +166,21 @@ export class UploadsService {
     const uniqueFilename = `${Date.now()}-${safeName}`;
     const uploadPath = path.join(dirPath, uniqueFilename);
 
-    // Write file to disk
-    fs.writeFileSync(uploadPath, file.buffer);
+    try {
+      // Write file to disk
+      fs.writeFileSync(uploadPath, file.buffer);
+
+      // Verify file was written correctly
+      const stats = fs.statSync(uploadPath);
+      logger.log(`File written successfully: ${uploadPath} (${stats.size} bytes)`);
+
+      if (stats.size !== file.size) {
+        logger.warn(`File size mismatch: expected ${file.size}, got ${stats.size}`);
+      }
+    } catch (error) {
+      logger.error(`Failed to write file to ${uploadPath}: ${error.message}`);
+      throw new BadRequestException(`Failed to save file: ${error.message}`);
+    }
 
     // Return the relative path from the uploads directory
     return `/uploads/lessons/${lessonId}/${uniqueFilename}`;
