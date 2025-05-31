@@ -22,7 +22,7 @@ export class UploadsController {
     private readonly coursesService: CoursesService,
     @Inject(forwardRef(() => AssignmentsService))
     private readonly assignmentsService: AssignmentsService
-  ) {}
+  ) { }
 
   @Post('courses/:courseId/thumbnail')
   @UseGuards(RolesGuard)
@@ -75,13 +75,13 @@ export class UploadsController {
 
     // Update course with thumbnail URL
     await this.coursesService.update(
-      courseId, 
+      courseId,
       { thumbnailUrl: filePath } as UpdateCourseDto,
       userId,
       userRole
     );
 
-    return { 
+    return {
       thumbnailUrl: filePath
     };
   }
@@ -114,9 +114,9 @@ export class UploadsController {
     if (!module) {
       throw new NotFoundException(`Module for lesson ID ${lessonId} not found`);
     }
-    
+
     const courseId = module.courseId;
-    
+
     if (req.user.role === UserRole.INSTRUCTOR) {
       await this.coursesService.checkInstructorAccess(courseId, req.user.id);
     }
@@ -153,6 +153,94 @@ export class UploadsController {
     };
   }
 
+  @Post('course-material')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
+  @UseInterceptors(FilesInterceptor('files'))
+  @ApiOperation({ summary: 'Upload course materials (generic)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+        courseId: {
+          type: 'number',
+          description: 'Course ID',
+        },
+        materialType: {
+          type: 'string',
+          description: 'Type of material',
+          enum: ['document', 'video', 'audio', 'image', 'other'],
+        },
+        title: {
+          type: 'string',
+          description: 'Title for the materials',
+        },
+      },
+    },
+  })
+  async uploadCourseMaterial(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() body: { courseId: string, materialType?: string, title?: string },
+    @Request() req
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No files provided');
+    }
+
+    if (!body.courseId) {
+      throw new BadRequestException('Course ID is required');
+    }
+
+    const courseId = parseInt(body.courseId);
+
+    // Get course and check permissions
+    const course = await this.coursesService.findOne(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    // Check if user is instructor of this course or admin
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    if (userRole !== UserRole.ADMIN && course.instructorId !== userId) {
+      throw new ForbiddenException('You do not have permission to upload materials to this course');
+    }
+
+    const uploadedFiles: any[] = [];
+
+    for (const file of files) {
+      try {
+        // Save the file to course materials directory
+        const filePath = await this.uploadsService.uploadCourseMaterial(file, courseId);
+
+        uploadedFiles.push({
+          originalName: file.originalname,
+          filePath,
+          fileType: file.mimetype,
+          fileSize: file.size,
+          materialType: body.materialType || this.uploadsService.getMaterialType(file),
+          title: body.title || file.originalname,
+        });
+      } catch (error) {
+        this.logger.error(`Error uploading file: ${error.message}`, error.stack);
+        throw new InternalServerErrorException(`Failed to upload file: ${error.message}`);
+      }
+    }
+
+    return {
+      message: `${uploadedFiles.length} file(s) uploaded successfully`,
+      files: uploadedFiles
+    };
+  }
+
   @Post('assignments/:assignmentId/submission')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Submit assignment' })
@@ -177,7 +265,7 @@ export class UploadsController {
     // Check allowed file types
     const fileExt = file.originalname.split('.').pop()?.toLowerCase();
     const allowedTypes = assignment.allowedFileTypes.split(',');
-    
+
     if (!fileExt || !allowedTypes.includes(fileExt)) {
       throw new BadRequestException(`Invalid file type. Allowed types: ${assignment.allowedFileTypes}`);
     }
@@ -190,14 +278,14 @@ export class UploadsController {
     // Check if student is enrolled in the course
     const studentId = req.user.id;
     const isEnrolled = await this.coursesService.isStudentEnrolled(assignment.courseId, studentId);
-    
+
     if (!isEnrolled) {
       throw new ForbiddenException('You are not enrolled in this course');
     }
 
     // Save the file
     const filePath = await this.uploadsService.uploadAssignmentSubmission(
-      file, 
+      file,
       assignmentId,
       studentId
     );
@@ -215,4 +303,4 @@ export class UploadsController {
 
     return submission;
   }
-} 
+}

@@ -35,7 +35,6 @@ export class UploadsService {
     this.uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
     this.ensureUploadsDir();
   }
-
   private async ensureUploadsDir(): Promise<void> {
     const dirs = [
       this.uploadsDir,
@@ -66,59 +65,79 @@ export class UploadsService {
     // Generate unique filename
     const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${fileExt}`;
     const uploadPath = path.join(this.uploadsDir, 'courses', uniqueFilename);
-    
+
     // Write file to disk
     fs.writeFileSync(uploadPath, file.buffer);
-    
+
     // Return the relative path from the uploads directory
     return `/uploads/courses/${uniqueFilename}`;
   }
 
   async uploadAssignmentSubmission(
-    file: Express.Multer.File, 
+    file: Express.Multer.File,
     assignmentId: number,
     studentId: number
   ): Promise<string> {
     // Generate directory path for this assignment's submissions
     const dirPath = path.join(this.uploadsDir, 'assignments', assignmentId.toString(), studentId.toString());
-    
+
     if (!(await existsAsync(dirPath))) {
       await mkdirAsync(dirPath, { recursive: true });
     }
-    
+
     // Get file extension
     const fileExt = file.originalname.split('.').pop()?.toLowerCase();
     if (!fileExt) {
       throw new BadRequestException('Invalid file name');
     }
-    
+
     // Generate unique filename
     const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${fileExt}`;
     const uploadPath = path.join(dirPath, uniqueFilename);
-    
+
     // Write file to disk
     fs.writeFileSync(uploadPath, file.buffer);
-    
+
     // Return the relative path from the uploads directory
     return `/uploads/assignments/${assignmentId}/${studentId}/${uniqueFilename}`;
+  }
+
+  async uploadCourseMaterial(file: Express.Multer.File, courseId: number): Promise<string> {
+    // Generate directory path for this course's materials
+    const dirPath = path.join(this.uploadsDir, 'courses', courseId.toString(), 'materials');
+
+    if (!(await existsAsync(dirPath))) {
+      await mkdirAsync(dirPath, { recursive: true });
+    }
+
+    // Generate unique filename (keep original name but add timestamp to avoid conflicts)
+    const safeName = file.originalname.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+    const uniqueFilename = `${Date.now()}-${safeName}`;
+    const uploadPath = path.join(dirPath, uniqueFilename);
+
+    // Write file to disk
+    fs.writeFileSync(uploadPath, file.buffer);
+
+    // Return the relative path from the uploads directory
+    return `/uploads/courses/${courseId}/materials/${uniqueFilename}`;
   }
 
   async uploadLessonMaterial(file: Express.Multer.File, lessonId: number): Promise<string> {
     // Generate directory path for this lesson's materials
     const dirPath = path.join(this.uploadsDir, 'lessons', lessonId.toString());
-    
+
     if (!(await existsAsync(dirPath))) {
       await mkdirAsync(dirPath, { recursive: true });
     }
-    
+
     // Generate unique filename (keep original name but add timestamp to avoid conflicts)
     const safeName = file.originalname.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
     const uniqueFilename = `${Date.now()}-${safeName}`;
     const uploadPath = path.join(dirPath, uniqueFilename);
-    
+
     // Write file to disk
     fs.writeFileSync(uploadPath, file.buffer);
-    
+
     // Return the relative path from the uploads directory
     return `/uploads/lessons/${lessonId}/${uniqueFilename}`;
   }
@@ -141,7 +160,7 @@ export class UploadsService {
 
   getMaterialType(file: Express.Multer.File): string {
     const mimeType = file.mimetype;
-    
+
     if (mimeType.startsWith('image/')) {
       return 'image';
     } else if (mimeType.startsWith('video/')) {
@@ -177,7 +196,7 @@ export class UploadsService {
     material.title = materialData.title;
     material.filePath = materialData.filePath;
     material.materialType = materialData.materialType as any;
-    
+
     // Save the material (without the non-entity properties)
     return this.materialRepository.save(material);
   }
@@ -200,7 +219,7 @@ export class UploadsService {
     submission.submissionDate = submissionData.submissionDate;
     submission.isLate = false; // Default value
     submission.comments = submissionData.comments || null;
-    
+
     return this.submissionRepository.save(submission);
   }
 
@@ -217,7 +236,7 @@ export class UploadsService {
     material.filePath = materialData.filePath || '';
     material.externalUrl = materialData.externalUrl || '';
     material.materialType = materialData.materialType as MaterialType;
-    
+
     return this.materialRepository.save(material);
   }
 
@@ -239,7 +258,7 @@ export class UploadsService {
     submission.isLate = submissionData.isLate;
     submission.submissionDate = new Date();
     submission.comments = submissionData.comments || null;
-    
+
     return this.submissionRepository.save(submission);
   }
-} 
+}
