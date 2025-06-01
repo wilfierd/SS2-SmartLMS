@@ -16,6 +16,34 @@ import { useCourseData } from '../../hook/useCourse';
 import notification from '../../utils/notification';
 import './CourseDetail.css';
 
+// Utility functions for YouTube video handling
+const isYouTubeUrl = (url) => {
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+  return youtubeRegex.test(url);
+};
+
+const getYouTubeEmbedUrl = (url) => {
+  // Handle different YouTube URL formats
+  let videoId = '';
+
+  // For youtube.com/watch?v=VIDEO_ID
+  if (url.includes('youtube.com/watch')) {
+    const urlParams = new URLSearchParams(url.split('?')[1]);
+    videoId = urlParams.get('v');
+  }
+  // For youtu.be/VIDEO_ID
+  else if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1].split('?')[0];
+  }
+  // For youtube.com/embed/VIDEO_ID
+  else if (url.includes('youtube.com/embed/')) {
+    videoId = url.split('youtube.com/embed/')[1].split('?')[0];
+  }
+
+  // Add parameters for better embedding
+  return `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&modestbranding=1`;
+};
+
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -423,34 +451,48 @@ const CourseDetail = () => {
                             }}
                           />
                         </div>
-                      )}
-                      {/* Materials */}
+                      )}                      {/* Materials */}
                       {currentLesson.materials && currentLesson.materials.length > 0 && (
                         <div className="session-materials">
                           <h4>Lesson Materials</h4>
-                          <ul>
+                          <div className="materials-list">
                             {currentLesson.materials.map(material => (
-                              <li key={material.id}>
+                              <div key={material.id} className="material-item">
                                 {material.externalUrl ? (
-                                  <a
-                                    href={material.externalUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                  isYouTubeUrl(material.externalUrl) ? (
+                                    <div className="material-video">
+                                      <h5 className="material-title">{material.title}</h5>                                      <div className="video-container">
+                                        <iframe
+                                          src={getYouTubeEmbedUrl(material.externalUrl)}
+                                          title={material.title}
+                                          frameBorder="0"
+                                          allowFullScreen
+                                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <a
+                                      href={material.externalUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="external-link"
+                                    >
+                                      {material.title} 🔗
+                                    </a>
+                                  )
+                                ) : (
+                                  <button
+                                    className="download-material-btn"
+                                    onClick={() => downloadMaterial(material.id, material.title)}
+                                    title="Download material"
                                   >
-                                    {material.title} 🔗
-                                  </a>
-                                ) : (<button
-                                  className="download-material-btn"
-                                  onClick={() => downloadMaterial(material.id, material.title)}
-                                  title="Download material"
-                                >
-                                  <span className="download-icon">📥</span>
-                                  {material.title}
-                                </button>
+                                    <span className="download-icon">📥</span>
+                                    {material.title}
+                                  </button>
                                 )}
-                              </li>
-                            ))}
-                          </ul>
+                              </div>))}
+                          </div>
                         </div>
                       )}
                     </div>
