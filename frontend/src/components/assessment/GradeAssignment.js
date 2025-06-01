@@ -12,7 +12,7 @@ const GradeAssignment = () => {
   const { courseId, assignmentId, submissionId } = useParams();
   const navigate = useNavigate();
   const { auth } = useContext(AuthContext);
-  
+
   const [submission, setSubmission] = useState(null);
   const [assignment, setAssignment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,24 +30,24 @@ const GradeAssignment = () => {
   const fetchSubmissionData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Get assignment details which includes submission info
       const assignmentData = await courseService.getAssignment(assignmentId);
       setAssignment(assignmentData);
-      
+
       // Find the specific submission
       const submissionToGrade = assignmentData.submissions?.find(
         sub => sub.id === parseInt(submissionId)
       );
-      
+
       if (!submissionToGrade) {
         notification.error('Submission not found');
         navigate(-1);
         return;
       }
-      
+
       setSubmission(submissionToGrade);
-      
+
       // Pre-fill existing grade data if available
       if (submissionToGrade.is_graded) {
         setGradeData({
@@ -55,7 +55,7 @@ const GradeAssignment = () => {
           feedback: submissionToGrade.feedback || ''
         });
       }
-      
+
     } catch (error) {
       console.error('Error fetching submission:', error);
       notification.error('Failed to load submission details');
@@ -67,7 +67,7 @@ const GradeAssignment = () => {
 
   const validateGrade = () => {
     const newErrors = {};
-    
+
     if (!gradeData.grade && gradeData.grade !== 0) {
       newErrors.grade = 'Grade is required';
     } else {
@@ -76,19 +76,19 @@ const GradeAssignment = () => {
         newErrors.grade = `Grade must be between 0 and ${assignment.max_points}`;
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     setGradeData(prev => ({
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -100,22 +100,22 @@ const GradeAssignment = () => {
 
   const handleSubmitGrade = async (e) => {
     e.preventDefault();
-    
+
     if (!validateGrade()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       await courseService.gradeSubmission(submissionId, {
         grade: parseFloat(gradeData.grade),
         feedback: gradeData.feedback.trim() || null
       });
-      
+
       notification.success('Grade submitted successfully');
       navigate(`/assignments/${assignmentId}`);
-      
+
     } catch (error) {
       console.error('Error submitting grade:', error);
       notification.error('Failed to submit grade');
@@ -148,15 +148,32 @@ const GradeAssignment = () => {
       minute: '2-digit'
     });
   };
+  const downloadFile = async (submissionId, fileName) => {
+    try {
+      const response = await fetch(`/api/uploads/download/submission/${submissionId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
 
-  const downloadFile = (filePath, fileName) => {
-    const link = document.createElement('a');
-    link.href = filePath;
-    link.download = fileName || 'submission-file';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName || 'submission-file';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      notification.error('Failed to download file');
+    }
   };
 
   if (isLoading) {
@@ -170,10 +187,10 @@ const GradeAssignment = () => {
   return (
     <div className="grade-assignment-container">
       <Sidebar activeItem="courses" />
-      
+
       <div className="admin-main-content">
         <Header title={`Grade Submission`} />
-        
+
         <div className="grade-assignment-content">
           {/* Grade Header */}
           <div className="grade-header">
@@ -188,9 +205,9 @@ const GradeAssignment = () => {
                 </span>
               </div>
             </div>
-            
+
             <div className="action-buttons">
-              <button 
+              <button
                 className="back-btn"
                 onClick={() => navigate(`/assignments/${assignmentId}`)}
               >
@@ -203,7 +220,7 @@ const GradeAssignment = () => {
             {/* Submission Panel */}
             <div className="submission-panel">
               <h3>Student Submission</h3>
-              
+
               <div className="submission-content">
                 {/* File Submission */}
                 {submission.file_path && (
@@ -215,7 +232,7 @@ const GradeAssignment = () => {
                     <div className="file-actions">
                       <button
                         className="file-btn download-btn"
-                        onClick={() => downloadFile(submission.file_path, 'submission')}
+                        onClick={() => downloadFile(submission.id, 'submission')}
                       >
                         Download
                       </button>
@@ -226,18 +243,18 @@ const GradeAssignment = () => {
                         View
                       </button>
                     </div>
-                    
+
                     {/* File Viewer (for certain file types) */}
                     {submission.file_path.match(/\.(pdf|txt|jpg|jpeg|png|gif)$/i) && (
                       <div className="file-viewer">
                         {submission.file_path.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                          <img 
-                            src={submission.file_path} 
-                            alt="Submission" 
+                          <img
+                            src={submission.file_path}
+                            alt="Submission"
                             style={{ maxWidth: '100%', height: 'auto' }}
                           />
                         ) : submission.file_path.endsWith('.pdf') ? (
-                          <iframe 
+                          <iframe
                             src={submission.file_path}
                             title="Submission PDF"
                           />
@@ -251,7 +268,7 @@ const GradeAssignment = () => {
                     )}
                   </div>
                 )}
-                
+
                 {/* Text Submission */}
                 <div className="submission-text-section">
                   <h4>Text Submission</h4>
@@ -271,7 +288,7 @@ const GradeAssignment = () => {
             {/* Grading Panel */}
             <div className="grading-panel">
               <h3>Grade Submission</h3>
-              
+
               {/* Show existing grade if available */}
               {submission.is_graded && (
                 <div className="existing-grade">
@@ -295,7 +312,7 @@ const GradeAssignment = () => {
                   </div>
                 </div>
               )}
-              
+
               <form onSubmit={handleSubmitGrade} className="grading-form">
                 <div className="form-group">
                   <label htmlFor="grade">
@@ -317,7 +334,7 @@ const GradeAssignment = () => {
                     <span className="grade-separator">/</span>
                     <span className="max-grade">{assignment.max_points}</span>
                     {gradeData.grade && (
-                      <span 
+                      <span
                         className="grade-percentage"
                         style={{ color: getGradeColor() }}
                       >
@@ -363,7 +380,7 @@ const GradeAssignment = () => {
                       submission.is_graded ? 'Update Grade' : 'Submit Grade'
                     )}
                   </button>
-                  
+
                   <button
                     type="button"
                     className="back-btn"

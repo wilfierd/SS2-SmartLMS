@@ -20,7 +20,7 @@ const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { auth } = useContext(AuthContext);
-  
+
   // Use our custom hook for all course data
   const {
     course,
@@ -39,7 +39,7 @@ const CourseDetail = () => {
   const [activeTab, setActiveTab] = useState('content');
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedLesson, setSelectedLesson] = useState(null);
-  
+
   // Modal states
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showLessonModal, setShowLessonModal] = useState(false);
@@ -52,7 +52,7 @@ const CourseDetail = () => {
     if (modules.modules.length > 0 && !selectedModule) {
       const firstModule = modules.modules[0];
       setSelectedModule(firstModule.id);
-      
+
       if (firstModule.lessons?.length > 0) {
         setSelectedLesson(firstModule.lessons[0].id);
       }
@@ -61,21 +61,21 @@ const CourseDetail = () => {
 
   // User permissions
   const permissions = {
-    canEdit: auth.user.role === 'admin' || 
-             (auth.user.role === 'instructor' && course.course?.instructorId === auth.user.id),
+    canEdit: auth.user.role === 'admin' ||
+      (auth.user.role === 'instructor' && course.course?.instructorId === auth.user.id),
     canEnroll: auth.user.role === 'student' && !enrollment.isEnrolled,
-    canViewStudents: auth.user.role === 'admin' || 
-                     (auth.user.role === 'instructor' && course.course?.instructorId === auth.user.id),
+    canViewStudents: auth.user.role === 'admin' ||
+      (auth.user.role === 'instructor' && course.course?.instructorId === auth.user.id),
     isEnrolled: enrollment.isEnrolled
   };
 
   // Get current lesson content
   const getCurrentLesson = () => {
     if (!selectedModule || !selectedLesson || !modules.modules.length) return null;
-    
+
     const module = modules.modules.find(m => m.id === selectedModule);
     if (!module?.lessons) return null;
-    
+
     return module.lessons.find(l => l.id === selectedLesson);
   };  // Navigate to assignment or quiz
   const navigateToAssessment = (type, id) => {
@@ -83,6 +83,35 @@ const CourseDetail = () => {
       navigate(`/assignments/${id}`);
     } else if (type === 'quiz') {
       navigate(`/quizzes/${id}`, { state: { courseId } });
+    }
+  };
+
+  // Download lesson material
+  const downloadMaterial = async (materialId, fileName) => {
+    try {
+      const response = await fetch(`/api/uploads/download/material/${materialId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName || 'lesson-material';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      notification.error('Failed to download material');
     }
   };
 
@@ -97,10 +126,10 @@ const CourseDetail = () => {
   return (
     <div className="course-detail-container">
       <Sidebar activeItem="courses" />
-      
+
       <div className="admin-main-content">
         <Header title={course.course.title} />
-        
+
         <div className="course-detail-content">
           {/* Course Header */}
           <div className="course-header">
@@ -118,20 +147,20 @@ const CourseDetail = () => {
               </div>
               <p className="course-description">{course.course.description}</p>
             </div>
-            
+
             {/* Action Buttons */}
             <div className="main-actions">
               {permissions.canEdit && (
                 <>
-                  <button 
-                    className="primary-btn" 
+                  <button
+                    className="primary-btn"
                     onClick={() => setShowModuleModal(true)}
                   >
                     <span className="btn-icon">📚</span> Add Module
                   </button>
-                  
-                  <button 
-                    className="secondary-btn" 
+
+                  <button
+                    className="secondary-btn"
                     onClick={() => {
                       if (modules.modules.length === 0) {
                         notification.warning('Create a module first');
@@ -142,25 +171,25 @@ const CourseDetail = () => {
                   >
                     <span className="btn-icon">📄</span> Add Lesson
                   </button>
-                  
-                  <button 
-                    className="secondary-btn" 
+
+                  <button
+                    className="secondary-btn"
                     onClick={() => setShowAssignmentModal(true)}
                   >
                     <span className="btn-icon">📝</span> Add Assignment
                   </button>
-                  
-                  <button 
-                    className="secondary-btn" 
+
+                  <button
+                    className="secondary-btn"
                     onClick={() => setShowQuizModal(true)}
                   >
                     <span className="btn-icon">🧩</span> Add Quiz
                   </button>
                 </>
               )}
-              
+
               {permissions.canEnroll && (
-                <button 
+                <button
                   className="enroll-btn"
                   onClick={() => setShowEnrollModal(true)}
                 >
@@ -172,39 +201,39 @@ const CourseDetail = () => {
 
           {/* Navigation Tabs */}
           <div className="course-tabs">
-            <button 
+            <button
               className={`course-tab ${activeTab === 'content' ? 'active' : ''}`}
               onClick={() => setActiveTab('content')}
             >
               Course Content
             </button>
-            
+
             {permissions.canViewStudents && (
-              <button 
+              <button
                 className={`course-tab ${activeTab === 'students' ? 'active' : ''}`}
                 onClick={() => setActiveTab('students')}
               >
                 Students ({students.students.length})
               </button>
             )}
-            
+
             {permissions.canViewStudents && (
-              <button 
+              <button
                 className={`course-tab ${activeTab === 'statistics' ? 'active' : ''}`}
                 onClick={() => setActiveTab('statistics')}
               >
                 Statistics
               </button>
             )}
-            
-            <button 
+
+            <button
               className={`course-tab ${activeTab === 'discussion' ? 'active' : ''}`}
               onClick={() => setActiveTab('discussion')}
             >
               Discussion ({discussions.discussions.length})
             </button>
           </div>
-          
+
           {/* Tab Content */}
           {activeTab === 'content' && (
             <div className="course-content-container">
@@ -214,12 +243,12 @@ const CourseDetail = () => {
                 {modules.modules.length > 0 ? (
                   <ul className="lesson-list">
                     {modules.modules.map(module => (
-                      <li 
-                        key={module.id} 
+                      <li
+                        key={module.id}
                         className={selectedModule === module.id ? 'active' : ''}
                       >
-                        <div 
-                          className="lesson-header" 
+                        <div
+                          className="lesson-header"
                           onClick={() => setSelectedModule(module.id)}
                         >
                           <span className="lesson-title">{module.title}</span>
@@ -227,29 +256,29 @@ const CourseDetail = () => {
                             {module.lessons?.length || 0} lessons
                           </span>
                         </div>
-                        
+
                         {selectedModule === module.id && module.lessons && (
                           <ul className="session-list">
                             {module.lessons.map(lesson => (
-                              <li 
+                              <li
                                 key={lesson.id}
                                 className={selectedLesson === lesson.id ? 'active' : ''}
                                 onClick={() => setSelectedLesson(lesson.id)}
                               >
                                 <span className="session-icon">
-                                  {lesson.contentType === 'video' ? '🎥' : 
-                                   lesson.contentType === 'quiz' ? '🧩' : 
-                                   lesson.contentType === 'assignment' ? '📝' : '📄'}
+                                  {lesson.contentType === 'video' ? '🎥' :
+                                    lesson.contentType === 'quiz' ? '🧩' :
+                                      lesson.contentType === 'assignment' ? '📝' : '📄'}
                                 </span>
                                 {lesson.title}
                               </li>
                             ))}
-                            
+
                             {/* Show assignments for this module */}
                             {assignments.assignments
                               .filter(a => a.lesson_id && module.lessons.some(l => l.id === a.lesson_id))
                               .map(assignment => (
-                                <li 
+                                <li
                                   key={`assignment-${assignment.id}`}
                                   className="assessment-item assignment-item"
                                   onClick={() => navigateToAssessment('assignment', assignment.id)}
@@ -270,16 +299,16 @@ const CourseDetail = () => {
                                 if (q.lessonId && module.lessons && module.lessons.some(l => l.id === q.lessonId)) {
                                   return true;
                                 }
-                                
+
                                 // Second try: for quizzes without specific lesson, show in first module
                                 if (!q.lessonId && module.id === modules.modules[0]?.id) {
                                   return true;
                                 }
-                                
+
                                 return false;
                               })
                               .map(quiz => (
-                                <li 
+                                <li
                                   key={`quiz-${quiz.id}`}
                                   className="assessment-item quiz-item"
                                   onClick={() => navigateToAssessment('quiz', quiz.id)}
@@ -315,7 +344,7 @@ const CourseDetail = () => {
                                     </span>
                                   )}
                                 </li>
-                              ))                            }
+                              ))}
                           </ul>
                         )}
                       </li>
@@ -325,8 +354,8 @@ const CourseDetail = () => {
                   <div className="empty-state">
                     <p>No modules created yet.</p>
                     {permissions.canEdit && (
-                      <button 
-                        className="add-btn" 
+                      <button
+                        className="add-btn"
                         onClick={() => setShowModuleModal(true)}
                       >
                         Create First Module
@@ -335,18 +364,18 @@ const CourseDetail = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Content Area */}
               <div className="course-session-content">
                 {(() => {
                   const currentLesson = getCurrentLesson();
-                  
+
                   if (!currentLesson) {
                     return (
                       <div className="empty-state">
                         <p>Select a lesson to view content</p>
                         {permissions.canEdit && modules.modules.length > 0 && (
-                          <button 
+                          <button
                             className="add-btn"
                             onClick={() => setShowLessonModal(true)}
                           >
@@ -356,7 +385,7 @@ const CourseDetail = () => {
                       </div>
                     );
                   }
-                  
+
                   return (
                     <div className="session-content">
                       <div className="session-header">
@@ -365,19 +394,19 @@ const CourseDetail = () => {
                           Duration: {currentLesson.durationMinutes || 0} minutes
                         </div>
                       </div>
-                      
+
                       {currentLesson.description && (
                         <div className="session-description">
                           {currentLesson.description}
                         </div>
                       )}
-                      
+
                       {/* Content based on type */}
                       {currentLesson.contentType === 'video' && currentLesson.content && (
                         <div className="video-container">
-                          <iframe 
-                            src={currentLesson.content.includes('youtube') ? 
-                              currentLesson.content.replace('watch?v=', 'embed/') : 
+                          <iframe
+                            src={currentLesson.content.includes('youtube') ?
+                              currentLesson.content.replace('watch?v=', 'embed/') :
                               currentLesson.content
                             }
                             title={currentLesson.title}
@@ -385,17 +414,16 @@ const CourseDetail = () => {
                           />
                         </div>
                       )}
-                      
+
                       {currentLesson.contentType === 'document' && currentLesson.content && (
                         <div className="session-main-content">
-                          <div 
-                            dangerouslySetInnerHTML={{ 
-                              __html: currentLesson.content 
-                            }} 
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: currentLesson.content
+                            }}
                           />
                         </div>
                       )}
-                      
                       {/* Materials */}
                       {currentLesson.materials && currentLesson.materials.length > 0 && (
                         <div className="session-materials">
@@ -403,13 +431,23 @@ const CourseDetail = () => {
                           <ul>
                             {currentLesson.materials.map(material => (
                               <li key={material.id}>
-                                <a 
-                                  href={material.filePath || material.externalUrl} 
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                {material.externalUrl ? (
+                                  <a
+                                    href={material.externalUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {material.title} 🔗
+                                  </a>
+                                ) : (<button
+                                  className="download-material-btn"
+                                  onClick={() => downloadMaterial(material.id, material.title)}
+                                  title="Download material"
                                 >
+                                  <span className="download-icon">📥</span>
                                   {material.title}
-                                </a>
+                                </button>
+                                )}
                               </li>
                             ))}
                           </ul>
@@ -421,22 +459,22 @@ const CourseDetail = () => {
               </div>
             </div>
           )}
-          
+
           {/* Other tabs */}
           {activeTab === 'students' && permissions.canViewStudents && (
             <EnrolledStudentList courseId={courseId} auth={auth} />
           )}
-          
+
           {activeTab === 'statistics' && permissions.canViewStudents && (
             <CourseStatistics courseId={courseId} auth={auth} />
           )}
-          
+
           {activeTab === 'discussion' && (
             <DiscussionForum courseId={courseId} />
           )}
         </div>
       </div>
-      
+
       {/* Modals */}
       {showModuleModal && (
         <ModuleForm
@@ -444,7 +482,7 @@ const CourseDetail = () => {
           onSubmit={modules.createModule}
         />
       )}
-      
+
       {showLessonModal && (
         <LessonForm
           modules={modules.modules}
@@ -452,7 +490,7 @@ const CourseDetail = () => {
           onSubmit={modules.refetch} // Refresh modules after lesson creation
         />
       )}
-      
+
       {showAssignmentModal && (
         <AssignmentForm
           courseId={courseId}
@@ -461,7 +499,7 @@ const CourseDetail = () => {
           onSubmit={assignments.createAssignment}
         />
       )}
-      
+
       {showQuizModal && (
         <QuizForm
           courseId={courseId}
@@ -470,7 +508,7 @@ const CourseDetail = () => {
           onSubmit={quizzes.createQuiz}
         />
       )}
-      
+
       {showEnrollModal && (
         <EnrollmentModal
           onClose={() => setShowEnrollModal(false)}
