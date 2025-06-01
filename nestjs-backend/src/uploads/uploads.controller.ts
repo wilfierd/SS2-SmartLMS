@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UploadedFiles, Param, Request, Body, UseGuards, NotFoundException, BadRequestException, ForbiddenException, InternalServerErrorException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Controller, Post, Get, UseInterceptors, UploadedFile, UploadedFiles, Param, Request, Body, UseGuards, NotFoundException, BadRequestException, ForbiddenException, InternalServerErrorException, Logger, Inject, forwardRef, Res, StreamableFile } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiParam, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -10,6 +10,9 @@ import { AssignmentsService } from '../assessments/assignments/assignments.servi
 import { UserRole } from '../users/entities/user.entity';
 import { UpdateCourseDto } from '../courses/dto/update-course.dto';
 import { LessonMaterial } from '../courses/entities/lesson-material.entity';
+import { Response } from 'express';
+import { createReadStream, existsSync } from 'fs';
+import { join } from 'path';
 
 @ApiTags('uploads')
 @Controller('uploads')
@@ -302,5 +305,225 @@ export class UploadsController {
     });
 
     return submission;
+  }
+
+  @Get('download/:type/:filename')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Download a file with proper headers to force download' })
+  @ApiParam({ name: 'type', description: 'File type (assignments, lessons, courses)' })
+  @ApiParam({ name: 'filename', description: 'Name of the file to download' })
+  async downloadFile(
+    @Param('type') type: string,
+    @Param('filename') filename: string,
+    @Res({ passthrough: true }) res: Response,
+    @Request() req
+  ) {
+    // Validate file type
+    const allowedTypes = ['assignments', 'lessons', 'courses'];
+    if (!allowedTypes.includes(type)) {
+      throw new BadRequestException('Invalid file type');
+    }
+
+    // Construct file path
+    const uploadsDir = join(__dirname, '..', '..', 'uploads');
+    const filePath = join(uploadsDir, type, filename);
+
+    // Check if file exists
+    if (!existsSync(filePath)) {
+      throw new NotFoundException('File not found');
+    }
+
+    // Set headers to force download
+    res.set({
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    const file = createReadStream(filePath);
+    return new StreamableFile(file);
+  }
+  @Get('download/submission/:submissionId')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Download a submission file' })
+  @ApiParam({ name: 'submissionId', description: 'ID of the submission' })
+  async downloadSubmissionFile(
+    @Param('submissionId') submissionId: number,
+    @Res({ passthrough: true }) res: Response,
+    @Request() req
+  ) {
+    try {
+      // For now, let's use a simplified approach using the DataSource
+      // In a real implementation, you'd add a method to AssignmentsService
+
+      // Check if file exists in the typical uploads/assignments directory
+      const uploadsDir = join(__dirname, '..', '..', 'uploads', 'assignments');
+
+      // Find files that match the submission pattern
+      const fs = require('fs');
+      const files = fs.readdirSync(uploadsDir).filter(file =>
+        file.includes(`-${submissionId}-`)
+      );
+
+      if (files.length === 0) {
+        throw new NotFoundException('Submission file not found');
+      }
+
+      const filename = files[0]; // Take the first matching file
+      const filePath = join(uploadsDir, filename);
+
+      // Check if file exists
+      if (!existsSync(filePath)) {
+        throw new NotFoundException('File not found on server');
+      }
+
+      // Set headers to force download
+      res.set({
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      });
+
+      const file = createReadStream(filePath);
+      return new StreamableFile(file);
+    } catch (error) {
+      this.logger.error(`Error downloading submission file: ${error.message}`);
+      if (error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to download file');
+    }
+  }
+
+  @Get('download/material/:materialId')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Download a lesson material file' })
+  @ApiParam({ name: 'materialId', description: 'ID of the lesson material' })
+  async downloadMaterialFile(
+    @Param('materialId') materialId: number,
+    @Res({ passthrough: true }) res: Response,
+    @Request() req
+  ) {
+    try {
+      // Get the material from database to check permissions and get file path
+      const material = await this.uploadsService.getLessonMaterial(materialId);
+      if (!material) {
+        throw new NotFoundException('Material not found');
+      }
+
+      // Get lesson and module to check permissions
+      const lesson = await this.uploadsService.getLesson(material.lessonId);
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+
+      const module = await this.coursesService.findModuleById(lesson.moduleId);
+      if (!module) {
+        throw new NotFoundException('Module not found');
+      }
+
+      // Check if user has access to this course
+      const courseId = module.courseId;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
+      // Admins have access to everything
+      if (userRole !== UserRole.ADMIN) {
+        // Check if instructor owns the course
+        if (userRole === UserRole.INSTRUCTOR) {
+          await this.coursesService.checkInstructorAccess(courseId, userId);
+        } else if (userRole === UserRole.STUDENT) {
+          // Check if student is enrolled in the course
+          const isEnrolled = await this.coursesService.isStudentEnrolled(courseId, userId);
+          if (!isEnrolled) {
+            throw new ForbiddenException('You are not enrolled in this course');
+          }
+        } else {
+          throw new ForbiddenException('Access denied');
+        }
+      }
+
+      // Handle external URLs (e.g., video links)
+      if (material.externalUrl) {
+        throw new BadRequestException('Cannot download external URLs');
+      }      // Construct file path from material.filePath
+      const uploadsDir = join(__dirname, '..', '..', 'uploads');
+
+      // Remove /uploads/ prefix if it exists, since we're already joining with uploadsDir
+      const relativePath = material.filePath.startsWith('/uploads/')
+        ? material.filePath.substring('/uploads/'.length)
+        : material.filePath;
+
+      const filePath = join(uploadsDir, relativePath);
+
+      // Debug logging
+      this.logger.log(`Material filePath: ${material.filePath}`);
+      this.logger.log(`Relative path: ${relativePath}`);
+      this.logger.log(`Full file path: ${filePath}`);
+      this.logger.log(`Uploads directory: ${uploadsDir}`);      // Check if file exists
+      if (!existsSync(filePath)) {
+        this.logger.error(`File not found at path: ${filePath}`);
+        throw new NotFoundException('File not found on server');
+      }
+
+      // Extract filename from file path and ensure proper encoding
+      const originalFilename = material.title || material.filePath.split('/').pop() || 'download';
+
+      // Detect file type for proper content type
+      const fs = require('fs');
+      const stats = fs.statSync(filePath);
+      const mimeType = this.getMimeType(filePath);
+
+      this.logger.log(`File stats - Size: ${stats.size} bytes, Type: ${mimeType}`);
+
+      // Encode filename properly for Vietnamese characters
+      const encodedFilename = encodeURIComponent(originalFilename);
+
+      // Set headers to force download with proper encoding
+      res.set({
+        'Content-Type': mimeType || 'application/octet-stream',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodedFilename}; filename="${originalFilename}"`,
+        'Content-Length': stats.size.toString(),
+        'Cache-Control': 'no-cache',
+      });
+
+      // Create read stream with proper options
+      const file = createReadStream(filePath);
+      return new StreamableFile(file);
+    } catch (error) {
+      this.logger.error(`Error downloading material file: ${error.message}`);
+      if (error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to download file');
+    }
+  }
+
+  private getMimeType(filePath: string): string {
+    const path = require('path');
+    const ext = path.extname(filePath).toLowerCase();
+
+    const mimeTypes = {
+      '.pdf': 'application/pdf',
+      '.doc': 'application/msword',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.xls': 'application/vnd.ms-excel',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.ppt': 'application/vnd.ms-powerpoint',
+      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      '.txt': 'text/plain',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.mp4': 'video/mp4',
+      '.mp3': 'audio/mpeg',
+      '.zip': 'application/zip',
+      '.rar': 'application/x-rar-compressed'
+    };
+
+    return mimeTypes[ext] || 'application/octet-stream';
   }
 }

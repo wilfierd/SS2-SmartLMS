@@ -34,8 +34,7 @@ export class UploadsService {
   ) {
     this.uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
     this.ensureUploadsDir();
-  }
-  private async ensureUploadsDir(): Promise<void> {
+  } private async ensureUploadsDir(): Promise<void> {
     const dirs = [
       this.uploadsDir,
       `${this.uploadsDir}/courses`,
@@ -48,6 +47,43 @@ export class UploadsService {
         await mkdirAsync(dir, { recursive: true });
       }
     }
+  }
+
+  /**
+   * Sanitize filename while preserving Vietnamese characters
+   * Only removes characters that are truly problematic for filesystems
+   */
+  private sanitizeFilename(filename: string): string {
+    // Define dangerous characters for filesystems
+    const dangerousChars = /[<>:"/\\|?*\x00-\x1f]/g;
+
+    // Replace dangerous characters with underscores but keep Vietnamese and other Unicode characters
+    let sanitized = filename.replace(dangerousChars, '_');
+
+    // Remove multiple consecutive underscores
+    sanitized = sanitized.replace(/_+/g, '_');
+
+    // Remove leading/trailing underscores and dots (which can be problematic)
+    sanitized = sanitized.replace(/^[._]+|[._]+$/g, '');
+
+    // Ensure filename is not empty and has reasonable length
+    if (!sanitized || sanitized.length === 0) {
+      sanitized = 'unnamed_file';
+    }
+
+    // Limit filename length but preserve extension
+    if (sanitized.length > 255) {
+      const lastDotIndex = sanitized.lastIndexOf('.');
+      if (lastDotIndex > 0) {
+        const extension = sanitized.substring(lastDotIndex);
+        const nameWithoutExt = sanitized.substring(0, lastDotIndex);
+        sanitized = nameWithoutExt.substring(0, 255 - extension.length) + extension;
+      } else {
+        sanitized = sanitized.substring(0, 255);
+      }
+    }
+
+    return sanitized;
   }
 
   async uploadCourseThumbnail(file: Express.Multer.File): Promise<string> {
@@ -117,10 +153,8 @@ export class UploadsService {
     if (!(await existsAsync(dirPath))) {
       await mkdirAsync(dirPath, { recursive: true });
       logger.log(`Created directory: ${dirPath}`);
-    }
-
-    // Generate unique filename (keep original name but add timestamp to avoid conflicts)
-    const safeName = file.originalname.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+    }    // Generate unique filename preserving Vietnamese characters
+    const safeName = this.sanitizeFilename(file.originalname);
     const uniqueFilename = `${Date.now()}-${safeName}`;
     const uploadPath = path.join(dirPath, uniqueFilename);
 
@@ -142,8 +176,7 @@ export class UploadsService {
 
     // Return the relative path from the uploads directory
     return `/uploads/courses/${courseId}/materials/${uniqueFilename}`;
-  }
-  async uploadLessonMaterial(file: Express.Multer.File, lessonId: number): Promise<string> {
+  } async uploadLessonMaterial(file: Express.Multer.File, lessonId: number): Promise<string> {
     const logger = new Logger('UploadsService.uploadLessonMaterial');
 
     // Validate file buffer exists
@@ -161,8 +194,8 @@ export class UploadsService {
       logger.log(`Created directory: ${dirPath}`);
     }
 
-    // Generate unique filename (keep original name but add timestamp to avoid conflicts)
-    const safeName = file.originalname.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
+    // Generate unique filename preserving Vietnamese characters
+    const safeName = this.sanitizeFilename(file.originalname);
     const uniqueFilename = `${Date.now()}-${safeName}`;
     const uploadPath = path.join(dirPath, uniqueFilename);
 
@@ -202,6 +235,13 @@ export class UploadsService {
     });
   }
 
+  async getLessonMaterial(materialId: number): Promise<LessonMaterial | null> {
+    return this.materialRepository.findOne({
+      where: { id: materialId },
+      relations: ['lesson', 'lesson.course']
+    });
+  }
+
   getMaterialType(file: Express.Multer.File): string {
     const mimeType = file.mimetype;
 
@@ -226,7 +266,6 @@ export class UploadsService {
       return 'other';
     }
   }
-
   async createLessonMaterial(materialData: {
     lessonId: number;
     title: string;
@@ -239,9 +278,11 @@ export class UploadsService {
     material.lessonId = materialData.lessonId;
     material.title = materialData.title;
     material.filePath = materialData.filePath;
+    material.fileType = materialData.fileType;
+    material.fileSize = materialData.fileSize;
     material.materialType = materialData.materialType as any;
 
-    // Save the material (without the non-entity properties)
+    // Save the material with all properties
     return this.materialRepository.save(material);
   }
 

@@ -138,7 +138,10 @@ CREATE TABLE IF NOT EXISTS lesson_materials (
   file_path VARCHAR(512),
   external_url VARCHAR(512),
   material_type ENUM('video', 'document', 'audio', 'image', 'link') NOT NULL,
+  file_type VARCHAR(100),
+  file_size INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
 );
 

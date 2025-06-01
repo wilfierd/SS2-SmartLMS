@@ -423,6 +423,28 @@
     text-align: center;
 }
 
+/* Download button styling */
+.download-link-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.download-link-btn:hover {
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.download-link-btn:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .grade-main-content {

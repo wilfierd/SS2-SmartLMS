@@ -1,4 +1,15 @@
 /* src/components/course/CourseDetail.css */
+
+/* Global box-sizing and overflow prevention */
+* {
+  box-sizing: border-box;
+}
+
+.course-detail-container * {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
 /* Assessment options modal */
 .assessment-options {
     padding: 20px;
@@ -367,17 +378,15 @@
     left: 25px;
     color: #3498db;
   }
-  
-  /* Session Content Area */
+    /* Session Content Area */
   .course-session-content {
     flex: 1;
-    padding: 30px;
+    padding: 15px;
     overflow-y: auto;
     max-height: calc(100vh - 180px);
   }
-  
-  .session-content {
-    max-width: 900px;
+    .session-content {
+    width: 100%;
     margin: 0 auto;
   }
   
@@ -405,9 +414,8 @@
     border-radius: 8px;
     border-left: 3px solid #3498db;
   }
-  
-  /* Video Container */
-  .video-container {
+    /* Video Container - for lesson content videos */
+  .session-content > .video-container {
     position: relative;
     padding-bottom: 56.25%; /* 16:9 aspect ratio */
     height: 0;
@@ -417,7 +425,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
-  .video-container iframe {
+  .session-content > .video-container iframe {
     position: absolute;
     top: 0;
     left: 0;
@@ -435,14 +443,16 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     line-height: 1.6;
     color: #2c3e50;
-  }
-  
-  /* Materials */
+  }    /* Materials */  
   .session-materials {
     background-color: #f5f7fa;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 25px;
+    border-radius: 4px;
     margin-bottom: 25px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
   }
   
   .session-materials h4 {
@@ -451,7 +461,77 @@
     font-size: 16px;
     color: #2c3e50;
   }
+    /* Materials List Container */
+  .materials-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }    /* Individual Material Item */
+  .material-item {
+    background: white;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+    .material-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }  /* Material Video Section */
+  .material-video {
+    width: 100%;
+    max-width: 100%; /* Revert to original full width */
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  .material-title {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: 600;
+  }  /* Responsive 16:9 YouTube video container */
+  .session-materials .material-video .video-container {
+    position: relative;
+    width: 100%;
+    max-width: 1000px; /* Keep original larger width */
+    margin: 0 auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    background-color: #000;
+    /* Force explicit height constraint */
+    height: 400px; /* Fixed height instead of percentage */
+    max-height: 400px;
+  }  .session-materials .material-video .video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 12px;
+    object-fit: cover; /* Ensure proper scaling */
+  }
   
+  /* External Link Styling */
+  .external-link {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .external-link:hover {
+    text-decoration: underline;
+    color: #2980b9;
+  }
+  
+  /* Legacy support for old ul structure */
   .session-materials ul {
     list-style: none;
     padding: 0;
@@ -477,6 +557,43 @@
   
   .session-materials a:hover {
     text-decoration: underline;
+  }
+    /* Download material button */
+  .download-material-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border: none;
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .download-material-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #1f639a);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .download-material-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .download-icon {
+    font-size: 16px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  }
+  
+  .download-material-btn:active {
+    transform: translateY(1px);
   }
   
   /* Navigation Buttons */
@@ -909,9 +1026,43 @@
     align-items: flex-start;
     gap: 8px;
   }
-  
-  .quiz-status,
+    .quiz-status,
   .submission-status {
     align-self: flex-end;
+  }
+    /* Responsive video containers for mobile */
+  .session-materials {
+    padding: 15px;
+  }
+
+  .material-item {
+    padding: 10px;
+  }
+  
+  .course-detail-content {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .session-materials {
+    padding: 10px;
+  }
+
+  .material-item {
+    padding: 8px;
+  }
+  
+  .material-video {
+    max-width: 100%;
+  }
+  
+  .session-materials .material-video .video-container {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .course-detail-content {
+    padding: 10px;
   }
 }

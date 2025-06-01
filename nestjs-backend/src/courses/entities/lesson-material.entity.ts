@@ -22,13 +22,18 @@ export class LessonMaterial {
 
   @Column({ nullable: true, name: 'external_url', length: 512 })
   externalUrl: string;
-
   @Column({
     type: 'enum',
     enum: MaterialType,
     name: 'material_type'
   })
   materialType: MaterialType;
+
+  @Column({ name: 'file_type', nullable: true })
+  fileType: string;
+
+  @Column({ name: 'file_size', type: 'int', nullable: true })
+  fileSize: number;
 
   @Column({ name: 'lesson_id' })
   lessonId: number;

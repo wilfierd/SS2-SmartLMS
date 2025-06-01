@@ -12,7 +12,7 @@ const AssignmentDetail = () => {
   const { assignmentId } = useParams();
   const navigate = useNavigate();
   const { auth } = useContext(AuthContext);
-  
+
   const [assignment, setAssignment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +48,7 @@ const AssignmentDetail = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!submissionData.file && !submissionData.comments.trim()) {
       notification.error('Please provide either a file or comments for your submission');
       return;
@@ -60,20 +60,20 @@ const AssignmentDetail = () => {
         file: submissionData.file,
         submission_text: submissionData.comments
       });
-      
+
       notification.success('Assignment submitted successfully');
       fetchAssignment(); // Refresh to show submission
-      
+
       // Reset form
       setSubmissionData({
         file: null,
         comments: ''
       });
-      
+
       // Reset file input
       const fileInput = document.getElementById('assignment-file');
       if (fileInput) fileInput.value = '';
-      
+
     } catch (error) {
       notification.error('Failed to submit assignment');
       console.error('Error submitting assignment:', error);
@@ -105,6 +105,34 @@ const AssignmentDetail = () => {
     return true;
   };
 
+  const downloadFile = async (submissionId, fileName) => {
+    try {
+      const response = await fetch(`/api/uploads/download/submission/${submissionId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName || 'submission-file';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      notification.error('Failed to download file');
+    }
+  };
+
   if (isLoading) {
     return <div className="loading-spinner">Loading assignment...</div>;
   }
@@ -116,10 +144,10 @@ const AssignmentDetail = () => {
   return (
     <div className="assignment-detail-container">
       <Sidebar activeItem="courses" />
-      
+
       <div className="admin-main-content">
         <Header title={assignment.title} />
-        
+
         <div className="assignment-detail-content">
           <div className="assignment-header">
             <div className="assignment-info">
@@ -140,9 +168,9 @@ const AssignmentDetail = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="action-buttons">
-              <button 
+              <button
                 className="secondary-btn"
                 onClick={() => navigate(-1)}
               >
@@ -176,16 +204,18 @@ const AssignmentDetail = () => {
             {auth.user.role === 'student' && (
               <div className="assignment-section">
                 <h3>Your Submission</h3>
-                
+
                 {assignment.submission ? (
                   <div className="existing-submission">
                     <div className="submission-info">
-                      <p><strong>Submitted:</strong> {formatDate(assignment.submission.submission_date)}</p>
-                      {assignment.submission.file_path && (
-                        <p><strong>File:</strong> 
-                          <a href={assignment.submission.file_path} target="_blank" rel="noopener noreferrer">
-                            View Submitted File
-                          </a>
+                      <p><strong>Submitted:</strong> {formatDate(assignment.submission.submission_date)}</p>                      {assignment.submission.file_path && (
+                        <p><strong>File:</strong>
+                          <button
+                            className="download-link-btn"
+                            onClick={() => downloadFile(assignment.submission.id, 'submission-file')}
+                          >
+                            📎 Download Submitted File
+                          </button>
                         </p>
                       )}
                       {assignment.submission.submission_text && (
@@ -196,7 +226,7 @@ const AssignmentDetail = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       {assignment.submission.is_graded ? (
                         <div className="grade-section">
                           <div className="grade-score">
@@ -281,7 +311,7 @@ const AssignmentDetail = () => {
             {(auth.user.role === 'instructor' || auth.user.role === 'admin') && assignment.submissions && (
               <div className="assignment-section">
                 <h3>Student Submissions ({assignment.submissions.length})</h3>
-                
+
                 {assignment.submissions.length > 0 ? (
                   <div className="submissions-list">
                     {assignment.submissions.map(submission => (
@@ -293,7 +323,7 @@ const AssignmentDetail = () => {
                               Submitted: {formatDate(submission.submission_date)}
                             </span>
                           </div>
-                          
+
                           <div className="submission-actions">
                             {submission.is_graded ? (
                               <span className="grade-display">
@@ -309,27 +339,41 @@ const AssignmentDetail = () => {
                             )}
                           </div>
                         </div>
-                        
-                        <div className="submission-content">
-                          {submission.file_path && (
-                            <div className="submission-file">
-                              <a href={submission.file_path} target="_blank" rel="noopener noreferrer">
-                                📎 View Submitted File
-                              </a>
-                            </div>
-                          )}
-                          
+
+                        <div className="submission-content">                          {submission.file_path && (
+                          <div className="submission-file">
+                            <button
+                              className="download-link-btn"
+                              onClick={() => downloadFile(submission.id, 'submission-file')}
+                            >
+                              📎 Download Submitted File
+                            </button>
+                          </div>
+                        )}
+
                           {submission.submission_text && (
                             <div className="submission-text">
                               <strong>Text Submission:</strong>
                               <div>{submission.submission_text}</div>
                             </div>
                           )}
-                          
+
                           {submission.feedback && (
                             <div className="submission-feedback">
                               <strong>Feedback:</strong>
                               <div>{submission.feedback}</div>
+                            </div>
+                          )}
+
+                          {/* Download Button for Instructors/Admins */}
+                          {(auth.user.role === 'instructor' || auth.user.role === 'admin') && submission.file_path && (
+                            <div className="download-button">
+                              <button
+                                className="primary-btn small"
+                                onClick={() => downloadFile(submission.id, submission.file_path.split('/').pop())}
+                              >
+                                Download Submission
+                              </button>
                             </div>
                           )}
                         </div>
