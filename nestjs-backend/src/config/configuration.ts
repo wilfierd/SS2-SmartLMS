@@ -32,9 +32,12 @@ export default () => ({
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || googleWeb?.client_id,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || googleWeb?.client_secret,
-  },
-  frontend: {
+  }, frontend: {
     url: process.env.FRONTEND_URL || 'http://localhost:3000',
+  },
+  mlService: {
+    url: process.env.ML_SERVICE_URL || 'http://localhost:5000',
+    timeout: parseInt(process.env.ML_SERVICE_TIMEOUT ?? '30000', 10),
   },
   nodeEnv: process.env.NODE_ENV || 'development',
 }); 

@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql-db:
+    image: mysql:8.0
+    container_name: lms-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-your_mysql_password}
+      MYSQL_DATABASE: ${DB_NAME:-lms_db}
+      MYSQL_USER: ${DB_USER:-lms_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-your_mysql_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - lms-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  # Redis Cache
+  redis-cache:
+    image: redis:7-alpine
+    container_name: lms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - lms-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+
+  # ML Recommendation Service
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: lms-ml-service
+    environment:
+      FLASK_ENV: production
+      DB_HOST: mysql-db
+      DB_USER: ${DB_USER:-lms_user}
+      DB_PASSWORD: ${DB_PASSWORD:-your_mysql_password}
+      DB_NAME: ${DB_NAME:-lms_db}
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+    ports:
+      - "5000:5000"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    networks:
+      - lms-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # NestJS Backend
+  nestjs-backend:
+    build:
+      context: ./nestjs-backend
+      dockerfile: Dockerfile
+    container_name: lms-nestjs-backend
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USER:-lms_user}
+      DB_PASSWORD: ${DB_PASSWORD:-your_mysql_password}
+      DB_NAME: ${DB_NAME:-lms_db}
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+      ML_SERVICE_URL: http://ml-service:5000
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      ml-service:
+        condition: service_healthy
+    networks:
+      - lms-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (if you have one)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: lms-frontend
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - nestjs-backend
+  #   networks:
+  #     - lms-network
+  #   restart: unless-stopped
+
+  # Nginx Reverse Proxy (optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: lms-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl # If you have SSL certificates
+    depends_on:
+      - nestjs-backend
+      - ml-service
+    networks:
+      - lms-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  lms-network:
+    driver: bridge

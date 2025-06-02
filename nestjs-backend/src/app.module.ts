@@ -16,6 +16,7 @@ import { UploadsModule } from './uploads/uploads.module';
 import { AssessmentsModule } from './assessments/assessments.module';
 import configuration from './config/configuration';
 import { DiscussionsModule } from './discussions/discussions.module';
+import { RecommendationModule } from './recommendations/recommendation.module';
 
 @Module({
   imports: [
@@ -41,18 +42,18 @@ import { DiscussionsModule } from './discussions/discussions.module';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
-    }),    UsersModule,
+    }), UsersModule,
     AuthModule,
     CoursesModule,
     DepartmentsModule,
     EnrollmentsModule,
     VirtualClassroomModule,
-    MailerModule.register(),
-    UploadsModule,
+    MailerModule.register(), UploadsModule,
     AssessmentsModule,
     DiscussionsModule,
+    RecommendationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
