@@ -88,7 +88,7 @@ In Docker Compose, environment variables flow like this:
 nestjs-backend:
   environment:
     - DB_HOST=mysql-db              # From main .env
-    - ML_SERVICE_URL=http://ml-service:5000
+    - ML_SERVICE_URL=http://ml-service:8000
     
 ml-service:
   environment:
@@ -160,7 +160,7 @@ npm start
 - Frontend → NestJS: `http://localhost:5001`
 
 ### Docker Mode:
-- NestJS → ML Service: `http://ml-service:5000`
+- NestJS → ML Service: `http://ml-service:8000`
 - Frontend → NestJS: `http://nestjs-backend:5001`
 - External → Nginx: `http://localhost` (proxies to services)
 

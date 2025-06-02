@@ -97,17 +97,24 @@ else
 fi
 
 # Check ML Service
-if curl -f http://localhost:5000/health > /dev/null 2>&1; then
+if curl -f http://localhost:8000/health > /dev/null 2>&1; then
     print_status "✅ ML Service is running"
 else
     print_error "❌ ML Service is not responding"
 fi
 
 # Check NestJS Backend
-if curl -f http://localhost:3000/health > /dev/null 2>&1; then
+if curl -f http://localhost:5000/health > /dev/null 2>&1; then
     print_status "✅ NestJS Backend is running"
 else
     print_error "❌ NestJS Backend is not responding"
+fi
+
+# Check Frontend
+if curl -f http://localhost:3000 > /dev/null 2>&1; then
+    print_status "✅ Frontend is running"
+else
+    print_error "❌ Frontend is not responding"
 fi
 
 # Show running services
@@ -123,9 +130,10 @@ fi
 
 print_status "🎉 Deployment completed!"
 print_status "Your LMS is available at:"
-print_status "- Backend API: http://your-server-ip:3000"
-print_status "- ML Service: http://your-server-ip:5000"
-print_status "- Nginx Proxy: http://your-server-ip:80"
+print_status "- Frontend Web App: http://your-server-ip:3000"
+print_status "- Backend API: http://your-server-ip:5000"
+print_status "- ML Service: http://your-server-ip:8000"
+print_status "- Nginx Proxy: http://your-server-ip:80 (routes to all services)"
 
 print_warning "Next steps:"
 print_warning "1. Set up SSL certificates in the ssl/ directory"

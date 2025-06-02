@@ -183,7 +183,7 @@ docker-compose ps
 ### NestJS Can't Connect to ML Service
 1. Verify ML service is running: `curl http://localhost:5000/health`
 2. Check `ML_SERVICE_URL` in NestJS `.env` file
-3. For Docker: use `http://ml-service:5000`
+3. For Docker: use `http://ml-service:8000`
 4. For local: use `http://localhost:5000`
 
 ### Database Connection Issues

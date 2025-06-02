@@ -7,16 +7,48 @@ This guide covers deploying the Smart LMS with real-time ML recommendations to a
 ## Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Nginx Proxy   │    │  NestJS Backend │    │   ML Service    │
-│   (Port 80/443) │────│   (Port 3000)   │────│   (Port 5000)   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │                       │
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │  MySQL Database │    │  Redis Cache    │
-                       │   (Port 3306)   │    │   (Port 6379)   │
-                       └─────────────────┘    └─────────────────┘
+                         ┌─────────────────┐
+                         │   Nginx Proxy   │ 
+                         │   (Port 80/443) │
+                         └─────────┬───────┘
+                                   │ Routes based on URL
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+                    ▼              ▼              ▼
+          ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+          │ React Frontend  │ │  NestJS Backend │ │   ML Service    │
+          │   (Port 3000)   │ │   (Port 5000)   │ │   (Port 8000)   │
+          └─────────────────┘ └─────────┬───────┘ └─────────▲───────┘
+                                        │                   │
+                                        └───────────────────┘
+                                        Internal API calls
+                                        
+                               ┌─────────┴───────┐
+                               │                 │
+                               ▼                 ▼
+                     ┌─────────────────┐ ┌─────────────────┐
+                     │  MySQL Database │ │  Redis Cache    │
+                     │   (Port 3306)   │ │   (Port 6379)   │
+                     └─────────────────┘ └─────────────────┘
 ```
+
+### Nginx Routing Logic:
+- `GET /` → **Frontend** (React app)
+- `GET /api/*` → **Backend** (NestJS API)
+- `GET /ml/*` → **ML Service** (Python Flask)
+- `GET /health` → **Nginx** (health check)
+
+## How the System Actually Works
+
+**❌ WRONG assumption**: Nginx → Backend → ML Service  
+**✅ CORRECT flow**: Nginx routes directly to each service based on URL:
+
+1. **Frontend requests** (`/`, `/login`, `/dashboard`) → Nginx serves React app
+2. **API requests** (`/api/users`, `/api/courses`) → Nginx forwards to NestJS backend
+3. **ML requests** (`/ml/recommendations`) → Nginx forwards to ML service
+4. **Backend-to-ML communication** happens directly between containers (not through Nginx)
+
+The NestJS backend **does** communicate with the ML service, but this happens **internally** within the Docker network, not through Nginx.
 
 ## ML Recommendation System Features
 
@@ -27,6 +59,16 @@ This guide covers deploying the Smart LMS with real-time ML recommendations to a
 - **Automatic model retraining** capabilities
 
 ## Quick VPS Deployment
+
+### Updated Architecture
+The deployment now includes a complete frontend React application alongside the backend services:
+
+- **Frontend**: React app running on port 3000 (your development setup)
+- **Backend**: NestJS API running on port 5000 (your development setup) 
+- **ML Service**: Python Flask service running on port 8000 (internal)
+- **Database**: MySQL on port 3306
+- **Cache**: Redis on port 6379
+- **Proxy**: Nginx on port 80/443 routing to all services
 
 ### 1. VPS Requirements
 - **CPU**: 2+ cores
@@ -64,9 +106,10 @@ chmod +x deploy.sh
 ```
 
 ### 4. Access Your Application
-- **Backend API**: `http://your-server-ip:3000`
-- **ML Service**: `http://your-server-ip:5000`
-- **Web Interface**: `http://your-server-ip:80`
+- **Frontend Web App**: `http://your-server-ip:3000`
+- **Backend API**: `http://your-server-ip:5000`
+- **ML Service**: `http://your-server-ip:8000`
+- **Nginx Proxy**: `http://your-server-ip:80` (routes to all services)
 
 ## API Endpoints for ML Recommendations
 
@@ -130,7 +173,7 @@ DB_NAME=lms_db
 JWT_SECRET=your_very_secure_jwt_secret_key_here_at_least_32_characters
 
 # ML Service
-ML_SERVICE_URL=http://ml-service:5000
+ML_SERVICE_URL=http://ml-service:8000
 
 # Redis Cache
 REDIS_HOST=redis-cache
@@ -138,6 +181,9 @@ REDIS_PORT=6379
 
 # Optional: SSL Domain
 DOMAIN_NAME=your-domain.com
+
+# Frontend Configuration (automatically set in Docker)
+REACT_APP_API_URL=http://localhost:5000
 ```
 
 ## SSL Setup (Production)
@@ -229,13 +275,26 @@ SHOW TABLES;
 ### ML Service Issues
 ```bash
 # Check ML service health
-curl http://localhost:5000/health
+curl http://localhost:8000/health
 
 # View ML service logs
 docker-compose logs ml-service
 
 # Manually retrain model
-curl -X POST http://localhost:5000/model/retrain
+curl -X POST http://localhost:8000/model/retrain
+```
+
+### Frontend Issues
+```bash
+# Check frontend status
+curl http://localhost:3000
+
+# View frontend logs
+docker-compose logs frontend
+
+# Rebuild frontend
+docker-compose build frontend
+docker-compose restart frontend
 ```
 
 ### Performance Issues

@@ -156,7 +156,7 @@ docker-compose logs ml-service
 ```bash
 # Check ML_SERVICE_URL in nestjs-backend/.env
 # For local development: http://localhost:5000
-# For Docker: http://ml-service:5000
+# For Docker: http://ml-service:8000
 ```
 
 ## 📊 Monitoring
