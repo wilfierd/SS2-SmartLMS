@@ -2,6 +2,9 @@
 Real-time ML Recommendation Microservice
 Replaces the Jupyter notebook approach with live database queries and Redis caching
 """
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import redis

@@ -14,7 +14,8 @@ class DatabaseManager:
     def __init__(self):
         self.db_config = {
             'host': os.getenv('DB_HOST', 'localhost'),
-            'user': os.getenv('DB_USER', 'root'),
+            'port': int(os.getenv('DB_PORT', '3306')),
+            'user': os.getenv('DB_USER', ''),
             'password': os.getenv('DB_PASSWORD', ''),
             'database': os.getenv('DB_NAME', 'lms_db'),
             'charset': 'utf8mb4',
