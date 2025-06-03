@@ -1,9 +1,17 @@
+# Ultra-minimal ML service dependencies
 flask==3.0.3
 flask-cors==4.0.1
 redis==5.0.8
-pandas==2.2.2
+
+# Lightweight ML packages
 numpy==1.26.4
+pandas==2.2.2
 scikit-learn==1.5.1
+
+# Database connectivity
 pymysql==1.1.1
-python-dotenv==1.0.1
+cryptography==42.0.8
+
+# Server and environment  
 gunicorn==22.0.0
+python-dotenv==1.0.1

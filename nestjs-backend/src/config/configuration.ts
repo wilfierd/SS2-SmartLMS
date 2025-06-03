@@ -36,7 +36,7 @@ export default () => ({
     url: process.env.FRONTEND_URL || 'http://localhost:3000',
   },
   mlService: {
-    url: process.env.ML_SERVICE_URL || 'http://localhost:5000',
+    url: process.env.ML_SERVICE_URL || 'http://localhost:8000',
     timeout: parseInt(process.env.ML_SERVICE_TIMEOUT ?? '30000', 10),
   },
   nodeEnv: process.env.NODE_ENV || 'development',

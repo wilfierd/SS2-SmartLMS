@@ -1,31 +1,44 @@
-# Use Node.js 22 with Alpine 3.21 for zero high vulnerabilities
-FROM node:22-alpine3.21
+# Multi-stage build for optimized NestJS backend
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install security updates and dependencies
-RUN apk update && apk upgrade && apk add --no-cache curl dumb-init && \
-    rm -rf /var/cache/apk/*
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ curl
 
-# Install dependencies first (better layer caching)
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+# Copy package files
+COPY nestjs-backend/package*.json ./
+
+# Install all dependencies
+RUN npm ci
 
 # Copy source code and build
-COPY . .
-RUN npm run build && \
-    rm -rf src test examples *.md
+COPY nestjs-backend/src ./src
+COPY nestjs-backend/tsconfig*.json nestjs-backend/nest-cli.json ./
+COPY key.json ./
+RUN npm run build
 
-# Create non-root user with proper permissions
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 -G nodejs && \
-    chown -R nestjs:nodejs /app
-USER nestjs
+# Production stage
+FROM node:22-alpine AS production
 
-EXPOSE 3000
+WORKDIR /app
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+# Install only runtime dependencies
+RUN apk add --no-cache curl && \
+    rm -rf /var/cache/apk/*
 
-CMD ["dumb-init", "node", "dist/main"]
+# Copy package files and install only production dependencies
+COPY nestjs-backend/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/key.json ./
+
+EXPOSE 5000
+
+# Health check - using the correct status endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/status || exit 1
+
+CMD ["node", "dist/main"]

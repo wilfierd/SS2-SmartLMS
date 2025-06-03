@@ -90,12 +90,11 @@ async function bootstrap() {
 
   // Setup static file serving for uploads
   app.use('/uploads', express.static(uploadsDir));
-
   // Apply global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Start the server on port 5000
-  const port = 5000; // Default port
+  // Start the server using port from configuration
+  const port = configService.get<number>('port', 5000);
   await app.listen(port);
   console.log(`Application running on port ${port}`);
 }

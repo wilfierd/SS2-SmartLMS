@@ -1,26 +1,34 @@
-# Use Node.js 18 Alpine image
-FROM node:18-alpine
+# Ultra-optimized React frontend build
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if available)
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm ci --silent && npm cache clean --force
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy all source code
-COPY . .
-
-# Build the React application
+# Copy source and build (minimize build context)
+COPY public ./public
+COPY src ./src
 RUN npm run build
 
-# Install serve to serve static files
-RUN npm install -g serve
+# Ultra-minimal production stage
+FROM nginx:alpine AS production
 
-# Expose port 3000
+# Copy built app
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Use custom minimal nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Remove unnecessary nginx modules and files and set permissions
+RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* && \
+    chmod -R 755 /usr/share/nginx/html
+
 EXPOSE 3000
 
-# Command to serve the built application
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Minimal health check (force IPv4)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
