@@ -157,20 +157,17 @@ const Header = ({ title }) => {
             className="profile-section"
             onClick={handleProfileClick}
             data-show-dropdown={showDropdown}
-          >
-            <div className="profile-avatar-container">
-              {auth.user.profileImage ? (
-                <img
-                  src={`${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`}
-                  alt="Profile"
-                  className="profile-avatar"
-                />
-              ) : (
-                <div className={`profile-avatar-placeholder ${auth.user.role}`}>
-                  {getUserInitials()}
-                </div>
-              )}
+          >            {auth.user.profileImage ? (
+            <img
+              src={`${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`}
+              alt="Profile"
+              className="profile-avatar"
+            />
+          ) : (
+            <div className={`profile-avatar-placeholder ${auth.user.role}`}>
+              {getUserInitials()}
             </div>
+          )}
             <span className="dropdown-arrow">
               {renderIcon('chevronDown')}
             </span>

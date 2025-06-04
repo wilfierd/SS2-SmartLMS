@@ -58,15 +58,15 @@
 }
 
 .profile-avatar-placeholder.admin {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4285f4, #1976d2);
 }
 
 .profile-avatar-placeholder.instructor {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #34a853, #137333);
 }
 
 .profile-avatar-placeholder.student {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #9c27b0, #6a1b9a);
 }
 
 .avatar-upload-overlay {
