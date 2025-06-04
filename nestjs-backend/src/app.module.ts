@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SessionTrackingMiddleware } from './common/middleware/session-tracking.middleware';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CoursesModule } from './courses/courses.module';
@@ -17,6 +18,8 @@ import { AssessmentsModule } from './assessments/assessments.module';
 import configuration from './config/configuration';
 import { DiscussionsModule } from './discussions/discussions.module';
 import { RecommendationModule } from './recommendations/recommendation.module';
+import { UserActivity } from './users/entities/user-activity.entity';
+import { UserSession } from './users/entities/user-session.entity';
 
 @Module({
   imports: [
@@ -39,6 +42,7 @@ import { RecommendationModule } from './recommendations/recommendation.module';
         logging: configService.get<boolean>('DB_LOGGING', false),
       }),
     }),
+    TypeOrmModule.forFeature([UserActivity, UserSession]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
@@ -51,9 +55,14 @@ import { RecommendationModule } from './recommendations/recommendation.module';
     MailerModule.register(), UploadsModule,
     AssessmentsModule,
     DiscussionsModule,
-    RecommendationModule,
-  ],
+    RecommendationModule,],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(SessionTrackingMiddleware)
+      .forRoutes('*'); // Apply to all routes
+  }
+}

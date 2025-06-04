@@ -25,13 +25,13 @@ import VirtualClassroom from './components/classroom/VirtualClassroom';
 import SessionAnalytics from './components/classroom/SessionAnalytics';
 import SessionRecordingView from './components/classroom/SessionRecordingView';
 
-const GradeAssignment = React.lazy(() => 
+const GradeAssignment = React.lazy(() =>
   import('./components/assessment/GradeAssignment').catch(() => ({
     default: () => <div className="error-message">Grade Assignment component not found. Please check the file path.</div>
   }))
 );
 
-const StudentProgressView = React.lazy(() => 
+const StudentProgressView = React.lazy(() =>
   import('./components/course/StudentProgressView').catch(() => ({
     default: () => <div className="error-message">Student Progress component not found. Please check the file path.</div>
   }))
@@ -73,23 +73,23 @@ function App() {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
-      
+
       if (token && storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          
+
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
+
           try {
             await axios.get(`${API_URL}/users/me`);
-            
+
             setAuth({
               isAuthenticated: true,
               user,
               token,
               isLoading: false
             });
-            
+
             if (user.role === 'student' && !user.isPasswordChanged) {
               setShowPasswordModal(true);
             }
@@ -98,7 +98,7 @@ function App() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             delete axios.defaults.headers.common['Authorization'];
-            
+
             setAuth({
               isAuthenticated: false,
               user: null,
@@ -110,7 +110,7 @@ function App() {
           console.error('Error parsing user from localStorage:', error);
           localStorage.removeItem('user');
           localStorage.removeItem('token');
-          
+
           setAuth({
             isAuthenticated: false,
             user: null,
@@ -119,22 +119,22 @@ function App() {
           });
         }
       } else {
-        setAuth({ 
-          isAuthenticated: false, 
-          user: null, 
-          token: null, 
-          isLoading: false 
+        setAuth({
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          isLoading: false
         });
       }
     };
-    
+
     initAuth();
   }, [API_URL]);
 
   const login = (userData, token) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-    
+
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     setAuth({
@@ -152,16 +152,16 @@ function App() {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
     delete axios.defaults.headers.common['Authorization'];
-    
+
     setAuth({
       isAuthenticated: false,
       user: null,
       token: null,
       isLoading: false
     });
-    
+
     SidebarManager.setExpanded(false);
   };
 
@@ -171,7 +171,7 @@ function App() {
       ...auth,
       user: userData
     });
-    
+
     if (userData.isPasswordChanged) {
       setShowPasswordModal(false);
     }
@@ -196,174 +196,177 @@ function App() {
       <AuthContext.Provider value={{ auth, login, logout, updateUser }}>
         <ChatbotProvider>
           <Toaster />
-          
+
           <Router>
             <div className="App">
               <Routes>
                 {/* Public routes */}
-                <Route 
-                  path="/login" 
-                  element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} 
+                <Route
+                  path="/login"
+                  element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />}
                 />
-                <Route 
-                  path="/forgot-password" 
-                  element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />} 
+                <Route
+                  path="/forgot-password"
+                  element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />}
                 />
-                <Route 
-                  path="/reset-password/:token" 
-                  element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} 
+                <Route
+                  path="/reset-password/:token"
+                  element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />}
                 />
                 <Route path="/unauthorized" element={<UnauthorizedPage />} />
-                
+
                 {/* Dashboard routes */}
                 <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
-                
+
                 {/* Course management routes */}
                 <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
-                <Route 
-                  path="/courses/:courseId/detail" 
+                <Route
+                  path="/courses/:courseId/detail"
                   element={
                     <ProtectedRoute>
                       <CourseDetail />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+
                 {/* Assessment routes with lazy loading */}
-                <Route 
-                  path="/quizzes/:quizId" 
+                <Route
+                  path="/quizzes/:quizId"
                   element={
                     <ProtectedRoute>
                       <QuizDetail />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/assignments/:assignmentId" 
+                <Route
+                  path="/assignments/:assignmentId"
                   element={
                     <ProtectedRoute>
                       <LazyWrapper>
                         <AssignmentDetail />
                       </LazyWrapper>
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+
                 {/* Grading routes (instructors/admins only) */}
-                <Route 
-                  path="/courses/:courseId/assignments/:assignmentId/submissions/:submissionId/grade" 
+                <Route
+                  path="/courses/:courseId/assignments/:assignmentId/submissions/:submissionId/grade"
                   element={
                     <ProtectedRoute>
                       <LazyWrapper>
                         <GradeAssignment />
                       </LazyWrapper>
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+
                 {/* Student progress routes (instructors/admins only) */}
-                <Route 
-                  path="/courses/:courseId/students/:studentId" 
+                <Route
+                  path="/courses/:courseId/students/:studentId"
                   element={
                     <ProtectedRoute>
                       <LazyWrapper>
                         <StudentProgressView />
                       </LazyWrapper>
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+
                 {/* Virtual Classroom routes */}
                 <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} />
                 <Route path="/virtual-classroom" element={<Navigate to="/classroom" />} />
-                <Route 
-                  path="/classroom/analytics/:sessionId" 
+                <Route
+                  path="/classroom/analytics/:sessionId"
                   element={
                     <ProtectedRoute>
                       <SessionAnalytics />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/classroom/recording/:sessionId/:recordingId" 
+                <Route
+                  path="/classroom/recording/:sessionId/:recordingId"
                   element={
                     <ProtectedRoute>
                       <SessionRecordingView />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/classroom/recording/:sessionId" 
+                <Route
+                  path="/classroom/recording/:sessionId"
                   element={
                     <ProtectedRoute>
                       <SessionRecordingView />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+
                 {/* Admin routes */}
                 <Route path="/users" element={<RoleBasedRoute component="users" />} />
                 <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
                 <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
-                
+
+                {/* Profile route - available to all authenticated users */}
+                <Route path="/profile" element={<RoleBasedRoute component="profile" />} />
+
                 {/* Assessment tools route */}
                 <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} />
-                
+
                 {/* Messages route */}
                 <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
-                
+
                 {/* Course export/import routes */}
-                <Route 
-                  path="/courses/:courseId/export" 
+                <Route
+                  path="/courses/:courseId/export"
                   element={
                     <ProtectedRoute>
                       <RoleBasedRoute component="courseExport" />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/admin/course-import" 
+                <Route
+                  path="/admin/course-import"
                   element={
                     <ProtectedRoute>
                       <RoleBasedRoute component="courseImport" />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+
                 {/* Analytics routes */}
-                <Route 
-                  path="/analytics" 
-                  element={<RoleBasedRoute component="analytics" />} 
+                <Route
+                  path="/analytics"
+                  element={<RoleBasedRoute component="analytics" />}
                 />
-                <Route 
-                  path="/analytics/course/:courseId" 
+                <Route
+                  path="/analytics/course/:courseId"
                   element={
                     <ProtectedRoute>
                       <RoleBasedRoute component="courseAnalytics" />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+
                 {/* API testing route (development only) */}
                 {process.env.NODE_ENV === 'development' && (
-                  <Route 
-                    path="/api-test" 
+                  <Route
+                    path="/api-test"
                     element={
                       <ProtectedRoute>
                         <RoleBasedRoute component="apiTest" />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
                 )}
-                
+
                 {/* Default routes */}
-                <Route 
-                  path="/" 
-                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} 
+                <Route
+                  path="/"
+                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />}
                 />
-                <Route 
-                  path="*" 
-                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />} 
+                <Route
+                  path="*"
+                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />}
                 />
               </Routes>
 
@@ -378,7 +381,7 @@ function App() {
                   forceChange={!auth.user.isPasswordChanged}
                 />
               )}
-              
+
               {/* Chatbot for authenticated users */}
               {auth.isAuthenticated && <Chatbot />}
             </div>

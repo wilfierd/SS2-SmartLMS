@@ -1,7 +1,8 @@
 import { Controller, Post, UseGuards, Request, Body, Get, HttpStatus, UnauthorizedException, Logger, Res, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiExcludeEndpoint, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiExcludeEndpoint, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -174,5 +175,53 @@ export class AuthController {
       secure: this.configService.get<string>('nodeEnv') === 'production',
     });
     return loginResponse;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Logout successful',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: 'Logout successful'
+        }
+      }
+    }
+  })
+  async logout(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    try {
+      // Log the logout activity using the session from middleware
+      if (req.userSession) {
+        await this.authService.logLogoutActivity(req.user.id, req.userSession);
+      }
+
+      // Clear the authentication cookie
+      res.clearCookie('Authentication', {
+        httpOnly: true,
+        path: '/',
+        sameSite: this.configService.get<string>('nodeEnv') === 'production' ? 'none' : 'lax',
+        secure: this.configService.get<string>('nodeEnv') === 'production',
+      });
+
+      this.logger.log(`User ${req.user.email} logged out`);
+
+      return {
+        message: 'Logout successful'
+      };
+    } catch (error) {
+      this.logger.error(`Error during logout for user ${req.user.email}:`, error);
+      return {
+        message: 'Logout successful' // Still return success to avoid exposing errors
+      };
+    }
   }
 }

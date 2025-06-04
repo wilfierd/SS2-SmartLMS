@@ -1,18 +1,30 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, MoreThan, Not, IsNull } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Express } from 'express';
 import { User, UserRole } from './entities/user.entity';
 import { UserResponseDto } from './dto/user-response.dto';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { BatchDeleteUsersDto } from './dto/batch-delete-users.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserActivityDto } from './dto/user-activity.dto';
+import { UserSessionDto } from './dto/user-session.dto';
+import { UserActivity, ActivityType } from './entities/user-activity.entity';
+import { UserSession } from './entities/user-session.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(UserActivity)
+    private activitiesRepository: Repository<UserActivity>,
+    @InjectRepository(UserSession)
+    private sessionsRepository: Repository<UserSession>,
     private dataSource: DataSource
   ) { }
 
@@ -215,7 +227,6 @@ export class UsersService {
 
     await this.usersRepository.save(user);
   }
-
   async updateUserGoogleId(userId: number, googleId: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
 
@@ -225,5 +236,246 @@ export class UsersService {
 
     user.googleId = googleId;
     await this.usersRepository.save(user);
+  }
+  async updateProfile(userId: number, updateProfileDto: UpdateProfileDto): Promise<UserResponseDto> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Update user fields if provided
+    if (updateProfileDto.firstName !== undefined) {
+      user.firstName = updateProfileDto.firstName;
+    }
+
+    if (updateProfileDto.lastName !== undefined) {
+      user.lastName = updateProfileDto.lastName;
+    }
+
+    if (updateProfileDto.bio !== undefined) {
+      user.bio = updateProfileDto.bio;
+    }
+
+    const updatedUser = await this.usersRepository.save(user);    // Log the profile update activity
+    await this.logActivity(userId, ActivityType.PROFILE_UPDATE, 'Profile information updated');
+
+    return new UserResponseDto(updatedUser);
+  }
+
+  async updateProfileImage(userId: number, file: Express.Multer.File): Promise<UserResponseDto> {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Delete old profile image if exists
+    if (user.profileImage) {
+      const oldImagePath = path.join('./uploads/profiles', path.basename(user.profileImage));
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    // Create profiles directory if it doesn't exist
+    const profilesDir = './uploads/profiles';
+    if (!fs.existsSync(profilesDir)) {
+      fs.mkdirSync(profilesDir, { recursive: true });
+    }
+
+    // Update user's profile image path
+    user.profileImage = `/uploads/profiles/${file.filename}`;
+    const updatedUser = await this.usersRepository.save(user);
+
+    // Log the profile image update activity
+    await this.logActivity(userId, ActivityType.PROFILE_UPDATE, 'Profile image updated');
+
+    return new UserResponseDto(updatedUser);
+  }
+
+  async getUserActivities(userId: number): Promise<UserActivityDto[]> {
+    const activities = await this.activitiesRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      take: 50, // Limit to last 50 activities
+    });
+
+    return activities.map(activity => new UserActivityDto(activity));
+  }
+
+  async getUserSessions(userId: number): Promise<UserSessionDto[]> {
+    const sessions = await this.sessionsRepository.find({
+      where: { userId },
+      order: { loginTime: 'DESC' },
+      take: 20, // Limit to last 20 sessions
+    });
+
+    return sessions.map(session => new UserSessionDto(session));
+  }
+
+  async getUserStats(userId: number): Promise<any> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Get basic stats
+    const totalActivities = await this.activitiesRepository.count({ where: { userId } });
+    const totalSessions = await this.sessionsRepository.count({ where: { userId } });
+
+    // Get recent activity count (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentActivities = await this.activitiesRepository.count({
+      where: {
+        userId,
+        createdAt: MoreThan(thirtyDaysAgo)
+      }
+    });
+
+    // Calculate total login time from sessions
+    const completedSessions = await this.sessionsRepository.find({
+      where: { userId, logoutTime: Not(IsNull()) },
+    });
+
+    let totalLoginTimeMinutes = 0;
+    completedSessions.forEach(session => {
+      if (session.logoutTime) {
+        const diffMs = new Date(session.logoutTime).getTime() - new Date(session.loginTime).getTime();
+        totalLoginTimeMinutes += Math.floor(diffMs / (1000 * 60));
+      }
+    });
+
+    const totalLoginTimeHours = Math.floor(totalLoginTimeMinutes / 60);
+
+    return {
+      memberSince: user.createdAt,
+      totalActivities,
+      totalSessions,
+      recentActivities,
+      totalLoginTime: `${totalLoginTimeHours}h ${totalLoginTimeMinutes % 60}m`,
+      averageSessionTime: completedSessions.length > 0
+        ? `${Math.floor(totalLoginTimeMinutes / completedSessions.length)}m`
+        : 'N/A'
+    };
+  }
+  async logActivity(
+    userId: number,
+    type: ActivityType,
+    description: string,
+    metadata?: any,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<void> {
+    const activity = this.activitiesRepository.create({
+      userId,
+      type,
+      description,
+      metadata,
+      ipAddress,
+      userAgent,
+    });
+
+    await this.activitiesRepository.save(activity);
+  }
+
+  async exportUserData(userId: number): Promise<any> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Get user activities
+    const activities = await this.activitiesRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+
+    // Get user sessions
+    const sessions = await this.sessionsRepository.find({
+      where: { userId },
+      order: { loginTime: 'DESC' },
+    });
+
+    // Get user stats
+    const stats = await this.getUserStats(userId);
+
+    // Prepare export data
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        bio: user.bio,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+      statistics: stats,
+      activities: activities.map(activity => ({
+        id: activity.id,
+        type: activity.type,
+        description: activity.description,
+        metadata: activity.metadata,
+        ipAddress: activity.ipAddress,
+        userAgent: activity.userAgent,
+        createdAt: activity.createdAt,
+      })),
+      sessions: sessions.map(session => ({
+        id: session.id,
+        loginTime: session.loginTime,
+        logoutTime: session.logoutTime,
+        ipAddress: session.ipAddress,
+        userAgent: session.userAgent,
+        browserInfo: session.browserInfo,
+        deviceType: session.deviceType,
+      })),
+    };
+
+    // Log the data export activity
+    await this.logActivity(
+      userId,
+      ActivityType.PROFILE_UPDATE,
+      'User exported their data',
+      { exportedAt: new Date().toISOString() }
+    );
+
+    return exportData;
+  }
+
+  async deleteCurrentUserAccount(userId: number): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Only students can delete their own accounts
+    if (user.role !== UserRole.STUDENT) {
+      throw new ForbiddenException('Only student accounts can be self-deleted');
+    }
+
+    // Log the account deletion activity before deletion
+    await this.logActivity(
+      userId,
+      ActivityType.LOGOUT,
+      'User deleted their account',
+      { deletedAt: new Date().toISOString() }
+    );
+
+    // Delete related data first
+    await this.activitiesRepository.delete({ userId });
+    await this.sessionsRepository.delete({ userId });
+
+    // Finally delete the user
+    await this.usersRepository.remove(user);
   }
 }

@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { User, UserRole } from '../users/entities/user.entity';
+import { UserActivity, ActivityType } from '../users/entities/user-activity.entity';
+import { UserSession } from '../users/entities/user-session.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { MailerService } from '../mailer/mailer.service';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -15,13 +17,17 @@ import { VerifyResetTokenResponseDto } from './dto/verify-reset-token.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
-    @InjectRepository(PasswordResetToken)
-    private passwordResetTokenRepository: Repository<PasswordResetToken>,
-    private mailerService: MailerService,
-  ) { }
+    constructor(
+      private usersService: UsersService,
+      private jwtService: JwtService,
+      @InjectRepository(PasswordResetToken)
+      private passwordResetTokenRepository: Repository<PasswordResetToken>,
+      @InjectRepository(UserActivity)
+      private userActivityRepository: Repository<UserActivity>,
+      @InjectRepository(UserSession)
+      private userSessionRepository: Repository<UserSession>,
+      private mailerService: MailerService,
+    ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmailForAuth(email);
@@ -183,8 +189,32 @@ export class AuthService {
     await this.usersService.updatePassword(passwordResetToken.userId, newPassword);
 
     // Delete token
-    await this.passwordResetTokenRepository.delete({ userId: passwordResetToken.userId });
+    await this.passwordResetTokenRepository.delete({ userId: passwordResetToken.userId }); return { message: 'Password reset successful. You can now log in with your new password.' };
+  }
 
-    return { message: 'Password reset successful. You can now log in with your new password.' };
+  async logLogoutActivity(userId: number, userSession: UserSession): Promise<void> {
+    try {      // Create logout activity
+      const activity = this.userActivityRepository.create({
+        userId,
+        type: ActivityType.LOGOUT,
+        description: 'User logged out',
+        ipAddress: userSession.ipAddress,
+        userAgent: userSession.userAgent,
+        metadata: { sessionId: userSession.id.toString() },
+      });
+
+      await this.userActivityRepository.save(activity);      // Update session end time
+      await this.userSessionRepository.update(
+        { id: userSession.id },
+        {
+          logoutTime: new Date(),
+          isActive: false
+        }
+      );
+
+    } catch (error) {
+      // Log error but don't throw to avoid breaking logout process
+      console.error('Error logging logout activity:', error);
+    }
   }
 }

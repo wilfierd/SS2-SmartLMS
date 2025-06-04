@@ -10,7 +10,8 @@ import CourseDetail from '../course/CourseDetail';
 import VirtualClassroom from '../classroom/VirtualClassroom';
 import AdminUsers from '../users/AdminUsers';
 import UnauthorizedPage from '../common/UnauthorizedPage';
-import QuizDetail from '../quiz/QuizDetail'; // Fixed the import path
+import QuizDetail from '../quiz/QuizDetail';
+import UserProfile from '../profile/UserProfile';
 
 /**
  * A component that routes users to different dashboards based on their role
@@ -18,19 +19,20 @@ import QuizDetail from '../quiz/QuizDetail'; // Fixed the import path
  */
 const RoleBasedRoute = ({ component }) => {
   const { auth } = useContext(AuthContext);
-  
+
   // If not authenticated, redirect to login
   if (!auth.isAuthenticated) {
     return <Navigate to="/login" />;
   }
-  
+
   const componentMap = {
     admin: {
       dashboard: <AdminDashboard />,
       courses: <CourseManagement />,
       courseDetail: <CourseDetail />,
-      quizDetail: <QuizDetail />, // Added quizDetail for admin
+      quizDetail: <QuizDetail />,
       users: <AdminUsers />,
+      profile: <UserProfile />,
       reports: <div>Reports & Analytics (Coming Soon)</div>,
       settings: <div>Settings (Coming Soon)</div>,
       messages: <div>Messages (Coming Soon)</div>,
@@ -39,8 +41,9 @@ const RoleBasedRoute = ({ component }) => {
     instructor: {
       dashboard: <InstructorDashboard />,
       courses: <CourseManagement />,
-      courseDetail: <CourseDetail />, 
-      quizDetail: <QuizDetail />, // Added quizDetail for instructor
+      courseDetail: <CourseDetail />,
+      quizDetail: <QuizDetail />,
+      profile: <UserProfile />,
       classroom: <VirtualClassroom />,
       assessment: <div>Assessment Tools (Coming Soon)</div>,
       messages: <div>Messages (Coming Soon)</div>,
@@ -49,12 +52,13 @@ const RoleBasedRoute = ({ component }) => {
       dashboard: <StudentDashboard />,
       courses: <CourseManagement />,
       courseDetail: <CourseDetail />,
-      quizDetail: <QuizDetail />, // Added quizDetail for student
+      quizDetail: <QuizDetail />,
+      profile: <UserProfile />,
       classroom: <VirtualClassroom />,
       messages: <div>Messages (Coming Soon)</div>,
     }
   };
-  
+
   // If component exists for this role, render it
   if (componentMap[auth.user.role]?.[component]) {
     return componentMap[auth.user.role][component];

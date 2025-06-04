@@ -10,10 +10,12 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { AuthController } from './auth.controller';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { UserActivity } from '../users/entities/user-activity.entity';
+import { UserSession } from '../users/entities/user-session.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PasswordResetToken]),
+    TypeOrmModule.forFeature([PasswordResetToken, UserActivity, UserSession]),
     UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     JwtModule.registerAsync({

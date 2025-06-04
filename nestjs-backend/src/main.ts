@@ -82,10 +82,14 @@ async function bootstrap() {
   if (!fs.existsSync(lessonUploadsDir)) {
     fs.mkdirSync(lessonUploadsDir, { recursive: true });
   }
-
   const assignmentUploadsDir = join(uploadsDir, 'assignments');
   if (!fs.existsSync(assignmentUploadsDir)) {
     fs.mkdirSync(assignmentUploadsDir, { recursive: true });
+  }
+
+  const profileUploadsDir = join(uploadsDir, 'profiles');
+  if (!fs.existsSync(profileUploadsDir)) {
+    fs.mkdirSync(profileUploadsDir, { recursive: true });
   }
 
   // Setup static file serving for uploads
