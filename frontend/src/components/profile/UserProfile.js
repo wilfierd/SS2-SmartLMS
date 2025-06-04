@@ -198,23 +198,43 @@ const UserProfile = () => {
             };
             reader.readAsDataURL(file);
         }
-    };
-    const handleSaveProfile = async (e) => {
+    };    const handleSaveProfile = async (e) => {
         e.preventDefault();
         setIsLoading(true);
 
         try {
-            // Prepare update data (without image for now)
+            let updatedProfile;            // Handle image upload first if there's a new image
+            if (profileImage) {
+                const imageResponse = await profileService.uploadProfileImage(profileImage);
+                
+                // Update form data with new image path
+                setFormData(prev => ({
+                    ...prev,
+                    profileImage: imageResponse.profileImage
+                }));
+            }
+
+            // Prepare update data
             const updateData = {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 bio: formData.bio
             };
 
-            const updatedProfile = await profileService.updateProfile(updateData);
+            // If we uploaded an image, include it in the update
+            if (profileImage) {
+                updateData.profileImage = formData.profileImage;
+            }
+
+            updatedProfile = await profileService.updateProfile(updateData);
 
             // Update the auth context with new user data
             updateUser(updatedProfile);
+
+            // Update image preview with the new image
+            if (updatedProfile.profileImage) {
+                setImagePreview(`${config.apiUrl}/uploads/profiles/${updatedProfile.profileImage}`);
+            }
 
             // Reload profile data to get updated stats
             await loadProfileData();
@@ -228,7 +248,7 @@ const UserProfile = () => {
         } finally {
             setIsLoading(false);
         }
-    }; const handleCancelEdit = () => {
+    };const handleCancelEdit = () => {
         setIsEditing(false);
         setProfileImage(null);
         setImagePreview(auth.user.profileImage ? `${config.apiUrl}/uploads/profiles/${auth.user.profileImage}` : null);
