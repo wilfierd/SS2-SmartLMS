@@ -42,6 +42,49 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 -- Create index for token
 -- DROP INDEX IF EXISTS idx_password_reset_tokens_token ON password_reset_tokens;
 CREATE INDEX idx_password_reset_tokens_token ON password_reset_tokens(token);
+-- User activities table
+CREATE TABLE IF NOT EXISTS user_activities (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  type ENUM(
+    'login',
+    'logout',
+    'course_access',
+    'module_complete',
+    'assignment_submit',
+    'quiz_complete',
+    'session_join',
+    'session_leave',
+    'profile_update',
+    'password_change'
+  ) NOT NULL,
+  description TEXT,
+  metadata JSON,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+-- Create index for user activities
+CREATE INDEX idx_user_activities_user_id ON user_activities(user_id);
+CREATE INDEX idx_user_activities_type ON user_activities(type);
+CREATE INDEX idx_user_activities_created_at ON user_activities(created_at);
+-- User sessions table for tracking login sessions
+CREATE TABLE IF NOT EXISTS user_sessions_tracking (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  session_id VARCHAR(255) NOT NULL,
+  login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  logout_time TIMESTAMP NULL,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+-- Create indexes for user sessions tracking
+CREATE INDEX idx_user_sessions_tracking_user_id ON user_sessions_tracking(user_id);
+CREATE INDEX idx_user_sessions_tracking_session_id ON user_sessions_tracking(session_id);
+CREATE INDEX idx_user_sessions_tracking_login_time ON user_sessions_tracking(login_time);
 -- Departments table
 CREATE TABLE IF NOT EXISTS departments (
   id INT AUTO_INCREMENT PRIMARY KEY,

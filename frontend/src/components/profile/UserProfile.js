@@ -198,7 +198,7 @@ const UserProfile = () => {
             };
             reader.readAsDataURL(file);
         }
-    };    const handleSaveProfile = async (e) => {
+    }; const handleSaveProfile = async (e) => {
         e.preventDefault();
         setIsLoading(true);
 
@@ -206,7 +206,7 @@ const UserProfile = () => {
             let updatedProfile;            // Handle image upload first if there's a new image
             if (profileImage) {
                 const imageResponse = await profileService.uploadProfileImage(profileImage);
-                
+
                 // Update form data with new image path
                 setFormData(prev => ({
                     ...prev,
@@ -248,7 +248,7 @@ const UserProfile = () => {
         } finally {
             setIsLoading(false);
         }
-    };const handleCancelEdit = () => {
+    }; const handleCancelEdit = () => {
         setIsEditing(false);
         setProfileImage(null);
         setImagePreview(auth.user.profileImage ? `${config.apiUrl}/uploads/profiles/${auth.user.profileImage}` : null);
