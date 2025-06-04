@@ -161,10 +161,10 @@ const Header = ({ title }) => {
             <img
               src={`${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`}
               alt="Profile"
-              className="profile-avatar"
+              className="header-profile-avatar"
             />
           ) : (
-            <div className={`profile-avatar-placeholder ${auth.user.role}`}>
+            <div className={`header-profile-avatar-placeholder ${auth.user.role}`}>
               {getUserInitials()}
             </div>
           )}

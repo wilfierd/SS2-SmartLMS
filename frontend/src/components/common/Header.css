@@ -197,9 +197,9 @@
     align-items: center;
     flex-shrink: 0;
     z-index: 1001; /* Ensure it's above other elements */
-    /* GOOGLE-STYLE: Professional sizing */
+    /* NORMAL: Standard header navigation sizing for 44px avatar */
     width: auto;
-    max-width: 84px;
+    max-width: 100px;
     height: 56px;
     overflow: visible; /* Allow dropdown to extend beyond */
   }.profile-section {
@@ -207,14 +207,14 @@
     align-items: center;
     cursor: pointer;
     gap: 8px;
-    padding: 4px 8px 4px 4px;
-    border-radius: 24px;
+    padding: 6px 10px 6px 6px;
+    border-radius: 22px;
     transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-    /* GOOGLE-STYLE: Professional avatar (48px) + gap (8px) + arrow (16px) + padding (12px) = ~84px */
+    /* NORMAL: Standard header navigation sizing for 44px avatar */
     width: auto;
-    max-width: 84px;
+    max-width: 88px;
     min-width: min-content;
-    height: 56px; /* Professional height: avatar (48px) + padding (8px) */
+    height: 56px; /* Increased height to properly center avatar */
     max-height: 56px;
     flex-shrink: 0;
     flex-grow: 0;
@@ -229,37 +229,47 @@
     /* GOOGLE-STYLE: Clean, minimal design */
     background: transparent;
     border: none;
+    /* PERFECT VERTICAL ALIGNMENT */
+    justify-content: flex-start;
+    align-items: center;
   }  .profile-section:hover {
-    background-color: rgba(95, 99, 104, 0.08);
-    border-radius: 24px;
+    background-color: rgba(95, 99, 104, 0.06);
+    border-radius: 28px;
+  }
+  .profile-section:hover .header-profile-avatar,
+  .profile-section:hover .header-profile-avatar-placeholder {
+    box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.2), 0 1px 4px 1px rgba(60, 64, 67, 0.1);
+    transform: none; /* Remove transform to keep avatar stable */
   }
 
-  .profile-section:hover .profile-avatar,
-  .profile-section:hover .profile-avatar-placeholder {
-    box-shadow: 0 2px 4px 0 rgba(60, 64, 67, 0.3), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
-    transform: translateY(-1px);
-  }  .profile-avatar,
-  .profile-avatar-placeholder {
-    width: 48px !important;
-    height: 48px !important;
-    min-width: 48px !important;
-    max-width: 48px !important;
-    min-height: 48px !important;
-    max-height: 48px !important;
+  /* HEADER NAVIGATION AVATAR - Normal size for navigation */
+  .header-profile-avatar,
+  .header-profile-avatar-placeholder {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
     border-radius: 50%;
     flex-shrink: 0;
     flex-grow: 0;
     box-sizing: border-box;
     transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
     overflow: hidden;
+    /* ENSURE PERFECT CIRCLE - CRITICAL STYLES */
+    border: 0;
+    outline: 0;
+    position: relative;
   }
 
-  .profile-avatar {
+  .header-profile-avatar {
     object-fit: cover;
-    border: none;
+    object-position: center;
+    display: block;
   }
 
-  .profile-avatar-placeholder {
+  .header-profile-avatar-placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -267,33 +277,37 @@
     font-weight: 500;
     font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
     color: white;
-    border: none;
     letter-spacing: 0.25px;
-  }.profile-avatar-placeholder.admin {
-    background: linear-gradient(135deg, #4285f4, #1976d2) !important;
+    /* ENSURE TEXT IS PERFECTLY CENTERED */
+    line-height: 1;
+    text-align: center;
   }
-  .profile-avatar-placeholder.instructor {
-    background: linear-gradient(135deg, #34a853, #137333) !important;
+  .header-profile-avatar-placeholder.admin {
+    background: linear-gradient(135deg, #4285f4, #5b9bd5) !important;
+  }
+  .header-profile-avatar-placeholder.instructor {
+    background: linear-gradient(135deg, #34a853, #5fbd5f) !important;
   }
 
-  .profile-avatar-placeholder.student {
-    background: linear-gradient(135deg, #9c27b0, #6a1b9a) !important;
-  }  .dropdown-arrow {
+  .header-profile-avatar-placeholder.student {
+    background: linear-gradient(135deg, #9c27b0, #ba68c8) !important;
+  }
+.dropdown-arrow {
     color: #5f6368;
     transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s ease;
     display: flex;
     align-items: center;
     flex-shrink: 0;
     flex-grow: 0;
-    width: 16px; /* Slightly larger for better visibility */
+    width: 16px; /* Normal size for smaller avatar */
     height: 16px;
     min-width: 16px;
     max-width: 16px;
     opacity: 0.87; /* Google-style subtle opacity */
   }
   .dropdown-arrow svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     stroke-width: 2;
   }
 
@@ -467,14 +481,11 @@
     .header-right {
       gap: 12px;      /* Adjust max-width for mobile since search is hidden */
       max-width: calc(100vw - 85px); /* Account for mobile padding */
-    }
-
-    .profile-avatar,
-    .profile-avatar-placeholder {
-      width: 36px;
-      height: 36px;
-      border-width: 2px;
-      font-size: 14px;
+    }    .header-profile-avatar,
+    .header-profile-avatar-placeholder {
+      width: 40px;
+      height: 40px;
+      font-size: 16px;
     }
 
     .profile-dropdown {
@@ -502,10 +513,8 @@
     .header-right {
       gap: 8px;      /* Adjust for very small screens */
       max-width: calc(100vw - 70px);
-    }
-
-    .profile-avatar,
-    .profile-avatar-placeholder {
+    }    .header-profile-avatar,
+    .header-profile-avatar-placeholder {
       width: 32px;
       height: 32px;
       font-size: 12px;
