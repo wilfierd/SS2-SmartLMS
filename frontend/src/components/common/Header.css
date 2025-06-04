@@ -5,7 +5,11 @@
     --sidebar-width-expanded: 240px;
     --transition-speed: 0.3s;
     --content-padding: 30px;
-  }    .admin-header {
+  }
+    /* Global box-sizing for header */
+  .admin-header * {
+    box-sizing: border-box;
+  }.admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -20,7 +24,7 @@
     z-index: 100;
     transition: left var(--transition-speed) ease;
     box-sizing: border-box;
-    overflow: visible; /* Changed from hidden to visible */
+    overflow: visible; /* Allow dropdown to show */
     min-width: 0; /* Allow flex items to shrink */
   }
     body.sidebar-expanded .admin-header {
@@ -42,8 +46,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-  .header-search {
+  }  .header-search {
     display: flex;
     background-color: #f8f9fa;
     border-radius: 24px;
@@ -54,6 +57,10 @@
     flex: 1 1 auto;
     max-width: 300px;
     min-width: 200px;
+    /* Prevent search from expanding too much */
+    overflow: hidden;
+    /* Ensure search doesn't interfere with header-right */
+    margin-right: 20px;
   }
 
   .header-search:focus-within {
@@ -96,15 +103,16 @@
     width: 20px;
     height: 20px;
     stroke-width: 2;
-  }
-    .header-right {
+  }  .header-right {
     display: flex;
     align-items: center;
-    gap: 20px;
-    flex: 0 0 auto;
+    gap: 16px;
+    flex: 0 0 auto; /* Don't allow to grow, but can shrink if needed */
     min-width: 0;
-  }
-    .header-date {
+    /* Prevent the right section from overflowing by setting a maximum width */
+    max-width: calc(100vw - var(--sidebar-width-collapsed) - 400px); /* Leave space for title and search */
+    overflow: visible; /* Allow dropdown to show */
+  }  .header-date {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -113,6 +121,10 @@
     padding: 8px 12px;
     border-radius: 20px;
     transition: background-color 0.2s ease;
+    /* Prevent the date from expanding too much */
+    white-space: nowrap;
+    flex-shrink: 1; /* Allow it to shrink if needed */
+    min-width: 0;
   }
 
   .header-date:hover {
@@ -139,6 +151,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Ensure fixed size to prevent layout shifts */
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    /* Allow badge to show outside bounds */
+    overflow: visible;
   }
 
   .header-notifications:hover {
@@ -179,44 +197,70 @@
     align-items: center;
     flex-shrink: 0;
     z-index: 1001; /* Ensure it's above other elements */
-  }
-  .profile-section {
+    /* STRICT CONSTRAINT: Only as wide as the profile section */
+    width: auto;
+    max-width: 60px; /* Match profile-section max-width */
+    height: 40px; /* Match profile-section height */
+    overflow: visible; /* Allow dropdown to extend beyond */
+  }.profile-section {
     display: flex;
     align-items: center;
     cursor: pointer;
     gap: 4px;
-    padding: 2px 6px 2px 2px;
+    padding: 4px 8px 4px 4px;
     border-radius: 20px;
     transition: all 0.2s ease;
-    min-width: fit-content;
-    width: fit-content;
+    /* PRECISE CONSTRAINT: Exactly size of avatar (32px) + gap (4px) + arrow (~12px) + padding (12px) = ~60px */
+    width: auto;
+    max-width: 60px; /* Strict maximum to prevent expansion */
+    min-width: min-content; /* Allow shrinking to content */
+    height: 40px; /* Exact height: avatar (32px) + padding (8px) */
+    max-height: 40px; /* Prevent vertical expansion */
+    flex-shrink: 0; /* Don't shrink the container */
+    flex-grow: 0; /* Don't grow the container */
+    overflow: visible; /* Allow dropdown to show */
+    white-space: nowrap;
+    box-sizing: border-box;
   }
 
   .profile-section:hover {
     background-color: rgba(95, 99, 104, 0.08);
-  }
-
-  .profile-avatar-container {
+  }  .profile-avatar-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-  }.profile-avatar {
+    flex-grow: 0;
+    box-sizing: border-box;
+  }  .profile-avatar {
     width: 32px !important;
     height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid #dadce0;
     flex-shrink: 0;
+    flex-grow: 0;
+    box-sizing: border-box;
   }
-
   .profile-avatar-placeholder {
     width: 32px !important;
     height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -226,25 +270,30 @@
     color: white;
     border: 1px solid #dadce0;
     flex-shrink: 0;
+    flex-grow: 0;
     overflow: hidden;
+    box-sizing: border-box;
   }
-
   .profile-avatar-placeholder.admin {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: linear-gradient(135deg, #1565C0, #0D47A1);
   }
-
   .profile-avatar-placeholder.instructor {
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: linear-gradient(135deg, #1565C0, #0D47A1);
   }
 
   .profile-avatar-placeholder.student {
     background: linear-gradient(135deg, #27ae60, #229954);
-  }  .dropdown-arrow {
+  }.dropdown-arrow {
     color: #5f6368;
     transition: transform 0.2s ease, color 0.2s ease;
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    flex-grow: 0; /* Prevent growth */
+    width: 12px; /* Exact width */
+    height: 12px; /* Exact height */
+    min-width: 12px; /* Minimum width */
+    max-width: 12px; /* Maximum width */
   }
 
   .dropdown-arrow svg {
@@ -395,8 +444,7 @@
     .profile-dropdown {
       min-width: 200px;
     }
-  }
-    @media (max-width: 768px) {
+  }    @media (max-width: 768px) {
     .admin-header {
       left: 0;
       padding-left: 70px; /* Make room for mobile toggle button */
@@ -414,7 +462,9 @@
     
     .header-right {
       gap: 12px;
-    }    .profile-avatar-container {
+      /* Adjust max-width for mobile since search is hidden */
+      max-width: calc(100vw - 85px); /* Account for mobile padding */
+    }.profile-avatar-container {
       padding: 1px 2px;
     }
 
@@ -441,8 +491,7 @@
     .dropdown-email {
       font-size: 11px;
     }
-  }
-    @media (max-width: 480px) {
+  }    @media (max-width: 480px) {
     .header-notifications {
       display: none;
     }
@@ -454,7 +503,9 @@
 
     .header-right {
       gap: 8px;
-    }    .profile-avatar-container {
+      /* Adjust for very small screens */
+      max-width: calc(100vw - 70px);
+    }.profile-avatar-container {
       padding: 1px 2px;
     }
 
