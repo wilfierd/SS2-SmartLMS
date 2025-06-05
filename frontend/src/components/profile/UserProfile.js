@@ -10,6 +10,9 @@ import notification from '../../utils/notification';
 import config from '../../config';
 import './UserProfile.css';
 
+// Base URL without the /api prefix for serving static assets
+const baseUrl = config.apiUrl.replace(/\/api$/, '');
+
 const UserProfile = () => {
     const { auth, updateUser } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -72,8 +75,8 @@ const UserProfile = () => {
             if (profile.profileImage) {
                 // Backend returns full path like "/uploads/profiles/filename.jpg"
                 const imagePath = profile.profileImage.startsWith('/uploads/')
-                    ? `${config.apiUrl}${profile.profileImage}`
-                    : `${config.apiUrl}/uploads/profiles/${profile.profileImage}`;
+                    ? `${baseUrl}${profile.profileImage}`
+                    : `${baseUrl}/uploads/profiles/${profile.profileImage}`;
                 setImagePreview(imagePath);
             }
 
@@ -97,8 +100,8 @@ const UserProfile = () => {
             }); if (auth.user.profileImage) {
                 // Backend returns full path like "/uploads/profiles/filename.jpg"
                 const imagePath = auth.user.profileImage.startsWith('/uploads/')
-                    ? `${config.apiUrl}${auth.user.profileImage}`
-                    : `${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`;
+                    ? `${baseUrl}${auth.user.profileImage}`
+                    : `${baseUrl}/uploads/profiles/${auth.user.profileImage}`;
                 setImagePreview(imagePath);
             }
         }
@@ -238,8 +241,8 @@ const UserProfile = () => {
             if (updatedProfile.profileImage) {
                 // Backend returns full path like "/uploads/profiles/filename.jpg"
                 const imagePath = updatedProfile.profileImage.startsWith('/uploads/')
-                    ? `${config.apiUrl}${updatedProfile.profileImage}`
-                    : `${config.apiUrl}/uploads/profiles/${updatedProfile.profileImage}`;
+                    ? `${baseUrl}${updatedProfile.profileImage}`
+                    : `${baseUrl}/uploads/profiles/${updatedProfile.profileImage}`;
                 setImagePreview(imagePath);
             }
 
@@ -262,8 +265,8 @@ const UserProfile = () => {
         // Set image preview with consistent path handling
         if (auth.user.profileImage) {
             const imagePath = auth.user.profileImage.startsWith('/uploads/')
-                ? `${config.apiUrl}${auth.user.profileImage}`
-                : `${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`;
+                ? `${baseUrl}${auth.user.profileImage}`
+                : `${baseUrl}/uploads/profiles/${auth.user.profileImage}`;
             setImagePreview(imagePath);
         } else {
             setImagePreview(null);

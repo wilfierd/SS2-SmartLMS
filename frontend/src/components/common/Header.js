@@ -7,6 +7,9 @@ import profileService from '../../services/profileService';
 import notification from '../../utils/notification';
 import config from '../../config';
 
+// Base URL without the /api prefix for serving static assets
+const baseUrl = config.apiUrl.replace(/\/api$/, '');
+
 const Header = ({ title }) => {
   const { auth, logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -159,7 +162,11 @@ const Header = ({ title }) => {
             data-show-dropdown={showDropdown}
           >            {auth.user.profileImage ? (
             <img
-              src={`${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`}
+              src={
+                auth.user.profileImage.startsWith('/uploads/')
+                  ? `${baseUrl}${auth.user.profileImage}`
+                  : `${baseUrl}/uploads/profiles/${auth.user.profileImage}`
+              }
               alt="Profile"
               className="header-profile-avatar"
             />
