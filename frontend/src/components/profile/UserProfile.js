@@ -8,10 +8,10 @@ import ChangePasswordModal from '../auth/ChangePasswordModal';
 import profileService from '../../services/profileService';
 import notification from '../../utils/notification';
 import config from '../../config';
+import './UserProfile.css';
 
 // Base URL without the /api prefix for serving static assets
 const baseUrl = config.apiUrl.replace(/\/api$/, '');
-import './UserProfile.css';
 
 const UserProfile = () => {
     const { auth, updateUser } = useContext(AuthContext);
