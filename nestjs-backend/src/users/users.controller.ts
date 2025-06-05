@@ -64,7 +64,6 @@ export class UsersController {
   findOne(@Param('id', ParseIntPipe) id: number): Promise<UserResponseDto> {
     return this.usersService.findOne(id);
   }
-
   @Post('admin-register')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -73,11 +72,53 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'User created successfully', type: UserResponseDto })
   @ApiResponse({ status: 400, description: 'Bad Request - Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
-  @ApiResponse({ status: 409, description: 'Conflict - Email already exists' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' }) @ApiResponse({ status: 409, description: 'Conflict - Email already exists' })
   adminCreateUser(@Body() createUserDto: AdminCreateUserDto): Promise<UserResponseDto> {
     return this.usersService.adminCreateUser(createUserDto);
   }
+
+  @Post('change-password')
+  @ApiOperation({ summary: 'Change current user password' })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid current password' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  changePassword(
+    @Request() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    return this.usersService.changePassword(req.user.userId, changePasswordDto);
+  }
+
+  @Post('batch-delete')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete multiple users (Admin only)' })
+  @ApiBody({ type: BatchDeleteUsersDto })
+  @ApiResponse({ status: 200, description: 'Users deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  adminBatchDeleteUsers(
+    @Body() batchDeleteDto: BatchDeleteUsersDto,
+    @Request() req,
+  ): Promise<void> {
+    return this.usersService.adminBatchDeleteUsers(batchDeleteDto, req.user.userId);
+  }
+
+  @Put('profile')
+  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiBody({ type: UpdateProfileDto })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully', type: UserResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad Request - Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  updateProfile(
+    @Request() req,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.updateProfile(req.user.userId, updateProfileDto);
+  }
+
   @Put(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -107,46 +148,6 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   adminDeleteUser(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.usersService.adminDeleteUser(id);
-  }
-
-  @Post('batch-delete')
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete multiple users (Admin only)' })
-  @ApiBody({ type: BatchDeleteUsersDto })
-  @ApiResponse({ status: 200, description: 'Users deleted successfully' })
-  @ApiResponse({ status: 400, description: 'Bad Request - Invalid input' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
-  adminBatchDeleteUsers(
-    @Body() batchDeleteDto: BatchDeleteUsersDto,
-    @Request() req,
-  ): Promise<void> {
-    return this.usersService.adminBatchDeleteUsers(batchDeleteDto, req.user.userId);
-  }
-  @Post('change-password')
-  @ApiOperation({ summary: 'Change current user password' })
-  @ApiBody({ type: ChangePasswordDto })
-  @ApiResponse({ status: 200, description: 'Password changed successfully' })
-  @ApiResponse({ status: 400, description: 'Bad Request - Invalid current password' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  changePassword(
-    @Request() req,
-    @Body() changePasswordDto: ChangePasswordDto,
-  ): Promise<void> {
-    return this.usersService.changePassword(req.user.userId, changePasswordDto);
-  }
-  @Put('profile')
-  @ApiOperation({ summary: 'Update current user profile' })
-  @ApiBody({ type: UpdateProfileDto })
-  @ApiResponse({ status: 200, description: 'Profile updated successfully', type: UserResponseDto })
-  @ApiResponse({ status: 400, description: 'Bad Request - Invalid input' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  updateProfile(
-    @Request() req,
-    @Body() updateProfileDto: UpdateProfileDto,
-  ): Promise<UserResponseDto> {
-    return this.usersService.updateProfile(req.user.userId, updateProfileDto);
   }
 
   @Post('profile-image')

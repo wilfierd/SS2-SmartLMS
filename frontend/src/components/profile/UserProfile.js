@@ -67,11 +67,14 @@ const UserProfile = () => {
             });
 
             setActivityHistory(activities);
-            setSessionHistory(sessions);
-            setAccountStats(stats);
+            setSessionHistory(sessions); setAccountStats(stats);
 
             if (profile.profileImage) {
-                setImagePreview(profile.profileImage);
+                // Backend returns full path like "/uploads/profiles/filename.jpg"
+                const imagePath = profile.profileImage.startsWith('/uploads/')
+                    ? `${config.apiUrl}${profile.profileImage}`
+                    : `${config.apiUrl}/uploads/profiles/${profile.profileImage}`;
+                setImagePreview(imagePath);
             }
 
         } catch (error) {
@@ -91,10 +94,12 @@ const UserProfile = () => {
                 email: auth.user.email || '',
                 bio: auth.user.bio || '',
                 profileImage: auth.user.profileImage || ''
-            });
-
-            if (auth.user.profileImage) {
-                setImagePreview(`${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`);
+            }); if (auth.user.profileImage) {
+                // Backend returns full path like "/uploads/profiles/filename.jpg"
+                const imagePath = auth.user.profileImage.startsWith('/uploads/')
+                    ? `${config.apiUrl}${auth.user.profileImage}`
+                    : `${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`;
+                setImagePreview(imagePath);
             }
         }
     }, [auth.user]);
@@ -229,11 +234,13 @@ const UserProfile = () => {
             updatedProfile = await profileService.updateProfile(updateData);
 
             // Update the auth context with new user data
-            updateUser(updatedProfile);
-
-            // Update image preview with the new image
+            updateUser(updatedProfile);            // Update image preview with the new image
             if (updatedProfile.profileImage) {
-                setImagePreview(`${config.apiUrl}/uploads/profiles/${updatedProfile.profileImage}`);
+                // Backend returns full path like "/uploads/profiles/filename.jpg"
+                const imagePath = updatedProfile.profileImage.startsWith('/uploads/')
+                    ? `${config.apiUrl}${updatedProfile.profileImage}`
+                    : `${config.apiUrl}/uploads/profiles/${updatedProfile.profileImage}`;
+                setImagePreview(imagePath);
             }
 
             // Reload profile data to get updated stats
@@ -251,7 +258,16 @@ const UserProfile = () => {
     }; const handleCancelEdit = () => {
         setIsEditing(false);
         setProfileImage(null);
-        setImagePreview(auth.user.profileImage ? `${config.apiUrl}/uploads/profiles/${auth.user.profileImage}` : null);
+
+        // Set image preview with consistent path handling
+        if (auth.user.profileImage) {
+            const imagePath = auth.user.profileImage.startsWith('/uploads/')
+                ? `${config.apiUrl}${auth.user.profileImage}`
+                : `${config.apiUrl}/uploads/profiles/${auth.user.profileImage}`;
+            setImagePreview(imagePath);
+        } else {
+            setImagePreview(null);
+        }
 
         // Reset form data
         setFormData({
