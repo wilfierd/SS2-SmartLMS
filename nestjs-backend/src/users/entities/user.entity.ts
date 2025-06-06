@@ -63,8 +63,15 @@ export class User {
       this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
     }
   }
-
   async comparePassword(attempt: string): Promise<boolean> {
-    return bcrypt.compare(attempt, this.passwordHash);
+    console.log('Comparing passwords...');
+    console.log('Attempt:', attempt);
+    console.log('Stored hash:', this.passwordHash);
+    console.log('Hash length:', this.passwordHash ? this.passwordHash.length : 'null');
+    
+    const result = await bcrypt.compare(attempt, this.passwordHash);
+    console.log('Comparison result:', result);
+    
+    return result;
   }
 } 

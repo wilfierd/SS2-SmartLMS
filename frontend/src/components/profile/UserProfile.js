@@ -105,57 +105,18 @@ const UserProfile = () => {
                 setImagePreview(imagePath);
             }
         }
-    }, [auth.user]);
-
-    // Fetch user activity and session history
+    }, [auth.user]);    // Fetch user activity and session history
     useEffect(() => {
         fetchUserActivity();
         fetchAccountStats();
-    }, [auth.token]);
-
-    const fetchUserActivity = async () => {
+    }, [auth.token]);const fetchUserActivity = async () => {
         try {
-            // This would be implemented in the backend
-            // For now, using mock data
-            setActivityHistory([
-                {
-                    id: 1,
-                    action: 'Completed Quiz: Introduction to React',
-                    timestamp: new Date().toISOString(),
-                    score: 85
-                },
-                {
-                    id: 2,
-                    action: 'Submitted Assignment: Final Project',
-                    timestamp: new Date(Date.now() - 86400000).toISOString(),
-                    course: 'Web Development'
-                },
-                {
-                    id: 3,
-                    action: 'Joined Virtual Classroom Session',
-                    timestamp: new Date(Date.now() - 172800000).toISOString(),
-                    course: 'Advanced JavaScript'
-                }
+            const [activities, sessions] = await Promise.all([
+                profileService.getUserActivities(),
+                profileService.getUserSessions()
             ]);
-
-            setSessionHistory([
-                {
-                    id: 1,
-                    sessionTitle: 'React Fundamentals',
-                    courseTitle: 'Web Development',
-                    date: new Date(Date.now() - 86400000).toISOString(),
-                    duration: 45,
-                    platform: 'Virtual Classroom'
-                },
-                {
-                    id: 2,
-                    sessionTitle: 'Database Design',
-                    courseTitle: 'Backend Development',
-                    date: new Date(Date.now() - 172800000).toISOString(),
-                    duration: 60,
-                    platform: 'Virtual Classroom'
-                }
-            ]);
+            setActivityHistory(activities);
+            setSessionHistory(sessions);
         } catch (error) {
             console.error('Error fetching user activity:', error);
         }
@@ -163,15 +124,8 @@ const UserProfile = () => {
 
     const fetchAccountStats = async () => {
         try {
-            // This would fetch real stats from the backend
-            setAccountStats({
-                coursesEnrolled: 5,
-                coursesCompleted: 2,
-                totalAssignments: 15,
-                totalQuizzes: 23,
-                lastLogin: new Date().toISOString(),
-                accountCreated: auth.user.created_at || new Date().toISOString()
-            });
+            const stats = await profileService.getUserStats();
+            setAccountStats(stats);
         } catch (error) {
             console.error('Error fetching account stats:', error);
         }
@@ -354,11 +308,9 @@ const UserProfile = () => {
     const handleForgotPassword = async () => {
         if (!window.confirm(`Send a password reset link to ${auth.user.email}?`)) {
             return;
-        }
-
-        try {
+        }        try {
             setIsLoading(true);
-            const response = await profileService.forgotPassword(auth.user.email);
+            await profileService.forgotPassword(auth.user.email);
             notification.success('Password reset link sent to your email. Please check your inbox.');
         } catch (error) {
             console.error('Error sending reset email:', error);

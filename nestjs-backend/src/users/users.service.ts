@@ -192,7 +192,6 @@ export class UsersService {
     // Delete users in batch
     await this.usersRepository.delete(userIds);
   }
-
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
 
@@ -200,8 +199,17 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    // Debug logging
+    console.log('User ID:', userId);
+    console.log('User email:', user.email);
+    console.log('Current password from request:', changePasswordDto.currentPassword);
+    console.log('Stored password hash length:', user.passwordHash ? user.passwordHash.length : 'null');
+    console.log('Stored password hash preview:', user.passwordHash ? user.passwordHash.substring(0, 20) + '...' : 'null');
+
     // Verify current password
     const isPasswordValid = await user.comparePassword(changePasswordDto.currentPassword);
+    
+    console.log('Password comparison result:', isPasswordValid);
 
     if (!isPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
