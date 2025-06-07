@@ -8,6 +8,7 @@ import ChangePasswordModal from '../auth/ChangePasswordModal';
 import profileService from '../../services/profileService';
 import notification from '../../utils/notification';
 import config from '../../config';
+import { FaEdit, FaLock, FaSave, FaTimes, FaCamera } from 'react-icons/fa';
 import './UserProfile.css';
 
 // Base URL without the /api prefix for serving static assets
@@ -109,7 +110,7 @@ const UserProfile = () => {
     useEffect(() => {
         fetchUserActivity();
         fetchAccountStats();
-    }, [auth.token]);const fetchUserActivity = async () => {
+    }, [auth.token]); const fetchUserActivity = async () => {
         try {
             const [activities, sessions] = await Promise.all([
                 profileService.getUserActivities(),
@@ -308,7 +309,7 @@ const UserProfile = () => {
     const handleForgotPassword = async () => {
         if (!window.confirm(`Send a password reset link to ${auth.user.email}?`)) {
             return;
-        }        try {
+        } try {
             setIsLoading(true);
             await profileService.forgotPassword(auth.user.email);
             notification.success('Password reset link sent to your email. Please check your inbox.');
@@ -344,16 +345,15 @@ const UserProfile = () => {
                                     </div>
                                 )}
                                 {isEditing && (
-                                    <div className="avatar-upload-overlay">
-                                        <input
-                                            type="file"
-                                            id="profileImage"
-                                            accept="image/*"
-                                            onChange={handleImageChange}
-                                            className="avatar-upload-input"
-                                        />
+                                    <div className="avatar-upload-overlay">                                        <input
+                                        type="file"
+                                        id="profileImage"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="avatar-upload-input"
+                                    />
                                         <label htmlFor="profileImage" className="avatar-upload-label">
-                                            📷 Change Photo
+                                            <FaCamera className="btn-icon" /> Change Photo
                                         </label>
                                     </div>
                                 )}
@@ -383,13 +383,13 @@ const UserProfile = () => {
                                         className="edit-profile-btn"
                                         onClick={() => setIsEditing(true)}
                                     >
-                                        <span className="btn-icon">✏️</span> Edit Profile
+                                        <FaEdit className="btn-icon" /> Edit Profile
                                     </button>
                                     <button
                                         className="change-password-btn"
                                         onClick={() => setShowPasswordModal(true)}
                                     >
-                                        <span className="btn-icon">🔒</span> Change Password
+                                        <FaLock className="btn-icon" /> Change Password
                                     </button>
                                 </>
                             ) : (
@@ -399,7 +399,7 @@ const UserProfile = () => {
                                         onClick={handleSaveProfile}
                                         disabled={isLoading}
                                     >
-                                        <span className="btn-icon">💾</span>
+                                        <FaSave className="btn-icon" />
                                         {isLoading ? 'Saving...' : 'Save Changes'}
                                     </button>
                                     <button
@@ -407,7 +407,7 @@ const UserProfile = () => {
                                         onClick={handleCancelEdit}
                                         disabled={isLoading}
                                     >
-                                        <span className="btn-icon">❌</span> Cancel
+                                        <FaTimes className="btn-icon" /> Cancel
                                     </button>
                                 </>
                             )}
