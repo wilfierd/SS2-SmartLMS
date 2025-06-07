@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request, Body, Get, HttpStatus, UnauthorizedException, Logger, Res, Param } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body, Get, HttpStatus, UnauthorizedException, Logger, Res, Param, HttpException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiExcludeEndpoint, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
@@ -11,16 +11,17 @@ import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { Response } from 'express';
+import { MailerService } from '../mailer/mailer.service';
 
 @ApiTags('authentication')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
   private googleClient: OAuth2Client;
-
   constructor(
     private authService: AuthService,
     private configService: ConfigService,
+    private mailerService: MailerService,
   ) {
     const clientId = this.configService.get<string>('google.clientId');
     const clientSecret = this.configService.get<string>('google.clientSecret');
@@ -218,10 +219,108 @@ export class AuthController {
         message: 'Logout successful'
       };
     } catch (error) {
-      this.logger.error(`Error during logout for user ${req.user.email}:`, error);
-      return {
+      this.logger.error(`Error during logout for user ${req.user.email}:`, error); return {
         message: 'Logout successful' // Still return success to avoid exposing errors
       };
+    }
+  }
+
+  @Post('test-email')
+  @ApiOperation({ summary: 'Test email functionality with Mailtrap' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          example: 'test@example.com',
+          description: 'Email address to send test email to'
+        }
+      },
+      required: ['email']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Test email sent successfully' })
+  async testEmail(@Body() { email }: { email: string }) {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Test Email from SmartLMS - Mailtrap Integration',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #333; text-align: center;">🎉 Mailtrap Integration Test</h2>
+            <p>Hello!</p>
+            <p>If you're reading this email, it means your Mailtrap integration is working perfectly!</p>
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <h3 style="color: #28a745; margin: 0;">✅ Test Results:</h3>
+              <ul style="margin: 10px 0;">
+                <li>SMTP Connection: Successful</li>
+                <li>Email Delivery: Working</li>
+                <li>Mailtrap Integration: Active</li>
+              </ul>
+            </div>
+            <p><strong>What's next?</strong></p>
+            <ul>
+              <li>Check your Mailtrap inbox to see this email</li>
+              <li>Your password reset emails will now work</li>
+              <li>All system notifications will be captured in Mailtrap</li>
+            </ul>
+            <hr style="border: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #666; font-size: 12px; text-align: center;">
+              This is a test email from SmartLMS. You can safely delete this message.
+            </p>
+          </div>
+        `,
+      });
+
+      return {
+        message: 'Test email sent successfully! Check your Mailtrap inbox.',
+        mailtrapUrl: 'https://mailtrap.io/inboxes'
+      };
+    } catch (error) {
+      this.logger.error('Failed to send test email:', error.message);
+      throw new HttpException(
+        `Failed to send test email: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('test-template-email')
+  @ApiOperation({ summary: 'Test email template functionality' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          example: 'test@example.com',
+          description: 'Email address to send test template email to'
+        }
+      },
+      required: ['email']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Test template email sent successfully' })
+  async testTemplateEmail(@Body() { email }: { email: string }) {
+    try {
+      // Test password reset template
+      await this.mailerService.sendPasswordReset(
+        email,
+        'test-token-123',
+        'Test User'
+      );
+
+      return {
+        message: 'Test template email sent successfully! Check your Mailtrap inbox for the password reset email.',
+        mailtrapUrl: 'https://mailtrap.io/inboxes'
+      };
+    } catch (error) {
+      this.logger.error('Failed to send test template email:', error.message);
+      throw new HttpException(
+        `Failed to send test template email: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

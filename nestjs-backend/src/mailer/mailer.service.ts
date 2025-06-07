@@ -5,12 +5,12 @@ import * as fs from 'fs';
 import { promisify } from 'util';
 import { MailerOptions, EmailTemplate, SendMailDto } from './mailer.interfaces';
 
-// Handle nodemailer-express-handlebars import
-let nodemailerHbs: any;
+// Handle handlebars import
+let handlebars: any;
 try {
-  nodemailerHbs = require('nodemailer-express-handlebars');
+  handlebars = require('handlebars');
 } catch (error) {
-  console.warn('nodemailer-express-handlebars not available, templates will not work');
+  console.warn('handlebars not available, templates will not work');
 }
 
 @Injectable()
@@ -19,9 +19,10 @@ export class MailerService {
   private transporter: Transporter;
   private templatesDir: string;
   private defaultSender: string;
-
+  
   constructor(@Inject('MAILER_OPTIONS') private options: MailerOptions) {
     this.initializeTransporter();
+    this.logger.log('Mailer service initialized with template directory: ' + this.templatesDir);
   }
 
   private initializeTransporter() {
@@ -38,29 +39,51 @@ export class MailerService {
         // Ensure templates directory exists
         if (!fs.existsSync(this.templatesDir)) {
           fs.mkdirSync(this.templatesDir, { recursive: true });
+          this.logger.warn(`Templates directory created: ${this.templatesDir}`);
         }
 
-        // Set up template engine (handlebars is supported by default)
-        if (this.options.template.adapter === 'handlebars' && nodemailerHbs) {
-          this.transporter.use('compile', nodemailerHbs({
-            viewEngine: {
-              defaultLayout: false,
-              partialsDir: path.join(this.templatesDir, 'partials'),
-              extname: '.hbs',
-              ...this.options.template.options
-            },
-            viewPath: this.templatesDir,
-            extName: '.hbs'
-          }));
-        } else if (this.options.template.adapter === 'handlebars') {
-          this.logger.warn('Handlebars adapter requested but nodemailer-express-handlebars not available');
-        }
-        // Other template engines can be added here if needed
+        // Check if template files exist
+        const templateFiles = ['password-reset.hbs', 'welcome.hbs', 'assignment-reminder.hbs', 'session-invitation.hbs'];
+        templateFiles.forEach(file => {
+          const filePath = path.join(this.templatesDir, file);
+          if (fs.existsSync(filePath)) {
+            this.logger.log(`✅ Template found: ${file}`);
+          } else {
+            this.logger.error(`❌ Template missing: ${file} at ${filePath}`);
+          }
+        });
+
+        this.logger.log('✅ Template system configured successfully');
       }
 
       this.logger.log('Email transport initialized successfully');
     } catch (error) {
       this.logger.error(`Failed to initialize email transport: ${error.message}`, error.stack);
+    }
+  }
+
+  private async renderTemplate(templateName: string, context: any): Promise<string> {
+    try {
+      const templatePath = path.join(this.templatesDir, `${templateName}.hbs`);
+      
+      if (!fs.existsSync(templatePath)) {
+        throw new Error(`Template file not found: ${templatePath}`);
+      }
+
+      const templateContent = fs.readFileSync(templatePath, 'utf8');
+      
+      if (!handlebars) {
+        throw new Error('Handlebars not available');
+      }
+
+      const template = handlebars.compile(templateContent);
+      const html = template(context);
+      
+      this.logger.log(`✅ Template rendered successfully: ${templateName}`);
+      return html;
+    } catch (error) {
+      this.logger.error(`❌ Failed to render template ${templateName}: ${error.message}`);
+      throw error;
     }
   }
 
@@ -82,37 +105,50 @@ export class MailerService {
 
       // Handle templates
       if (mailOptions.template) {
-        // If template is provided, use handlebars template engine
+        this.logger.log(`📧 Sending email with template: ${mailOptions.template}`);
+        this.logger.log(`📧 Template context: ${JSON.stringify(mailOptions.context, null, 2)}`);
+        
+        // Render the template
+        const html = await this.renderTemplate(mailOptions.template, mailOptions.context || {});
+
+        // Send email with rendered HTML
         const result = await this.transporter.sendMail({
           ...mailOptions,
-          template: mailOptions.template,
-          context: mailOptions.context || {}
+          html,
+          // Remove template from the mail options as we've already rendered it
+          template: undefined,
+          context: undefined
         });
 
-        this.logger.log(`Email sent successfully to ${mailOptions.to}`);
+        this.logger.log(`✅ Email sent successfully to ${mailOptions.to} using template: ${mailOptions.template}`);
         return result;
       } else {
+        this.logger.log(`📧 Sending email without template to: ${mailOptions.to}`);
         // Otherwise, use direct HTML or text content
         const result = await this.transporter.sendMail(mailOptions);
-        this.logger.log(`Email sent successfully to ${mailOptions.to}`);
+        this.logger.log(`✅ Email sent successfully to ${mailOptions.to}`);
         return result;
       }
     } catch (error) {
-      this.logger.error(`Failed to send email: ${error.message}`, error.stack);
+      this.logger.error(`❌ Failed to send email: ${error.message}`, error.stack);
       throw error;
     }
   }
+
   // Predefined email types
   async sendPasswordReset(to: string, resetToken: string, username: string): Promise<any> {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
     return this.sendMail({
       to,
-      subject: 'Password Reset Request',
+      subject: 'Password Reset Request - SmartLMS',
       template: 'password-reset',
       context: {
+        to, // The user's email
+        user_email: to, // For the new template
+        resetUrl, // Kept for backward compatibility
+        pass_reset_link: resetUrl, // For the new template
         username,
-        resetUrl,
         expiryHours: 24, // Token expiry time in hours
         year: new Date().getFullYear()
       }
@@ -165,190 +201,6 @@ export class MailerService {
     });
   }
 
-  // Create default templates if they don't exist
-  async createDefaultTemplates(): Promise<void> {
-    try {
-      const templates = [
-        {
-          name: 'welcome.hbs',
-          content: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Welcome to SmartLMS</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #4a69bd; color: white; padding: 10px; text-align: center; }
-    .content { padding: 20px; border: 1px solid #ddd; }
-    .footer { font-size: 12px; text-align: center; margin-top: 20px; color: #777; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Welcome to SmartLMS</h1>
-    </div>
-    <div class="content">
-      <h2>Hello {{username}},</h2>
-      <p>Welcome to SmartLMS, your all-in-one learning management system!</p>
-      <p>Your account has been successfully created. You can now log in and start exploring the platform.</p>
-      <p><a href="{{loginUrl}}">Click here to log in</a></p>
-      <p>If you have any questions, please contact support.</p>
-    </div>
-    <div class="footer">
-      <p>&copy; {{year}} SmartLMS. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>
-          `
-        },
-        {
-          name: 'password-reset.hbs',
-          content: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Password Reset</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #4a69bd; color: white; padding: 10px; text-align: center; }
-    .content { padding: 20px; border: 1px solid #ddd; }
-    .button { display: inline-block; padding: 10px 20px; background-color: #4a69bd; color: white; text-decoration: none; border-radius: 4px; }
-    .warning { color: #e74c3c; font-weight: bold; }
-    .footer { font-size: 12px; text-align: center; margin-top: 20px; color: #777; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Password Reset Request</h1>
-    </div>
-    <div class="content">
-      <h2>Hello {{username}},</h2>
-      <p>We received a request to reset your password. If you didn't make this request, you can safely ignore this email.</p>
-      <p>To reset your password, click the button below:</p>
-      <p><a href="{{resetUrl}}" class="button">Reset My Password</a></p>
-      <p class="warning">This link is valid for {{expiryHours}} hours.</p>
-      <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-      <p>{{resetUrl}}</p>
-    </div>
-    <div class="footer">
-      <p>&copy; {{year}} SmartLMS. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>
-          `
-        },
-        {
-          name: 'assignment-reminder.hbs',
-          content: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Assignment Reminder</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #4a69bd; color: white; padding: 10px; text-align: center; }
-    .content { padding: 20px; border: 1px solid #ddd; }
-    .date { font-weight: bold; color: #e74c3c; }
-    .button { display: inline-block; padding: 10px 20px; background-color: #4a69bd; color: white; text-decoration: none; border-radius: 4px; }
-    .footer { font-size: 12px; text-align: center; margin-top: 20px; color: #777; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Assignment Reminder</h1>
-    </div>
-    <div class="content">
-      <h2>Hello {{studentName}},</h2>
-      <p>This is a friendly reminder that you have an assignment due soon:</p>
-      <p><strong>Assignment:</strong> {{assignmentTitle}}</p>
-      <p><strong>Course:</strong> {{courseName}}</p>
-      <p><strong>Due Date:</strong> <span class="date">{{dueDate}}</span></p>
-      <p>Please make sure to submit your work before the deadline.</p>
-      <p><a href="{{assignmentUrl}}" class="button">View Assignment</a></p>
-    </div>
-    <div class="footer">
-      <p>&copy; {{year}} SmartLMS. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>
-          `
-        },
-        {
-          name: 'session-invitation.hbs',
-          content: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Virtual Session Invitation</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #4a69bd; color: white; padding: 10px; text-align: center; }
-    .content { padding: 20px; border: 1px solid #ddd; }
-    .details { background-color: #f9f9f9; padding: 15px; margin: 15px 0; }
-    .button { display: inline-block; padding: 10px 20px; background-color: #4a69bd; color: white; text-decoration: none; border-radius: 4px; }
-    .footer { font-size: 12px; text-align: center; margin-top: 20px; color: #777; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Virtual Session Invitation</h1>
-    </div>
-    <div class="content">
-      <h2>You're Invited!</h2>
-      <p>You have been invited to join a virtual session.</p>
-      
-      <div class="details">
-        <p><strong>Session:</strong> {{sessionTitle}}</p>
-        <p><strong>Course:</strong> {{courseName}}</p>
-        <p><strong>Instructor:</strong> {{instructorName}}</p>
-        <p><strong>Date:</strong> {{sessionDate}}</p>
-        <p><strong>Time:</strong> {{startTime}} - {{endTime}}</p>
-        <p><strong>Description:</strong> {{description}}</p>
-      </div>
-      
-      <p><a href="{{sessionUrl}}" class="button">Join Session</a></p>
-      <p>Click the button above when it's time to join the session.</p>
-    </div>
-    <div class="footer">
-      <p>&copy; {{year}} SmartLMS. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>
-          `
-        }
-      ];
-
-      const writeFileAsync = promisify(fs.writeFile);
-
-      for (const template of templates) {
-        const filePath = path.join(this.templatesDir, template.name);
-
-        if (!fs.existsSync(filePath)) {
-          await writeFileAsync(filePath, template.content);
-          this.logger.log(`Created template: ${template.name}`);
-        }
-      }
-    } catch (error) {
-      this.logger.error(`Failed to create email templates: ${error.message}`, error.stack);
-    }
-  }
-
   // Method to verify transport configuration is working
   async verifyConnection(): Promise<boolean> {
     try {
@@ -364,4 +216,21 @@ export class MailerService {
       return false;
     }
   }
-} 
+
+  // Method to manually recreate all templates (useful for updates)
+  async recreateTemplates(): Promise<void> {
+    try {
+      // Simply log information - templates are now managed as files directly
+      this.logger.log('Templates are now managed directly in the templates directory. No recreation needed.');
+      return;
+    } catch (error) {
+      this.logger.error(`Failed to recreate templates: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  // Get templates directory path
+  getTemplatesDir(): string {
+    return this.templatesDir;
+  }
+}
