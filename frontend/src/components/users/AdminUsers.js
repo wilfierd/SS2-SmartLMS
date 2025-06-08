@@ -16,26 +16,26 @@ const AdminUsers = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(
     SidebarManager.isExpanded()
   );
-  
+
   // Default student password
   const DEFAULT_STUDENT_PASSWORD = '123456789';
-  
+
   // For user selection and batch operations
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   // For filtering
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // For sorting
   const [sortOrder, setSortOrder] = useState('role'); // 'role', 'name', 'email', 'date'
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc', 'desc'
-  
+
   // For pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
-  
+
   // For add/edit user modal
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -49,10 +49,10 @@ const AdminUsers = () => {
     googleId: ''
   });
   const [formErrors, setFormErrors] = useState({});
-  
+
   // API URL from config
   const API_URL = config.apiUrl;
-  
+
   // Listen for sidebar state changes
   useEffect(() => {
     const handleSidebarChange = () => {
@@ -99,12 +99,12 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await axios.get(`${API_URL}/users`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
-      
+
       setUsers(response.data);
       setIsLoading(false);
     } catch (err) {
@@ -128,7 +128,7 @@ const AdminUsers = () => {
   const sortUsers = (userList) => {
     return [...userList].sort((a, b) => {
       let comparison = 0;
-      
+
       if (sortOrder === 'role') {
         // Sort by role priority (admin, instructor, student)
         comparison = getRolePriority(a.role) - getRolePriority(b.role);
@@ -144,7 +144,7 @@ const AdminUsers = () => {
         // Sort by creation date
         comparison = new Date(a.created_at) - new Date(b.created_at);
       }
-      
+
       // Reverse if sort direction is descending
       return sortDirection === 'desc' ? -comparison : comparison;
     });
@@ -165,22 +165,22 @@ const AdminUsers = () => {
   // Filter users based on role and search query, then sort
   const getFilteredUsers = () => {
     let filtered = [...users];
-    
+
     // Filter by role
     if (activeFilter !== 'all') {
       filtered = filtered.filter(user => user.role === activeFilter);
     }
-    
+
     // Filter by search query
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(user => 
-        user.email.toLowerCase().includes(query) || 
+      filtered = filtered.filter(user =>
+        user.email.toLowerCase().includes(query) ||
         (user.first_name && user.first_name.toLowerCase().includes(query)) ||
         (user.last_name && user.last_name.toLowerCase().includes(query))
       );
     }
-    
+
     // Sort the filtered users
     return sortUsers(filtered);
   };
@@ -266,7 +266,7 @@ const AdminUsers = () => {
       ...formData,
       [name]: value
     });
-    
+
     // Clear error for this field
     if (formErrors[name]) {
       setFormErrors({
@@ -279,7 +279,7 @@ const AdminUsers = () => {
   // Handle role change specifically
   const handleRoleChange = (e) => {
     const newRole = e.target.value;
-    
+
     // Auto-set password for student accounts and random Google ID
     if (newRole === 'student' && !editingUser) {
       setFormData({
@@ -302,7 +302,7 @@ const AdminUsers = () => {
         role: newRole
       });
     }
-    
+
     // Clear error for role field
     if (formErrors.role) {
       setFormErrors({
@@ -315,47 +315,47 @@ const AdminUsers = () => {
   // Validate form
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.email) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = 'Email is invalid';
     }
-    
+
     if (!formData.role) {
       errors.role = 'Role selection is required';
     }
-    
+
     if (!editingUser && !formData.password) {
       errors.password = 'Password is required for new users';
     } else if (!editingUser && formData.password.length < 8) {
       errors.password = 'Password must be at least 8 characters';
     }
-    
+
     if (!formData.firstName) {
       errors.firstName = 'First name is required';
     }
-    
+
     if (!formData.lastName) {
       errors.lastName = 'Last name is required';
     }
-    
+
     return errors;
   };
 
   // Handle create/update user
   const handleSaveUser = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       // Chuẩn bị dữ liệu gửi đi dựa trên vai trò
       const baseUserData = {
@@ -364,12 +364,12 @@ const AdminUsers = () => {
         lastName: formData.lastName,
         role: formData.role
       };
-      
+
       // Thêm password nếu có
       if (formData.password) {
         baseUserData.password = formData.password;
       }
-      
+
       // Thêm trường dữ liệu theo vai trò
       if (formData.role === 'student') {
         // Dữ liệu cho học viên
@@ -378,7 +378,7 @@ const AdminUsers = () => {
         // Dữ liệu cho admin và giảng viên
         baseUserData.bio = formData.bio || '';
       }
-      
+
       if (editingUser) {
         // Cập nhật người dùng hiện có
         await axios.put(
@@ -388,36 +388,35 @@ const AdminUsers = () => {
             headers: { Authorization: `Bearer ${auth.token}` }
           }
         );
-        
+
         setSuccess('User updated successfully');
       } else {
         // Tạo người dùng mới
         // Đảm bảo có mật khẩu cho người dùng mới
         if (!baseUserData.password) {
-          baseUserData.password = formData.role === 'student' ? 
-                               DEFAULT_STUDENT_PASSWORD : '';
+          baseUserData.password = formData.role === 'student' ?
+            DEFAULT_STUDENT_PASSWORD : '';
         }
-        
         await axios.post(
-          `${API_URL}/users/register`,
+          `${API_URL}/users/admin-register`,
           baseUserData,
           {
             headers: { Authorization: `Bearer ${auth.token}` }
           }
         );
-        
+
         setSuccess('User created successfully');
       }
-      
+
       // Refresh users list
       fetchUsers();
       handleCloseModal();
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(null);
       }, 3000);
-      
+
     } catch (err) {
       console.error('Error saving user:', err);
       setFormErrors({
@@ -434,20 +433,20 @@ const AdminUsers = () => {
       setError('Please select at least one user to delete');
       return;
     }
-    
+
     setShowDeleteConfirm(true);
   };
 
   // Perform user deletion
   const performDeleteUsers = async () => {
     setIsLoading(true);
-    
+
     try {
       // Delete multiple users at once if supported by API
       if (selectedUsers.length > 1) {
-        await axios.post(`${API_URL}/users/batch-delete`, 
+        await axios.post(`${API_URL}/users/batch-delete`,
           { userIds: selectedUsers },
-          { headers: { Authorization: `Bearer ${auth.token}` }}
+          { headers: { Authorization: `Bearer ${auth.token}` } }
         );
       } else {
         // Delete single user
@@ -455,19 +454,19 @@ const AdminUsers = () => {
           headers: { Authorization: `Bearer ${auth.token}` }
         });
       }
-      
+
       setSuccess(`${selectedUsers.length} user(s) deleted successfully`);
-      
+
       // Refresh users list
       fetchUsers();
       setSelectedUsers([]);
       setShowDeleteConfirm(false);
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess(null);
       }, 3000);
-      
+
     } catch (err) {
       console.error('Error deleting users:', err);
       setError(err.response?.data?.message || 'Failed to delete users. Please try again.');
@@ -491,11 +490,11 @@ const AdminUsers = () => {
   // Get user name initials for avatar
   const getUserInitials = (firstName, lastName) => {
     if (!firstName && !lastName) return '?';
-    
+
     let initials = '';
     if (firstName) initials += firstName.charAt(0).toUpperCase();
     if (lastName) initials += lastName.charAt(0).toUpperCase();
-    
+
     return initials;
   };
 
@@ -508,10 +507,10 @@ const AdminUsers = () => {
   return (
     <div className={`admin-users-container ${sidebarExpanded ? 'sidebar-expanded' : ''}`}>
       <Sidebar activeItem="users" />
-      
+
       <div className="admin-main-content">
         <Header title="User Management" />
-        
+
         <div className="users-content">
           {error && (
             <div className="error-message">
@@ -519,14 +518,14 @@ const AdminUsers = () => {
               <button className="close-button" onClick={handleCloseAlert}>×</button>
             </div>
           )}
-          
+
           {success && (
             <div className="success-message">
               {success}
               <button className="close-button" onClick={handleCloseAlert}>×</button>
             </div>
           )}
-          
+
           <div className="search-box">
             <span className="search-icon">🔍</span>
             <input
@@ -536,7 +535,7 @@ const AdminUsers = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           <div className="filter-action-bar">
             <div className="filter-options">
               <button
@@ -564,21 +563,21 @@ const AdminUsers = () => {
                 Students
               </button>
             </div>
-            
+
             <div className="action-buttons">
               <button className="add-btn" onClick={handleAddUser}>
                 <span className="icon">+</span> Add User
               </button>
-              <button 
-                className="remove-btn" 
-                onClick={handleRemoveUsers} 
+              <button
+                className="remove-btn"
+                onClick={handleRemoveUsers}
                 disabled={selectedUsers.length === 0}
               >
                 Remove {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
               </button>
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="loading-spinner">Loading...</div>
           ) : (
@@ -634,15 +633,15 @@ const AdminUsers = () => {
                         </td>
                         <td>{new Date(user.created_at).toLocaleDateString()}</td>
                         <td>
-                          <button 
-                            className="action-icon" 
+                          <button
+                            className="action-icon"
                             title="Edit user"
                             onClick={() => handleEditUser(user)}
                           >
                             ✏️
                           </button>
-                          <button 
-                            className="action-icon delete-icon" 
+                          <button
+                            className="action-icon delete-icon"
                             title="Delete user"
                             onClick={() => handleDeleteUser(user.id)}
                           >
@@ -651,7 +650,7 @@ const AdminUsers = () => {
                         </td>
                       </tr>
                     ))}
-                    
+
                     {getCurrentUsers().length === 0 && (
                       <tr>
                         <td colSpan="7" style={{ textAlign: 'center', padding: '30px' }}>
@@ -662,21 +661,21 @@ const AdminUsers = () => {
                   </tbody>
                 </table>
               </div>
-              
+
               {totalPages > 1 && (
                 <div className="pagination">
                   <div className="pagination-info">
                     Showing {Math.min((currentPage - 1) * usersPerPage + 1, getFilteredUsers().length)} to {Math.min(currentPage * usersPerPage, getFilteredUsers().length)} of {getFilteredUsers().length} users
                   </div>
                   <div className="pagination-controls">
-                    <button 
-                      className="pagination-btn" 
+                    <button
+                      className="pagination-btn"
                       disabled={currentPage === 1}
                       onClick={() => handlePageChange(currentPage - 1)}
                     >
                       Previous
                     </button>
-                    
+
                     {[...Array(totalPages).keys()].map(number => (
                       <button
                         key={number + 1}
@@ -686,9 +685,9 @@ const AdminUsers = () => {
                         {number + 1}
                       </button>
                     ))}
-                    
-                    <button 
-                      className="pagination-btn" 
+
+                    <button
+                      className="pagination-btn"
                       disabled={currentPage === totalPages}
                       onClick={() => handlePageChange(currentPage + 1)}
                     >
@@ -699,7 +698,7 @@ const AdminUsers = () => {
               )}
             </>
           )}
-          
+
           {/* Add/Edit User Modal */}
           {showUserModal && (
             <div className="modal-overlay" onClick={handleCloseModal}>
@@ -708,7 +707,7 @@ const AdminUsers = () => {
                   <h2>{editingUser ? 'Edit User' : 'Add New User'}</h2>
                   <button className="close-btn" onClick={handleCloseModal}>×</button>
                 </div>
-                
+
                 <form className="user-form" onSubmit={handleSaveUser}>
                   <div className="form-row">
                     <div className="form-group">
@@ -723,7 +722,7 @@ const AdminUsers = () => {
                       />
                       {formErrors.firstName && <div className="form-error">{formErrors.firstName}</div>}
                     </div>
-                    
+
                     <div className="form-group">
                       <label htmlFor="lastName">Last Name*</label>
                       <input
@@ -737,7 +736,7 @@ const AdminUsers = () => {
                       {formErrors.lastName && <div className="form-error">{formErrors.lastName}</div>}
                     </div>
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="email">Email Address*</label>
                     <input
@@ -751,7 +750,7 @@ const AdminUsers = () => {
                     />
                     {formErrors.email && <div className="form-error">{formErrors.email}</div>}
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="role">Role*</label>
                     <select
@@ -767,12 +766,12 @@ const AdminUsers = () => {
                     </select>
                     {formErrors.role && <div className="form-error">{formErrors.role}</div>}
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="password">
                       {editingUser ? 'Password (leave blank to keep current)' : 'Password*'}
-                      {formData.role === 'student' && !editingUser && 
-                       ' - Default: 123456789'}
+                      {formData.role === 'student' && !editingUser &&
+                        ' - Default: 123456789'}
                     </label>
                     <input
                       type="password"
@@ -780,17 +779,17 @@ const AdminUsers = () => {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      placeholder={editingUser ? "Enter new password (optional)" : 
-                                 formData.role === 'student' ? "Default: 123456789" : "Enter password"}
+                      placeholder={editingUser ? "Enter new password (optional)" :
+                        formData.role === 'student' ? "Default: 123456789" : "Enter password"}
                       readOnly={formData.role === 'student' && !editingUser}
                     />
                     {formErrors.password && <div className="form-error">{formErrors.password}</div>}
-                    {formData.role === 'student' && !editingUser && !formErrors.password && 
-                     <div className="form-info" style={{ color: '#666', fontSize: '12px', marginTop: '5px' }}>
-                       Student accounts use default password: 123456789
-                     </div>}
+                    {formData.role === 'student' && !editingUser && !formErrors.password &&
+                      <div className="form-info" style={{ color: '#666', fontSize: '12px', marginTop: '5px' }}>
+                        Student accounts use default password: 123456789
+                      </div>}
                   </div>
-                  
+
                   {/* Hiển thị trường Bio cho admin và instructor */}
                   {formData.role !== 'student' && formData.role !== '' && (
                     <div className="form-group">
@@ -805,7 +804,7 @@ const AdminUsers = () => {
                       />
                     </div>
                   )}
-                  
+
                   {/* Hiển thị trường Google ID cho học viên */}
                   {formData.role === 'student' && (
                     <div className="form-group">
@@ -824,16 +823,16 @@ const AdminUsers = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {formErrors.submit && <div className="form-error">{formErrors.submit}</div>}
-                  
+
                   <div className="form-actions">
                     <button type="button" className="cancel-btn" onClick={handleCloseModal}>
                       Cancel
                     </button>
-                    <button 
-                      type="submit" 
-                      className="save-btn" 
+                    <button
+                      type="submit"
+                      className="save-btn"
                       disabled={isLoading || formData.role === ''}
                     >
                       {isLoading ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}
@@ -843,7 +842,7 @@ const AdminUsers = () => {
               </div>
             </div>
           )}
-          
+
           {/* Delete Confirmation Modal */}
           {showDeleteConfirm && (
             <div className="modal-overlay">
@@ -852,25 +851,25 @@ const AdminUsers = () => {
                   <h2>Confirm Deletion</h2>
                   <button className="close-btn" onClick={() => setShowDeleteConfirm(false)}>×</button>
                 </div>
-                
+
                 <div className="confirmation-message">
                   <p>
-                    Are you sure you want to delete {selectedUsers.length > 1 
-                      ? `these ${selectedUsers.length} users` 
+                    Are you sure you want to delete {selectedUsers.length > 1
+                      ? `these ${selectedUsers.length} users`
                       : 'this user'}?
                   </p>
                   <p>This action cannot be undone.</p>
                 </div>
-                
+
                 <div className="confirmation-actions">
-                  <button 
-                    className="cancel-btn" 
+                  <button
+                    className="cancel-btn"
                     onClick={() => setShowDeleteConfirm(false)}
                   >
                     Cancel
                   </button>
-                  <button 
-                    className="remove-btn" 
+                  <button
+                    className="remove-btn"
                     onClick={performDeleteUsers}
                     disabled={isLoading}
                   >

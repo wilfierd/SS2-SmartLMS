@@ -15,18 +15,20 @@ import { UserActivityDto } from './dto/user-activity.dto';
 import { UserSessionDto } from './dto/user-session.dto';
 import { UserActivity, ActivityType } from './entities/user-activity.entity';
 import { UserSession } from './entities/user-session.entity';
+import { MailerService } from '../mailer/mailer.service';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-    @InjectRepository(UserActivity)
-    private activitiesRepository: Repository<UserActivity>,
-    @InjectRepository(UserSession)
-    private sessionsRepository: Repository<UserSession>,
-    private dataSource: DataSource
-  ) { }
+    constructor(
+      @InjectRepository(User)
+      private usersRepository: Repository<User>,
+      @InjectRepository(UserActivity)
+      private activitiesRepository: Repository<UserActivity>,
+      @InjectRepository(UserSession)
+      private sessionsRepository: Repository<UserSession>,
+      private dataSource: DataSource,
+      private mailerService: MailerService
+    ) { }
 
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.usersRepository.find({
@@ -94,9 +96,18 @@ export class UsersService {
       bio: createUserDto.bio,
       googleId: createUserDto.googleId,
       isPasswordChanged: createUserDto.role !== UserRole.STUDENT, // Students need to change password initially
-    });
+    }); const savedUser = await this.usersRepository.save(user);
 
-    const savedUser = await this.usersRepository.save(user);
+    // Send welcome email
+    try {
+      const username = `${savedUser.firstName || ''} ${savedUser.lastName || ''}`.trim() || savedUser.email;
+      await this.mailerService.sendWelcome(savedUser.email, username);
+      console.log(`✅ Welcome email sent to ${savedUser.email}`);
+    } catch (error) {
+      console.error(`❌ Failed to send welcome email to ${savedUser.email}:`, error.message);
+      // Don't throw error to avoid failing user creation due to email issues
+    }
+
     return new UserResponseDto(savedUser);
   }
 
@@ -208,7 +219,7 @@ export class UsersService {
 
     // Verify current password
     const isPasswordValid = await user.comparePassword(changePasswordDto.currentPassword);
-    
+
     console.log('Password comparison result:', isPasswordValid);
 
     if (!isPasswordValid) {

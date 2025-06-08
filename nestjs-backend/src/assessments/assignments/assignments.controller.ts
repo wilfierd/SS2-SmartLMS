@@ -1,17 +1,18 @@
-import { 
-  Controller, 
-  Post, 
-  Put, 
-  Delete, 
-  Get, 
-  Param, 
-  Body, 
-  UseGuards, 
-  Request, 
+import {
+  Controller,
+  Post,
+  Put,
+  Delete,
+  Get,
+  Param,
+  Body,
+  UseGuards,
+  Request,
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
-  BadRequestException
+  BadRequestException,
+  Query
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -21,6 +22,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../users/entities/user.entity';
 import { AssignmentsService } from './assignments.service';
+import { AssignmentReminderService } from './assignment-reminder.service';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { UpdateAssignmentDto } from './dto/update-assignment.dto';
 import { SubmitAssignmentDto } from './dto/submit-assignment.dto';
@@ -29,7 +31,10 @@ import { GradeSubmissionDto } from './dto/grade-submission.dto';
 @Controller('assignments')
 @UseGuards(JwtAuthGuard)
 export class AssignmentsController {
-  constructor(private readonly assignmentsService: AssignmentsService) {}
+  constructor(
+    private readonly assignmentsService: AssignmentsService,
+    private readonly assignmentReminderService: AssignmentReminderService,
+  ) { }
 
   @Post('course/:courseId/lesson/:lessonId')
   @UseGuards(RolesGuard)
@@ -55,8 +60,8 @@ export class AssignmentsController {
 
     console.log('Creating assignment with data:', JSON.stringify(createAssignmentDto));
     return this.assignmentsService.createAssignment(
-      courseId, 
-      createAssignmentDto, 
+      courseId,
+      createAssignmentDto,
       req.user.userId
     );
   }
@@ -70,8 +75,8 @@ export class AssignmentsController {
     @Request() req: any,
   ) {
     return this.assignmentsService.updateAssignment(
-      assignmentId, 
-      updateAssignmentDto, 
+      assignmentId,
+      updateAssignmentDto,
       req.user.userId
     );
   }
@@ -84,7 +89,7 @@ export class AssignmentsController {
     @Request() req: any,
   ) {
     await this.assignmentsService.deleteAssignment(
-      assignmentId, 
+      assignmentId,
       req.user.userId
     );
     return { message: 'Assignment deleted successfully' };
@@ -98,7 +103,7 @@ export class AssignmentsController {
     @Request() req: any,
   ) {
     return this.assignmentsService.getSubmissionsForAssignment(
-      assignmentId, 
+      assignmentId,
       req.user.userId
     );
   }
@@ -112,8 +117,8 @@ export class AssignmentsController {
     @Request() req: any,
   ) {
     return this.assignmentsService.gradeSubmission(
-      submissionId, 
-      gradeSubmissionDto, 
+      submissionId,
+      gradeSubmissionDto,
       req.user.userId
     );
   }
@@ -125,18 +130,18 @@ export class AssignmentsController {
     @Request() req: any,
   ) {
     const assignments = await this.assignmentsService.findAssignmentsByCourse(courseId);
-    
+
     // For students, include submission status
     if (req.user.role === UserRole.STUDENT) {
       const studentId = req.user.userId;
-      
+
       // Get submission status for each assignment
       for (let assignment of assignments) {
         const submission = await this.assignmentsService.getStudentAssignmentWithSubmission(
-          assignment.id, 
+          assignment.id,
           studentId
         );
-        
+
         if (submission.submission) {
           assignment['submission'] = {
             id: submission.submission.id,
@@ -150,7 +155,7 @@ export class AssignmentsController {
         }
       }
     }
-    
+
     return assignments;
   }
 
@@ -164,7 +169,7 @@ export class AssignmentsController {
     try {
       // Get assignment with full details using the enhanced service method
       const assignment = await this.assignmentsService.getAssignmentWithFullDetails(
-        assignmentId, 
+        assignmentId,
         req.user.role,
         req.user.userId
       );
@@ -239,13 +244,40 @@ export class AssignmentsController {
       path: file.path,
       type: file.mimetype,
       size: file.size,
-    };
-
-    return this.assignmentsService.submitAssignment(
+    }; return this.assignmentsService.submitAssignment(
       assignmentId,
       req.user.userId,
       fileInfo,
       submitAssignmentDto.comments
     );
+  }
+
+  // Assignment Reminder Endpoints
+
+  @Post('reminders/send')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
+  async sendImmediateReminders(
+    @Body() body: { courseId?: number; assignmentId?: number },
+    @Request() req: any,
+  ) {
+    const result = await this.assignmentReminderService.sendImmediateReminders(
+      body.courseId,
+      body.assignmentId
+    );
+    return {
+      success: true,
+      ...result,
+    };
+  }
+
+  @Get('reminders/upcoming')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
+  async getUpcomingAssignments(
+    @Query('days') days?: string,
+  ) {
+    const daysCount = days ? parseInt(days, 10) : 7;
+    return this.assignmentReminderService.getUpcomingAssignments(daysCount);
   }
 }
