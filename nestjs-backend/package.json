@@ -46,6 +46,7 @@
     "google-auth-library": "^9.15.1",
     "handlebars": "^4.7.8",
     "lms-nestjs-backend": "file:",
+    "meilisearch": "^0.37.0",
     "multer": "^2.0.0",
     "mysql2": "^3.14.1",
     "nodemailer": "^7.0.3",

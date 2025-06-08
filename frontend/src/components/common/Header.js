@@ -6,6 +6,7 @@ import AuthContext from '../../context/AuthContext';
 import profileService from '../../services/profileService';
 import notification from '../../utils/notification';
 import config from '../../config';
+import SearchBar from './SearchBar';
 
 // Base URL without the /api prefix for serving static assets
 const baseUrl = config.apiUrl.replace(/\/api$/, '');
@@ -127,6 +128,30 @@ const Header = ({ title }) => {
     console.log('Profile clicked, current showDropdown:', showDropdown); // Debug log
     setShowDropdown(prev => !prev);
   };
+
+  // Handle search result selection
+  const handleSearchResult = (result) => {
+    // Navigate based on result type
+    switch (result.type) {
+      case 'course':
+        const courseId = result.id.replace('course_', '');
+        navigate(`/courses/${courseId}/detail`);
+        break;
+      case 'discussion':
+        const discussionId = result.id.replace('discussion_', '');
+        // You'll need to extract course ID from the result or make another API call
+        // For now, navigate to discussions (you might need to adjust this)
+        notification.info(`Opening discussion: ${result.title}`);
+        // navigate(`/courses/${courseId}/discussions/${discussionId}`);
+        break;
+      case 'announcement':
+        notification.info(`Opening announcement: ${result.title}`);
+        break;
+      default:
+        notification.info(`Selected: ${result.title}`);
+    }
+  };
+
   return (
     <div className="admin-header">
       <div className="header-title">
@@ -134,13 +159,7 @@ const Header = ({ title }) => {
       </div>
 
       <div className="header-search">
-        <input
-          type="text"
-          placeholder="Search for courses"
-        />
-        <button type="button">
-          {renderIcon('search')}
-        </button>
+        <SearchBar onResultSelect={handleSearchResult} />
       </div>
 
       <div className="header-right">        <div className="header-date">

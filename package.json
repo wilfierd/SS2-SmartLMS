@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "meilisearch": "^0.50.0",
+    "mysql2": "^3.14.1"
+  }
+}

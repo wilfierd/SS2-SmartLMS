@@ -48,61 +48,17 @@
     text-overflow: ellipsis;
   }  .header-search {
     display: flex;
-    background-color: #f8f9fa;
-    border-radius: 24px;
-    padding: 0;
-    width: 300px;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
-    flex: 1 1 auto;
-    max-width: 300px;
-    min-width: 200px;
-    /* Prevent search from expanding too much */
-    overflow: hidden;
-    /* Ensure search doesn't interfere with header-right */
-    margin-right: 20px;
-  }
-
-  .header-search:focus-within {
-    background-color: white;
-    border-color: #dadce0;
-    box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
-  }
-
-  .header-search input {
-    border: none;
-    background: none;
-    outline: none;
-    flex: 1;
-    padding: 10px 16px;
-    font-size: 14px;
-    color: #202124;
-  }
-
-  .header-search input::placeholder {
-    color: #5f6368;
-  }.header-search button {
-    border: none;
-    background: none;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    display: flex;
     align-items: center;
-    justify-content: center;
-    color: #5f6368;
-    transition: all 0.2s ease;
+    width: 400px;
+    max-width: 400px;
+    min-width: 300px;
+    flex: 1 1 auto;
+    margin-right: 20px;
+    /* Remove the old search styling since SearchBar has its own */
   }
 
-  .header-search button:hover {
-    background-color: rgba(95, 99, 104, 0.08);
-    color: #202124;
-  }
-
-  .header-search button svg {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2;
+  .header-search .search-bar-container {
+    width: 100%;
   }  .header-right {
     display: flex;
     align-items: center;

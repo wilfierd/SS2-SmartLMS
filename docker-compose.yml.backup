@@ -11,8 +11,7 @@ services:
       MYSQL_USER: ${DB_USER:-lms_user}
       MYSQL_PASSWORD: ${DB_PASSWORD:-your_mysql_password}
     ports:
-      - "3307:3306"
-    volumes:
+      - "3307:3306"    volumes:
       - mysql_data:/var/lib/mysql
       - ./nestjs-backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:

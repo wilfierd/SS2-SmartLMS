@@ -18,6 +18,7 @@ import { AssessmentsModule } from './assessments/assessments.module';
 import configuration from './config/configuration';
 import { DiscussionsModule } from './discussions/discussions.module';
 import { RecommendationModule } from './recommendations/recommendation.module';
+import { SearchModule } from './search/search.module';
 import { UserActivity } from './users/entities/user-activity.entity';
 import { UserSession } from './users/entities/user-session.entity';
 
@@ -55,7 +56,9 @@ import { UserSession } from './users/entities/user-session.entity';
     MailerModule.register(), UploadsModule,
     AssessmentsModule,
     DiscussionsModule,
-    RecommendationModule,],
+    RecommendationModule,
+    SearchModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
