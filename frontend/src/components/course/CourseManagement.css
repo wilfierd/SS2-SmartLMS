@@ -735,16 +735,21 @@
   font-weight: 500;
   color: #555;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+  position: relative;
 }
 
 .course-tab:hover {
   color: #3498db;
+  transform: translateY(-1px);
+  background-color: rgba(52, 152, 219, 0.05);
 }
 
 .course-tab.active {
   color: #3498db;
   border-bottom-color: #3498db;
+  background-color: rgba(52, 152, 219, 0.08);
+  transform: translateY(0);
 }
 
 /* Enrollment button for students */
