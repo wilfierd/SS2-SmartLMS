@@ -1,5 +1,5 @@
 // src/discussions/discussions.service.ts
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Discussion } from './entities/discussion.entity';
@@ -9,6 +9,7 @@ import { UpdateDiscussionDto } from './dto/update-discussion.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { CoursesService } from '../courses/courses.service';
+import { SearchService } from '../search/search.service';
 import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
@@ -18,9 +19,11 @@ export class DiscussionsService {
     private discussionsRepository: Repository<Discussion>,
     @InjectRepository(DiscussionPost)
     private postsRepository: Repository<DiscussionPost>,
+    @Inject(forwardRef(() => CoursesService))
     private coursesService: CoursesService,
-  ) {}
-
+    @Inject(forwardRef(() => SearchService))
+    private searchService: SearchService,
+  ) { }
   async createDiscussion(
     courseId: number,
     createDiscussionDto: CreateDiscussionDto,
@@ -36,7 +39,16 @@ export class DiscussionsService {
       createdBy: userId,
     });
 
-    return this.discussionsRepository.save(discussion);
+    const savedDiscussion = await this.discussionsRepository.save(discussion);
+
+    // Sync with search index
+    try {
+      await this.searchService.indexDiscussion(savedDiscussion.id, courseId);
+    } catch (error) {
+      console.error('Failed to index discussion in search:', error);
+    }
+
+    return savedDiscussion;
   }
 
   async findDiscussionsByCourse(courseId: number): Promise<Discussion[]> {
@@ -63,7 +75,7 @@ export class DiscussionsService {
     // Organize posts into threaded format
     const topLevelPosts = discussion.posts.filter(post => !post.parentPostId);
     const organizedPosts = this.organizePostsRecursively(topLevelPosts, discussion.posts);
-    
+
     discussion.posts = organizedPosts;
     return discussion;
   }
@@ -94,10 +106,17 @@ export class DiscussionsService {
       if (!isInstructor && discussion.createdBy !== userId) {
         throw new ForbiddenException('You can only edit discussions in your courses or your own discussions');
       }
+    } Object.assign(discussion, updateDiscussionDto);
+    const updatedDiscussion = await this.discussionsRepository.save(discussion);
+
+    // Sync with search index
+    try {
+      await this.searchService.updateDiscussionIndex(discussionId, courseId);
+    } catch (error) {
+      console.error('Failed to update discussion in search index:', error);
     }
 
-    Object.assign(discussion, updateDiscussionDto);
-    return this.discussionsRepository.save(discussion);
+    return updatedDiscussion;
   }
 
   async deleteDiscussion(
@@ -127,6 +146,13 @@ export class DiscussionsService {
     }
 
     await this.discussionsRepository.remove(discussion);
+
+    // Remove from search index
+    try {
+      await this.searchService.removeDiscussionFromIndex(discussionId);
+    } catch (error) {
+      console.error('Failed to remove discussion from search index:', error);
+    }
   }
 
   async createPost(
@@ -157,16 +183,23 @@ export class DiscussionsService {
       if (!parentPost) {
         throw new NotFoundException('Parent post not found');
       }
-    }
-
-    const post = this.postsRepository.create({
+    } const post = this.postsRepository.create({
       discussionId,
       userId,
       content: createPostDto.content,
       parentPostId: createPostDto.parentPostId || undefined,
     });
 
-    return this.postsRepository.save(post);
+    const savedPost = await this.postsRepository.save(post);
+
+    // Update parent discussion in search index
+    try {
+      await this.searchService.indexPost(savedPost.id, discussionId, courseId);
+    } catch (error) {
+      console.error('Failed to index post in search:', error);
+    }
+
+    return savedPost;
   }
 
   async updatePost(
@@ -204,10 +237,17 @@ export class DiscussionsService {
       } else {
         throw new ForbiddenException('You can only edit your own posts');
       }
+    } post.content = updatePostDto.content;
+    const updatedPost = await this.postsRepository.save(post);
+
+    // Update parent discussion in search index
+    try {
+      await this.searchService.indexPost(postId, discussionId, courseId);
+    } catch (error) {
+      console.error('Failed to update post in search:', error);
     }
 
-    post.content = updatePostDto.content;
-    return this.postsRepository.save(post);
+    return updatedPost;
   }
 
   async deletePost(
@@ -244,14 +284,19 @@ export class DiscussionsService {
       } else {
         throw new ForbiddenException('You can only delete your own posts');
       }
-    }
-
-    // If post has replies, mark as deleted instead of removing
+    }    // If post has replies, mark as deleted instead of removing
     if (post.replies && post.replies.length > 0) {
       post.content = '[This post has been deleted]';
       await this.postsRepository.save(post);
     } else {
       await this.postsRepository.remove(post);
+    }
+
+    // Update parent discussion in search index
+    try {
+      await this.searchService.removePostFromIndex(postId, discussionId, courseId);
+    } catch (error) {
+      console.error('Failed to remove post from search:', error);
     }
   }
 

@@ -9,48 +9,58 @@ import { UsersService } from '../users/users.service';
 import { DepartmentsService } from '../departments/departments.service';
 import { UserRole } from '../common/enums/user-role.enum';
 import { EnrollmentsService } from '../enrollments/enrollments.service';
+import { SearchService } from '../search/search.service';
 
 @Injectable()
 export class CoursesService {
-  constructor(
-    @InjectRepository(Course)
-    private coursesRepository: Repository<Course>,
-    private usersService: UsersService,
-    private departmentsService: DepartmentsService,
-    @Inject(forwardRef(() => EnrollmentsService))
-    private enrollmentsService: EnrollmentsService,
-  ) {}
+    constructor(
+      @InjectRepository(Course)
+      private coursesRepository: Repository<Course>,
+      private usersService: UsersService,
+      private departmentsService: DepartmentsService,
+      @Inject(forwardRef(() => EnrollmentsService))
+      private enrollmentsService: EnrollmentsService,
+      @Inject(forwardRef(() => SearchService))
+      private searchService: SearchService,
+    ) { } async create(createCourseDto: CreateCourseDto, userId: number, userRole: UserRole): Promise<Course> {
+      const course = this.coursesRepository.create(createCourseDto);
 
-  async create(createCourseDto: CreateCourseDto, userId: number, userRole: UserRole): Promise<Course> {
-    const course = this.coursesRepository.create(createCourseDto);
-    
-    // If user is instructor, set the instructorId to the user's id
-    if (userRole === UserRole.INSTRUCTOR) {
-      course.instructorId = userId;
-    } else if (userRole === UserRole.ADMIN && !createCourseDto.instructorId) {
-      // Admin should provide instructorId or it defaults to themselves
-      course.instructorId = userId;
+      // If user is instructor, set the instructorId to the user's id
+      if (userRole === UserRole.INSTRUCTOR) {
+        course.instructorId = userId;
+      } else if (userRole === UserRole.ADMIN && !createCourseDto.instructorId) {
+        // Admin should provide instructorId or it defaults to themselves
+        course.instructorId = userId;
+      }
+
+      const savedCourse = await this.coursesRepository.save(course);
+
+      // Sync with search index
+      try {
+        await this.searchService.indexCourse(savedCourse.id);
+      } catch (error) {
+        console.error('Failed to index course in search:', error);
+      }
+
+      return savedCourse;
     }
-    
-    return this.coursesRepository.save(course);
-  }
 
   async findAll(filters?: { status?: CourseStatus, featured?: boolean }): Promise<Course[]> {
     const queryBuilder = this.coursesRepository
       .createQueryBuilder('course')
       .leftJoinAndSelect('course.instructor', 'instructor')
       .leftJoinAndSelect('course.department', 'department');
-    
+
     if (filters?.status) {
       queryBuilder.andWhere('course.status = :status', { status: filters.status });
     }
-    
+
     if (filters?.featured) {
       queryBuilder.andWhere('course.isFeatured = :isFeatured', { isFeatured: filters.featured });
     }
-    
+
     queryBuilder.orderBy('course.createdAt', 'DESC');
-    
+
     return queryBuilder.getMany();
   }
 
@@ -63,11 +73,11 @@ export class CoursesService {
       where: { id },
       relations: ['instructor', 'department'],
     });
-    
+
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
-    
+
     return course;
   }
 
@@ -82,11 +92,11 @@ export class CoursesService {
       .orderBy('modules.orderIndex', 'ASC')
       .addOrderBy('lessons.orderIndex', 'ASC')
       .getOne();
-    
+
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
-    
+
     return course;
   }
 
@@ -96,57 +106,70 @@ export class CoursesService {
       .innerJoinAndSelect('course.modules', 'module', 'module.id = :moduleId', { moduleId })
       .select(['course.id', 'course.instructorId', 'module.id', 'module.courseId'])
       .getOne();
-    
+
     if (!module || !module.modules.length) {
       return null;
     }
-    
+
     return module.modules[0];
   }
-
   async update(id: number, updateCourseDto: UpdateCourseDto, userId: number, userRole: UserRole): Promise<Course> {
     const course = await this.findOne(id);
-    
+
     // Check permissions
     if (userRole === UserRole.INSTRUCTOR && course.instructorId !== userId) {
       throw new ForbiddenException('You can only update your own courses');
     }
-    
+
     // Instructors cannot change instructorId
     if (userRole === UserRole.INSTRUCTOR && updateCourseDto.instructorId) {
       delete updateCourseDto.instructorId;
     }
-    
+
     // Update course properties
     Object.assign(course, updateCourseDto);
-    
-    return this.coursesRepository.save(course);
-  }
 
+    const updatedCourse = await this.coursesRepository.save(course);
+
+    // Sync with search index
+    try {
+      await this.searchService.updateCourseIndex(id);
+    } catch (error) {
+      console.error('Failed to update course in search index:', error);
+    }
+
+    return updatedCourse;
+  }
   async remove(id: number, userId: number, userRole: UserRole): Promise<void> {
     // Validate input
     if (!id || isNaN(id)) {
       throw new BadRequestException('Invalid course ID');
     }
-    
+
     const course = await this.findOne(id);
-    
+
     // Check permissions
     if (userRole === UserRole.INSTRUCTOR && course.instructorId !== userId) {
       throw new ForbiddenException('You can only delete your own courses');
     }
-    
+
     try {
       const result = await this.coursesRepository.delete(id);
-      
       if (result.affected === 0) {
         throw new NotFoundException(`Course with ID ${id} not found or already deleted`);
+      }
+
+      // Remove from search index
+      try {
+        await this.searchService.removeCourseFromIndex(id);
+      } catch (error) {
+        console.error('Failed to remove course from search index:', error);
       }
     } catch (error) {
       console.error('Error deleting course:', error);
       if (error instanceof NotFoundException) {
         throw error;
-      } else if (error.code === 'ER_ROW_IS_REFERENCED' || error.code === '23503') { 
+      } else if (error.code === 'ER_ROW_IS_REFERENCED' || error.code === '23503') {
         // MySQL or PostgreSQL foreign key error codes
         throw new BadRequestException('Cannot delete this course because it is referenced by other entities (e.g., enrollments or modules)');
       } else {
@@ -157,23 +180,22 @@ export class CoursesService {
 
   async archive(id: number, userId: number, userRole: UserRole): Promise<Course> {
     const course = await this.findOne(id);
-    
+
     // Check permissions
     if (userRole === UserRole.INSTRUCTOR && course.instructorId !== userId) {
       throw new ForbiddenException('You can only archive your own courses');
     }
-    
+
     course.status = CourseStatus.ARCHIVED;
-    
+
     return this.coursesRepository.save(course);
   }
-
   async batchDelete(ids: number[], userId: number, userRole: UserRole): Promise<void> {
     // Validate input
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       throw new BadRequestException('No course IDs provided for deletion');
     }
-    
+
     // For instructors, verify they own all courses
     if (userRole === UserRole.INSTRUCTOR) {
       for (const id of ids) {
@@ -183,11 +205,18 @@ export class CoursesService {
         }
       }
     }
-    
+
     const result = await this.coursesRepository.delete(ids);
-    
+
     if (result.affected === 0) {
       throw new NotFoundException(`No courses were deleted. Courses may not exist.`);
+    }
+
+    // Remove from search index
+    try {
+      await Promise.all(ids.map(id => this.searchService.removeCourseFromIndex(id)));
+    } catch (error) {
+      console.error('Failed to remove courses from search index:', error);
     }
   }
 
@@ -218,7 +247,7 @@ export class CoursesService {
         // Instructor not found
       }
     }
-    
+
     // Get department name
     let departmentName = '';
     if (course.department) {
@@ -231,7 +260,7 @@ export class CoursesService {
         // Department not found
       }
     }
-    
+
     return {
       id: course.id,
       code: course.code,

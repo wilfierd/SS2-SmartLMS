@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CourseModule } from './entities/course-module.entity';
@@ -7,6 +7,7 @@ import { LessonMaterial } from './entities/lesson-material.entity';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
 import { UpdateCourseModuleDto } from './dto/update-course-module.dto';
 import { CoursesService } from './courses.service';
+import { SearchService } from '../search/search.service';
 import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
@@ -19,6 +20,8 @@ export class CourseModulesService {
     @InjectRepository(LessonMaterial)
     private lessonMaterialsRepository: Repository<LessonMaterial>,
     private coursesService: CoursesService,
+    @Inject(forwardRef(() => SearchService))
+    private searchService: SearchService,
   ) { }
 
   async create(courseId: number, createCourseModuleDto: CreateCourseModuleDto, userId: number, userRole: UserRole): Promise<any> {
@@ -67,9 +70,7 @@ export class CourseModulesService {
         // Use a query to get the last inserted ID
         const lastInsertResult = await this.courseModulesRepository.query('SELECT LAST_INSERT_ID() as id');
         moduleId = lastInsertResult && lastInsertResult.length > 0 ? lastInsertResult[0].id : null;
-      }
-
-      return {
+      } const moduleData = {
         id: moduleId,
         courseId,
         title: createCourseModuleDto.title,
@@ -77,6 +78,16 @@ export class CourseModulesService {
         orderIndex,
         isPublished: createCourseModuleDto.isPublished !== undefined ? createCourseModuleDto.isPublished : true
       };
+
+      // Index the module in search
+      try {
+        await this.searchService.indexModule(moduleId, courseId);
+      } catch (searchError) {
+        console.error('Error indexing module in search:', searchError.message);
+        // Don't throw error - search failure shouldn't break module creation
+      }
+
+      return moduleData;
     } catch (error) {
       console.error('Error creating module:', error.message);
       throw error;
@@ -156,10 +167,16 @@ export class CourseModulesService {
       // Add updated_at and WHERE clause
       setClauses.push('updated_at = NOW()');
       query += setClauses.join(', ') + ' WHERE id = ?';
-      params.push(id);
-
-      // Execute update
+      params.push(id);      // Execute update
       await this.courseModulesRepository.query(query, params);
+
+      // Update module in search index
+      try {
+        await this.searchService.updateModuleIndex(id, module.course_id);
+      } catch (searchError) {
+        console.error('Error updating module in search index:', searchError.message);
+        // Don't throw error - search failure shouldn't break module update
+      }
 
       // Get updated module
       return this.findOne(id);
@@ -179,15 +196,21 @@ export class CourseModulesService {
         if (!isInstructor) {
           throw new ForbiddenException('You can only delete modules of your own courses');
         }
-      }
-
-      const result = await this.courseModulesRepository.query(
+      } const result = await this.courseModulesRepository.query(
         'DELETE FROM course_modules WHERE id = ?',
         [id]
       );
 
       if (result.affectedRows === 0) {
         throw new NotFoundException(`Course module with ID ${id} not found`);
+      }
+
+      // Remove module from search index
+      try {
+        await this.searchService.removeModuleFromIndex(id, module.course_id);
+      } catch (searchError) {
+        console.error('Error removing module from search index:', searchError.message);
+        // Don't throw error - search failure shouldn't break module deletion
       }
     } catch (error) {
       console.error('Error removing module:', error.message);

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Lesson } from './entities/lesson.entity';
@@ -9,18 +9,21 @@ import { CreateLessonMaterialDto } from './dto/create-lesson-material.dto';
 import { UpdateLessonMaterialDto } from './dto/update-lesson-material.dto';
 import { CourseModulesService } from './course-modules.service';
 import { CoursesService } from './courses.service';
+import { SearchService } from '../search/search.service';
 import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
 export class LessonsService {
-  constructor(
-    @InjectRepository(Lesson)
-    private lessonsRepository: Repository<Lesson>,
-    @InjectRepository(LessonMaterial)
-    private lessonMaterialsRepository: Repository<LessonMaterial>,
-    private courseModulesService: CourseModulesService,
-    private coursesService: CoursesService,
-  ) {}
+    constructor(
+      @InjectRepository(Lesson)
+      private lessonsRepository: Repository<Lesson>,
+      @InjectRepository(LessonMaterial)
+      private lessonMaterialsRepository: Repository<LessonMaterial>,
+      private courseModulesService: CourseModulesService,
+      private coursesService: CoursesService,
+      @Inject(forwardRef(() => SearchService))
+      private searchService: SearchService,
+    ) { }
 
   async create(
     createLessonDto: CreateLessonDto,
@@ -48,14 +51,22 @@ export class LessonsService {
         order: { orderIndex: 'DESC' },
       });
       orderIndex = lastLesson ? lastLesson.orderIndex + 1 : 0;
-    }
-
-    const lesson = this.lessonsRepository.create({
+    } const lesson = this.lessonsRepository.create({
       ...createLessonDto,
       orderIndex,
     });
 
-    return this.lessonsRepository.save(lesson);
+    const savedLesson = await this.lessonsRepository.save(lesson);
+
+    // Index lesson in search
+    try {
+      await this.searchService.indexLesson(savedLesson.id, moduleId, courseId);
+    } catch (searchError) {
+      console.error('Error indexing lesson in search:', searchError.message);
+      // Don't throw error - search failure shouldn't break lesson creation
+    }
+
+    return savedLesson;
   }
 
   async findByModule(moduleId: number): Promise<Lesson[]> {
@@ -113,12 +124,20 @@ export class LessonsService {
           throw new ForbiddenException('You can only move lessons to modules of your own courses');
         }
       }
-    }
-
-    // Update lesson properties
+    }    // Update lesson properties
     Object.assign(lesson, updateLessonDto);
 
-    return this.lessonsRepository.save(lesson);
+    const updatedLesson = await this.lessonsRepository.save(lesson);
+
+    // Update lesson in search index
+    try {
+      await this.searchService.updateLessonIndex(id, lesson.moduleId, courseId);
+    } catch (searchError) {
+      console.error('Error updating lesson in search index:', searchError.message);
+      // Don't throw error - search failure shouldn't break lesson update
+    }
+
+    return updatedLesson;
   }
 
   async remove(id: number, userId: number, userRole: UserRole): Promise<void> {
@@ -133,12 +152,18 @@ export class LessonsService {
       if (!isInstructor) {
         throw new ForbiddenException('You can only delete lessons of your own courses');
       }
-    }
-
-    const result = await this.lessonsRepository.delete(id);
+    } const result = await this.lessonsRepository.delete(id);
 
     if (result.affected === 0) {
       throw new NotFoundException(`Lesson with ID ${id} not found`);
+    }
+
+    // Remove lesson from search index
+    try {
+      await this.searchService.removeLessonFromIndex(id, lesson.moduleId, courseId);
+    } catch (searchError) {
+      console.error('Error removing lesson from search index:', searchError.message);
+      // Don't throw error - search failure shouldn't break lesson deletion
     }
   }
 

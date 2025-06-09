@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { SearchController } from './search.controller';
 import { CoursesModule } from '../courses/courses.module';
@@ -8,8 +8,8 @@ import { DepartmentsModule } from '../departments/departments.module';
 
 @Module({
   imports: [
-    CoursesModule,
-    DiscussionsModule,
+    forwardRef(() => CoursesModule),
+    forwardRef(() => DiscussionsModule),
     UsersModule,
     DepartmentsModule,
   ],
@@ -17,4 +17,4 @@ import { DepartmentsModule } from '../departments/departments.module';
   providers: [SearchService],
   exports: [SearchService],
 })
-export class SearchModule {} 
+export class SearchModule { } 

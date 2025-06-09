@@ -15,6 +15,7 @@ import { LessonMaterialsController } from './lesson-materials.controller';
 import { DepartmentsModule } from '../departments/departments.module';
 import { UsersModule } from '../users/users.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
+import { SearchModule } from '../search/search.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
     DepartmentsModule,
     UsersModule,
     forwardRef(() => EnrollmentsModule),
+    forwardRef(() => SearchModule),
   ],
   providers: [CoursesService, CourseModulesService, LessonsService],
   controllers: [
@@ -32,4 +34,4 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
   ],
   exports: [CoursesService, CourseModulesService, LessonsService],
 })
-export class CoursesModule {}
+export class CoursesModule { }
