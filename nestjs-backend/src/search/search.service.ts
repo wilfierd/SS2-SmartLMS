@@ -78,7 +78,8 @@ export class SearchService implements OnModuleInit {
         'status',
         'difficulty',
         'instructorId',
-        'departmentId'
+        'departmentId',
+        'courseId'
       ]);
 
       // Configure sortable attributes
@@ -213,6 +214,8 @@ export class SearchService implements OnModuleInit {
         instructorId: discussion.createdBy,
         department: discussion.course?.department?.name || '',
         departmentId: discussion.course?.departmentId,
+        courseId: discussion.course?.id,
+        courseTitle: discussion.course?.title || '',
         createdAt: discussion.createdAt.toISOString(),
         tags: [
           discussion.course?.department?.name,

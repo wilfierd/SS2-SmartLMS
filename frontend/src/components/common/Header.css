@@ -29,46 +29,47 @@
   }
     body.sidebar-expanded .admin-header {
     left: var(--sidebar-width-expanded);
-  }
-
-  .header-title {
-    flex: 0 1 auto;
+  }  .header-title {
+    flex: 0 0 auto; /* Don't shrink the title */
     min-width: 0;
-    margin-right: 20px;
+    margin-right: 24px;
   }
 
   .header-title h1 {
-    font-size: 22px;
-    font-weight: 400;
-    color: #202124;
+    font-size: 24px;
+    font-weight: 500;
+    color: #1f2937;
     margin: 0;
-    line-height: 1.2;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.025em;
   }  .header-search {
     display: flex;
     align-items: center;
-    width: 400px;
-    max-width: 400px;
-    min-width: 300px;
+    justify-content: center;
     flex: 1 1 auto;
-    margin-right: 20px;
+    margin-right: 24px;
+    min-width: 0; /* Allow shrinking */
+    max-width: 720px; /* Ensure consistent max width */
     /* Remove the old search styling since SearchBar has its own */
   }
 
   .header-search .search-bar-container {
     width: 100%;
-  }  .header-right {
+    max-width: 720px;
+    margin: 0 auto; /* Center the search bar */
+  }.header-right {
     display: flex;
     align-items: center;
     gap: 16px;
     flex: 0 0 auto; /* Don't allow to grow, but can shrink if needed */
     min-width: 0;
-    /* Prevent the right section from overflowing by setting a maximum width */
-    max-width: calc(100vw - var(--sidebar-width-collapsed) - 400px); /* Leave space for title and search */
+    /* Allow flexible space management */
     overflow: visible; /* Allow dropdown to show */
-  }  .header-date {
+  }.header-date {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -511,5 +512,87 @@
     .dropdown-item {
       padding: 10px 12px;
       font-size: 13px;
+    }
+  }
+  /* Responsive adjustments for search bar */
+  @media (max-width: 1200px) {
+    .header-search {
+      flex: 1 1 auto;
+      max-width: 600px; /* Slightly smaller on medium screens */
+    }
+    
+    .header-search .search-bar-container {
+      max-width: 600px;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .header-search {
+      max-width: 480px;
+    }
+    
+    .header-search .search-bar-container {
+      max-width: 480px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .admin-header {
+      padding: 10px 15px;
+      gap: 10px;
+    }
+
+    .header-title {
+      margin-right: 15px;
+    }
+
+    .header-title h1 {
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .header-search {
+      flex: 1 1 auto;
+      max-width: none; /* Remove max-width constraint on tablet */
+      margin-right: 15px;
+    }
+    
+    .header-search .search-bar-container {
+      max-width: none;
+    }
+
+    .header-right {
+      gap: 12px;
+    }
+
+    .header-date {
+      display: none; /* Hide date on mobile to save space */
+    }
+  }
+  @media (max-width: 480px) {
+    .admin-header {
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .header-title {
+      margin-right: 10px;
+    }
+
+    .header-title h1 {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .header-search {
+      margin-right: 10px;
+    }
+    
+    .header-search .search-bar-container {
+      max-width: none;
+    }
+
+    .header-right {
+      gap: 8px;
     }
   }

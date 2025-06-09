@@ -128,7 +128,6 @@ const Header = ({ title }) => {
     console.log('Profile clicked, current showDropdown:', showDropdown); // Debug log
     setShowDropdown(prev => !prev);
   };
-
   // Handle search result selection
   const handleSearchResult = (result) => {
     // Navigate based on result type
@@ -136,13 +135,18 @@ const Header = ({ title }) => {
       case 'course':
         const courseId = result.id.replace('course_', '');
         navigate(`/courses/${courseId}/detail`);
-        break;
-      case 'discussion':
+        break;      case 'discussion':
         const discussionId = result.id.replace('discussion_', '');
-        // You'll need to extract course ID from the result or make another API call
-        // For now, navigate to discussions (you might need to adjust this)
-        notification.info(`Opening discussion: ${result.title}`);
-        // navigate(`/courses/${courseId}/discussions/${discussionId}`);
+        // Check if we have courseId in the result
+        if (result.courseId) {
+          // Navigate to course detail page with discussion tab and specific discussion
+          navigate(`/courses/${result.courseId}/detail?tab=discussion&discussionId=${discussionId}`);
+        } else {
+          // Fallback: navigate to discussions overview
+          notification.info(`Opening discussion: ${result.title}`);
+          // Try to find a suitable fallback route
+          navigate('/discussions');
+        }
         break;
       case 'announcement':
         notification.info(`Opening announcement: ${result.title}`);

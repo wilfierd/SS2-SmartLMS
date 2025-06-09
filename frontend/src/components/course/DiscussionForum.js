@@ -7,7 +7,7 @@ import notification from '../../utils/notification';
 import AuthContext from '../../context/AuthContext';
 import './DiscussionForum.css';
 
-const DiscussionForum = ({ courseId }) => {
+const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
   const { auth } = useContext(AuthContext);
   const [discussions, setDiscussions] = useState([]);
   const [selectedDiscussion, setSelectedDiscussion] = useState(null);
@@ -52,11 +52,17 @@ const DiscussionForum = ({ courseId }) => {
         
         console.log(`Successfully fetched ${response.data.length} discussions`);
         
-        const discussionsData = response.data || [];
-        setDiscussions(discussionsData);
+        const discussionsData = response.data || [];        setDiscussions(discussionsData);
         
-        // If no discussion is selected but we have discussions, select the first one
-        if (discussionsData.length > 0 && !selectedDiscussion) {
+        // Priority selection: selectedDiscussionId prop > current selection > first discussion
+        if (selectedDiscussionId) {
+          const discussionExists = discussionsData.find(d => d.id === parseInt(selectedDiscussionId));
+          if (discussionExists) {
+            setSelectedDiscussion(parseInt(selectedDiscussionId));
+          } else if (discussionsData.length > 0 && !selectedDiscussion) {
+            setSelectedDiscussion(discussionsData[0].id);
+          }
+        } else if (discussionsData.length > 0 && !selectedDiscussion) {
           setSelectedDiscussion(discussionsData[0].id);
         }
       } catch (error) {
@@ -106,11 +112,20 @@ const DiscussionForum = ({ courseId }) => {
         setIsPostsLoading(false);
       }
     };
-    
-    if (selectedDiscussion) {
+      if (selectedDiscussion) {
       fetchDiscussionPosts();
     }
   }, [selectedDiscussion, courseId, auth.token, API_URL]);
+
+  // Handle selectedDiscussionId prop changes
+  useEffect(() => {
+    if (selectedDiscussionId && discussions.length > 0) {
+      const discussionExists = discussions.find(d => d.id === parseInt(selectedDiscussionId));
+      if (discussionExists && selectedDiscussion !== parseInt(selectedDiscussionId)) {
+        setSelectedDiscussion(parseInt(selectedDiscussionId));
+      }
+    }
+  }, [selectedDiscussionId, discussions, selectedDiscussion]);
 
   // Create a new discussion
   const handleCreateDiscussion = async (e) => {

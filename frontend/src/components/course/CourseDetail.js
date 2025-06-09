@@ -1,6 +1,6 @@
 // src/components/course/CourseDetail.js - Optimized version using custom hooks
-import React, { useState, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
 import Sidebar from '../common/Sidebar';
 import Header from '../common/Header';
@@ -47,6 +47,7 @@ const getYouTubeEmbedUrl = (url) => {
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { auth } = useContext(AuthContext);
 
   // Use our custom hook for all course data
@@ -67,13 +68,23 @@ const CourseDetail = () => {
   const [activeTab, setActiveTab] = useState('content');
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedLesson, setSelectedLesson] = useState(null);
-
   // Modal states
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
+
+  // Handle URL parameters for tab and discussion navigation
+  const discussionId = searchParams.get('discussionId');
+  const tabFromUrl = searchParams.get('tab');
+
+  // Effect to handle URL parameters on component mount
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   // Auto-select first module and lesson when data loads
   React.useEffect(() => {
@@ -509,10 +520,8 @@ const CourseDetail = () => {
 
           {activeTab === 'statistics' && permissions.canViewStudents && (
             <CourseStatistics courseId={courseId} auth={auth} />
-          )}
-
-          {activeTab === 'discussion' && (
-            <DiscussionForum courseId={courseId} />
+          )}          {activeTab === 'discussion' && (
+            <DiscussionForum courseId={courseId} selectedDiscussionId={discussionId} />
           )}
         </div>
       </div>
