@@ -3,6 +3,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { extname } from 'path';
+import * as multer from 'multer';
 import { UploadsController } from './uploads.controller';
 import { UploadsService } from './uploads.service';
 import { CoursesModule } from '../courses/courses.module';
@@ -19,12 +20,12 @@ import { Course } from '../courses/entities/course.entity';
       LessonMaterial,
       Lesson,
       Course
-    ]), MulterModule.registerAsync({
+    ]),    MulterModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         // Use memory storage so files are kept in memory as buffers
         // This allows UploadsService to handle file saving manually
-        storage: 'memory',
+        storage: multer.memoryStorage(),
         limits: {
           fileSize: 10 * 1024 * 1024, // 10MB limit by default
         },

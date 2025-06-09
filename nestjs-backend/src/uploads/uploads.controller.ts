@@ -27,10 +27,53 @@ export class UploadsController {
     private readonly assignmentsService: AssignmentsService
   ) { }
 
+  @Post('thumbnail')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
+  @UseInterceptors(FileInterceptor('thumbnail'))
+  @ApiOperation({ summary: 'Upload thumbnail (for course creation)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        thumbnail: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async uploadThumbnail(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+    }
+
+    try {
+      // Save the file (this will be a temporary upload until course is created)
+      const filePath = await this.uploadsService.uploadCourseThumbnail(file);
+
+      return {
+        thumbnailUrl: filePath
+      };
+    } catch (error) {
+      this.logger.error('Error uploading thumbnail:', error);
+      throw new InternalServerErrorException('Failed to upload thumbnail');
+    }
+  }
   @Post('courses/:courseId/thumbnail')
   @UseGuards(RolesGuard)
   @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('thumbnail'))
   @ApiOperation({ summary: 'Upload course thumbnail' })
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'courseId', type: Number })
@@ -38,7 +81,7 @@ export class UploadsController {
     schema: {
       type: 'object',
       properties: {
-        file: {
+        thumbnail: {
           type: 'string',
           format: 'binary',
         },

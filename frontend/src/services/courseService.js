@@ -297,11 +297,16 @@ class CourseService {
   }
 
   // File Operations
-  async uploadThumbnail(file) {
+  async uploadThumbnail(file, courseId = null) {
     const formData = new FormData();
     formData.append('thumbnail', file);
     
-    const response = await this.api.post('/upload/thumbnail', formData, {
+    // Use course-specific endpoint if courseId is provided, otherwise use general endpoint
+    const endpoint = courseId 
+      ? `/uploads/courses/${courseId}/thumbnail`
+      : '/uploads/thumbnail';
+    
+    const response = await this.api.post(endpoint, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;

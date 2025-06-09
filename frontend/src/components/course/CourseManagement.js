@@ -1,5 +1,5 @@
 // src/components/course/CourseManagement.js
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import AuthContext from '../../context/AuthContext';
 import './CourseManagement.css';
 import Sidebar from '../common/Sidebar';
@@ -8,10 +8,12 @@ import axios from 'axios';
 import config from '../../config';
 import notification from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
+import CourseService from '../../services/courseService';
 
 const CourseManagement = () => {
   const { auth } = useContext(AuthContext);
   const navigate = useNavigate();
+  const courseServiceInstance = CourseService;
   const [isLoading, setIsLoading] = useState(false);
   const [courses, setCourses] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
@@ -161,9 +163,8 @@ const CourseManagement = () => {
   const handleViewCourseDetails = (courseId) => {
     navigate(`/courses/${courseId}/detail`);
   };
-
   // Fetch courses from the API
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     setIsLoading(true);
     
     try {
@@ -184,10 +185,9 @@ const CourseManagement = () => {
       notification.error("Failed to load courses. Please try again.");
       setIsLoading(false);
     }
-  };
-
+  }, [auth.token, auth.user.role, auth.user.id, permissions.canViewAllCourses]);
   // Fetch enrolled courses for students
-  const fetchEnrolledCourses = async () => {
+  const fetchEnrolledCourses = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/enrollments/my-courses`, {
         headers: { Authorization: `Bearer ${auth.token}` }
@@ -198,10 +198,9 @@ const CourseManagement = () => {
       console.error("Error fetching enrolled courses:", err);
       notification.error("Failed to load your enrolled courses.");
     }
-  };
-
+  }, [auth.token]);
   // Fetch instructors for the dropdown
-  const fetchInstructors = async () => {
+  const fetchInstructors = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/instructors`, {
         headers: { Authorization: `Bearer ${auth.token}` }
@@ -212,10 +211,9 @@ const CourseManagement = () => {
       console.error("Error fetching instructors:", err);
       notification.error("Failed to load instructors list.");
     }
-  };
-
+  }, [auth.token]);
   // Fetch departments for the dropdown
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/departments`, {
         headers: { Authorization: `Bearer ${auth.token}` }
@@ -226,7 +224,7 @@ const CourseManagement = () => {
       console.error("Error fetching departments:", err);
       notification.error("Failed to load departments list.");
     }
-  };
+  }, [auth.token]);
 
   // Reset form data
   const resetFormData = () => {
@@ -305,21 +303,20 @@ const CourseManagement = () => {
     try {
       // Show loading toast
       const loadingToastId = notification.loading(editingCourse ? 'Updating course...' : 'Creating course...');
-      
-      // Handle file upload first if we have a file
+        // Handle file upload first if we have a file
       let thumbnailUrl = null;
       if (formData.thumbnailImage) {
-        const fileFormData = new FormData();
-        fileFormData.append('thumbnail', formData.thumbnailImage);
-        
-        const uploadResponse = await axios.post(`${API_URL}/upload/thumbnail`, fileFormData, {
-          headers: { 
-            'Authorization': `Bearer ${auth.token}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        
-        thumbnailUrl = uploadResponse.data.thumbnailUrl;
+        try {          // For editing: use course-specific endpoint, for creation: use general endpoint
+          const courseId = editingCourse ? editingCourse.id : null;
+          const uploadResponse = await courseServiceInstance.uploadThumbnail(formData.thumbnailImage, courseId);
+          thumbnailUrl = uploadResponse.thumbnailUrl;
+        } catch (error) {
+          console.error('Error uploading thumbnail:', error);
+          notification.error('Failed to upload thumbnail. Please try again.');
+          notification.dismiss(loadingToastId);
+          setIsLoading(false);
+          return;
+        }
       }
       
       // Prepare the course data
@@ -723,12 +720,11 @@ const CourseManagement = () => {
                         if (!e.target.closest('.course-checkbox') && !e.target.closest('.course-menu-btn')) {
                           handleViewCourseDetails(course.id);
                         }
-                      }}
-                      style={{ cursor: 'pointer' }}
+                      }}                      style={{ cursor: 'pointer' }}
                     >
                       <div className="course-thumbnail">
-                        {course.thumbnail ? (
-                          <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {course.thumbnailUrl ? (
+                          <img src={course.thumbnailUrl} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <div className="placeholder-thumbnail"></div>
                         )}
@@ -794,13 +790,12 @@ const CourseManagement = () => {
                           onChange={(e) => {
                             handleToggleSelection(course.id);
                           }}
-                        />
-                      </div>
+                        />                      </div>
                     )}
                     
                     <div className="course-thumbnail">
-                      {course.thumbnail ? (
-                        <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {course.thumbnailUrl ? (
+                        <img src={course.thumbnailUrl} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div className="placeholder-thumbnail"></div>
                       )}
@@ -1046,11 +1041,10 @@ const CourseManagement = () => {
                         name="thumbnailImage"
                         onChange={handleFileChange}
                         accept="image/*"
-                      />
-                      <small>
+                      />                      <small>
                         {formData.thumbnailImage 
                           ? formData.thumbnailImage.name 
-                          : editingCourse && editingCourse.thumbnail 
+                          : editingCourse && editingCourse.thumbnailUrl 
                             ? 'Current thumbnail will be preserved' 
                             : 'No file chosen'}
                       </small>
