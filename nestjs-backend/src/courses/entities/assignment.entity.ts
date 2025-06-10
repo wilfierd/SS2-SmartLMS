@@ -42,13 +42,12 @@ export class Assignment {
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id' })
   course: Course;
-
   @Column({ name: 'lesson_id' })
-  lessonId: number; // This actually references course_modules.id in the database
+  lessonId: number; // This references course_modules.id in the database
 
   @ManyToOne(() => CourseModule, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'lesson_id' })
-  lesson: CourseModule; // Actually references a module
+  lesson: CourseModule; // References a module
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -29,7 +29,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { UserRole } from '../common/enums/user-role.enum';
 import { CourseStatus } from './entities/course.entity';
 import { DataSource } from 'typeorm';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -604,22 +604,23 @@ export class CoursesController {
       console.error('Error batch deleting courses:', error);
       throw error;
     }
-  }
-
-  @Post(':courseId/lessons')
+  } @Post(':courseId/lessons')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
-  @UseInterceptors(FilesInterceptor('materials', 10, { storage: lessonStorage }))
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'materials', maxCount: 10 },
+    { name: 'images', maxCount: 10 }
+  ], { storage: lessonStorage }))
   async createLesson(
     @Param('courseId') courseId: string,
     @Body() createLessonDto: CreateLessonDto,
-    @UploadedFiles() files: Array<Express.Multer.File>,
+    @UploadedFiles() files: { materials?: Express.Multer.File[], images?: Express.Multer.File[] },
     @Request() req,
   ) {
-    // Log incoming data for debugging
-    console.log('Creating lesson for course:', courseId);
+    // Log incoming data for debugging    console.log('Creating lesson for course:', courseId);
     console.log('DTO:', JSON.stringify(createLessonDto));
-    console.log('Files:', files ? files.length : 0);
+    console.log('Materials files:', files?.materials?.length || 0);
+    console.log('Image files:', files?.images?.length || 0);
 
     // Create a direct connection for transaction
     const connection = await this.dataSource.createQueryRunner();
@@ -677,27 +678,27 @@ export class CoursesController {
         nextOrder = parseInt(orderResult[0].max_order) + 1;
       }
 
-      console.log('Next order index:', nextOrder);
-
-      // Process video URL for video content type
+      console.log('Next order index:', nextOrder);      // Process content for rich content type
       let finalContent = content;
-      if (contentType === 'video' && videoUrl) {
-        finalContent = videoUrl;
+      let finalVideoUrl: string | null = null;
+
+      if (contentType === 'rich_content') {
+        finalVideoUrl = videoUrl || null;
       }
 
       // Insert the lesson
       try {
         const insertQuery = `
           INSERT INTO lessons 
-          (module_id, title, description, content_type, content, order_index, is_published) 
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          (module_id, title, description, content_type, content, video_url, order_index, is_published) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
         console.log('Insert query:', insertQuery);
-        console.log('Insert params:', [moduleId, title, description || null, contentType, finalContent || null, nextOrder, 1]);
+        console.log('Insert params:', [moduleId, title, description || null, contentType, finalContent || null, finalVideoUrl, nextOrder, 1]);
 
         const lessonResult = await connection.query(
           insertQuery,
-          [moduleId, title, description || null, contentType, finalContent || null, nextOrder, 1]
+          [moduleId, title, description || null, contentType, finalContent || null, finalVideoUrl, nextOrder, 1]
         );
 
         console.log('Lesson insert result:', JSON.stringify(lessonResult));
@@ -716,11 +717,9 @@ export class CoursesController {
           }
         }
 
-        console.log('Lesson ID:', lessonId);
-
-        // Process uploaded files as materials if any
-        if (files && files.length > 0) {
-          for (const file of files) {
+        console.log('Lesson ID:', lessonId);        // Process uploaded material files if any
+        if (files?.materials && files.materials.length > 0) {
+          for (const file of files.materials) {
             const filePath = `/uploads/lessons/${courseId}/${file.filename}`;
             const fileExt = path.extname(file.originalname).toLowerCase();
 
@@ -754,25 +753,28 @@ export class CoursesController {
           }
         }
 
-        // If video URL is provided for non-video content type, add it as a material
-        if (videoUrl && contentType !== 'video') {
-          const videoMaterialQuery = `
-            INSERT INTO lesson_materials 
-            (lesson_id, title, external_url, material_type) 
-            VALUES (?, ?, ?, ?)
-          `;
-          console.log('Video material query:', videoMaterialQuery);
-          console.log('Video material params:', [lessonId, 'Video Reference', videoUrl, 'video']);
+        // Process uploaded image files if any
+        if (files?.images && files.images.length > 0) {
+          for (const image of files.images) {
+            const filePath = `/uploads/lessons/${courseId}/${image.filename}`;
 
-          const videoMaterialResult = await connection.query(
-            videoMaterialQuery,
-            [lessonId, 'Video Reference', videoUrl, 'video']
-          );
+            // Insert the image as a material with type 'image'
+            const imageInsertQuery = `
+              INSERT INTO lesson_materials 
+              (lesson_id, title, file_path, material_type) 
+              VALUES (?, ?, ?, ?)
+            `;
+            console.log('Image insert query:', imageInsertQuery);
+            console.log('Image insert params:', [lessonId, image.originalname, filePath, 'image']);
 
-          console.log('Video material insert result:', JSON.stringify(videoMaterialResult));
-        }
+            const imageResult = await connection.query(
+              imageInsertQuery,
+              [lessonId, image.originalname, filePath, 'image']
+            );
 
-        await connection.commitTransaction();
+            console.log('Image insert result:', JSON.stringify(imageResult));
+          }
+        } await connection.commitTransaction();
         console.log('Transaction committed successfully');
 
         return {
@@ -786,11 +788,17 @@ export class CoursesController {
       }
 
     } catch (error) {
-      await connection.rollbackTransaction();
+      await connection.rollbackTransaction();      // Clean up uploaded files in case of error
+      if (files) {
+        // Clean up material files
+        files.materials?.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
 
-      // Clean up uploaded files in case of error
-      if (files && files.length > 0) {
-        files.forEach(file => {
+        // Clean up image files
+        files.images?.forEach(file => {
           if (fs.existsSync(file.path)) {
             fs.unlinkSync(file.path);
           }
@@ -835,11 +843,9 @@ export class CoursesController {
         maxPoints,
         dueDate,
         allowLateSubmissions
-      } = createAssignmentDto;
-
-      // Validation
-      if (!title || !lessonId || !dueDate) {
-        throw new BadRequestException('Title, lesson, and due date are required');
+      } = createAssignmentDto;      // Validation
+      if (!title || !dueDate) {
+        throw new BadRequestException('Title and due date are required');
       }
 
       // For instructors, verify they teach this course
@@ -939,13 +945,11 @@ export class CoursesController {
   @UseGuards(JwtAuthGuard)
   async getAssignmentsForCourse(@Param('courseId') courseId: string, @Request() req) {
     try {
-      console.log(`Fetching assignments for course: ${courseId}`);
-
-      // Query assignments using raw SQL like in Express
+      console.log(`Fetching assignments for course: ${courseId}`);      // Query assignments using raw SQL like in Express
       const assignments = await this.dataSource.query(
-        `SELECT a.*, cm.title as lesson_title
+        `SELECT a.*, cm.title as module_title
          FROM assignments a
-         JOIN course_modules cm ON a.lesson_id = cm.id
+         LEFT JOIN course_modules cm ON a.lesson_id = cm.id
          WHERE a.course_id = ?
          ORDER BY a.due_date ASC`,
         [courseId]

@@ -20,10 +20,13 @@ export class UpdateLessonDto {
   @IsOptional()
   @IsEnum(ContentType)
   contentType?: ContentType;
-
   @IsOptional()
   @IsString()
   content?: string;
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
 
   @IsOptional()
   @IsNumber()
@@ -34,7 +37,7 @@ export class UpdateLessonDto {
   @IsNumber()
   @Type(() => Number)
   orderIndex?: number;
-  
+
   // Add transformation from 'order' to 'orderIndex' for compatibility
   @IsOptional()
   @IsNumber()

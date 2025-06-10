@@ -276,14 +276,13 @@ export class CourseModulesService {
               externalUrl: urls[index] || null,
               materialType: types[index] || 'document'
             }));
-          }
-
-          return {
+          } return {
             id: lesson.id,
             title: lesson.title,
             description: lesson.description,
             contentType: lesson.content_type,
             content: lesson.content,
+            videoUrl: lesson.video_url,
             durationMinutes: lesson.duration_minutes,
             orderIndex: lesson.order_index,
             isPublished: lesson.is_published === 1,

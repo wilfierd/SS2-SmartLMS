@@ -12,37 +12,10 @@ import LessonForm from './forms/LessonForm';
 import AssignmentForm from './forms/AssignmentForm';
 import QuizForm from './forms/QuizForm';
 import EnrollmentModal from './modals/EnrollmentModal';
+import VideoPlayer from './VideoPlayer';
 import { useCourseData } from '../../hook/useCourse';
 import notification from '../../utils/notification';
 import './CourseDetail.css';
-
-// Utility functions for YouTube video handling
-const isYouTubeUrl = (url) => {
-  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
-  return youtubeRegex.test(url);
-};
-
-const getYouTubeEmbedUrl = (url) => {
-  // Handle different YouTube URL formats
-  let videoId = '';
-
-  // For youtube.com/watch?v=VIDEO_ID
-  if (url.includes('youtube.com/watch')) {
-    const urlParams = new URLSearchParams(url.split('?')[1]);
-    videoId = urlParams.get('v');
-  }
-  // For youtu.be/VIDEO_ID
-  else if (url.includes('youtu.be/')) {
-    videoId = url.split('youtu.be/')[1].split('?')[0];
-  }
-  // For youtube.com/embed/VIDEO_ID
-  else if (url.includes('youtube.com/embed/')) {
-    videoId = url.split('youtube.com/embed/')[1].split('?')[0];
-  }
-
-  // Add parameters for better embedding
-  return `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&modestbranding=1`;
-};
 
 const CourseDetail = () => {
   const { courseId } = useParams();
@@ -173,12 +146,11 @@ const CourseDetail = () => {
           {/* Course Header */}
           <div className="course-header">
             <div className="course-info">
-              <h1>{course.course.title}</h1>
-              <div className="course-meta">
+              <h1>{course.course.title}</h1>              <div className="course-meta">
                 <span className="course-code">{course.course.code}</span>
                 <span className="course-instructor">Instructor: {course.course.instructor}</span>
-                <span className={`status-badge ${course.course.status.toLowerCase()}`}>
-                  {course.course.status}
+                <span className={`status-badge ${course.course.status?.toLowerCase() || 'draft'}`}>
+                  {course.course.status || 'Draft'}
                 </span>
                 {permissions.isEnrolled && (
                   <span className="enrolled-badge">Enrolled</span>
@@ -303,19 +275,16 @@ const CourseDetail = () => {
                                 key={lesson.id}
                                 className={selectedLesson === lesson.id ? 'active' : ''}
                                 onClick={() => setSelectedLesson(lesson.id)}
-                              >
-                                <span className="session-icon">
-                                  {lesson.contentType === 'video' ? '🎥' :
-                                    lesson.contentType === 'quiz' ? '🧩' :
-                                      lesson.contentType === 'assignment' ? '📝' : '📄'}
+                              >                                <span className="session-icon">
+                                  {lesson.contentType === 'quiz' ? '🧩' :
+                                    lesson.contentType === 'assignment' ? '📝' :
+                                      lesson.contentType === 'live_session' ? '🎪' : '📚'}
                                 </span>
                                 {lesson.title}
                               </li>
-                            ))}
-
-                            {/* Show assignments for this module */}
+                            ))}                            {/* Show assignments for this module */}
                             {assignments.assignments
-                              .filter(a => a.lesson_id && module.lessons.some(l => l.id === a.lesson_id))
+                              .filter(a => a.lesson_id === module.id)
                               .map(assignment => (
                                 <li
                                   key={`assignment-${assignment.id}`}
@@ -438,72 +407,100 @@ const CourseDetail = () => {
                         <div className="session-description">
                           {currentLesson.description}
                         </div>
-                      )}
+                      )}                      {/* Rich Content Type - combines text, video, and images */}
+                      {currentLesson.contentType === 'rich_content' && (
+                        <>
+                          {/* Text Content */}
+                          {currentLesson.content && (
+                            <div className="session-main-content">
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: currentLesson.content
+                                }}
+                              />
+                            </div>
+                          )}
 
-                      {/* Content based on type */}
-                      {currentLesson.contentType === 'video' && currentLesson.content && (
-                        <div className="video-container">
-                          <iframe
-                            src={currentLesson.content.includes('youtube') ?
-                              currentLesson.content.replace('watch?v=', 'embed/') :
-                              currentLesson.content
-                            }
-                            title={currentLesson.title}
-                            allowFullScreen
-                          />
-                        </div>
-                      )}
-
-                      {currentLesson.contentType === 'document' && currentLesson.content && (
-                        <div className="session-main-content">
-                          <div
-                            dangerouslySetInnerHTML={{
-                              __html: currentLesson.content
-                            }}
-                          />
-                        </div>
-                      )}                      {/* Materials */}
+                          {/* Video Content */}
+                          {currentLesson.videoUrl && (
+                            <div className="rich-content-video">
+                              <h4>Lesson Video</h4>
+                              <VideoPlayer
+                                videoUrl={currentLesson.videoUrl}
+                                title={currentLesson.title}
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}{/* Materials */}
                       {currentLesson.materials && currentLesson.materials.length > 0 && (
                         <div className="session-materials">
                           <h4>Lesson Materials</h4>
-                          <div className="materials-list">
-                            {currentLesson.materials.map(material => (
-                              <div key={material.id} className="material-item">
-                                {material.externalUrl ? (
-                                  isYouTubeUrl(material.externalUrl) ? (
-                                    <div className="material-video">
-                                      <h5 className="material-title">{material.title}</h5>                                      <div className="video-container">
-                                        <iframe
-                                          src={getYouTubeEmbedUrl(material.externalUrl)}
-                                          title={material.title}
-                                          frameBorder="0"
-                                          allowFullScreen
-                                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <a
-                                      href={material.externalUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="external-link"
-                                    >
-                                      {material.title} 🔗
-                                    </a>
-                                  )
-                                ) : (
-                                  <button
-                                    className="download-material-btn"
-                                    onClick={() => downloadMaterial(material.id, material.title)}
-                                    title="Download material"
-                                  >
-                                    <span className="download-icon">📥</span>
-                                    {material.title}
-                                  </button>
-                                )}
-                              </div>))}
-                          </div>
+
+                          {/* Display Images separately */}
+                          {currentLesson.materials.filter(m => m.materialType === 'image').length > 0 && (
+                            <div className="lesson-images-grid">
+                              {currentLesson.materials
+                                .filter(material => material.materialType === 'image')
+                                .map(image => (
+                                  <div key={image.id} className="lesson-image-item">
+                                    <img
+                                      src={`/api${image.filePath}`}
+                                      alt={image.title}
+                                      className="lesson-image"
+                                    />
+                                    <p className="image-caption">{image.title}</p>
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          )}
+
+                          {/* Display other materials */}
+                          {currentLesson.materials.filter(m => m.materialType !== 'image').length > 0 && (
+                            <div className="materials-list">
+                              {currentLesson.materials
+                                .filter(material => material.materialType !== 'image')
+                                .map(material => (
+                                  <div key={material.id} className="material-item">
+                                    {material.externalUrl ? (
+                                      // Check if it's a video URL (YouTube, Vimeo, etc.) 
+                                      material.materialType === 'video' ||
+                                        material.externalUrl.includes('youtube.com') ||
+                                        material.externalUrl.includes('youtu.be') ||
+                                        material.externalUrl.includes('vimeo.com') ? (
+                                        <div className="material-video">
+                                          <h5 className="material-title">{material.title}</h5>
+                                          <VideoPlayer
+                                            videoUrl={material.externalUrl}
+                                            title={material.title}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <a
+                                          href={material.externalUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="external-link"
+                                        >
+                                          {material.title} 🔗
+                                        </a>
+                                      )
+                                    ) : (
+                                      <button
+                                        className="download-material-btn"
+                                        onClick={() => downloadMaterial(material.id, material.title)}
+                                        title="Download material"
+                                      >
+                                        <span className="download-icon">📥</span>
+                                        {material.title}
+                                      </button>
+                                    )}
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

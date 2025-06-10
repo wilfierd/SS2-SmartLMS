@@ -3,8 +3,7 @@ import { CourseModule } from './course-module.entity';
 import { LessonMaterial } from './lesson-material.entity';
 
 export enum ContentType {
-  VIDEO = 'video',
-  DOCUMENT = 'document',
+  RICH_CONTENT = 'rich_content',
   QUIZ = 'quiz',
   ASSIGNMENT = 'assignment',
   LIVE_SESSION = 'live_session'
@@ -27,9 +26,11 @@ export class Lesson {
     name: 'content_type'
   })
   contentType: ContentType;
-
   @Column({ nullable: true, type: 'text' })
   content: string;
+
+  @Column({ nullable: true, name: 'video_url' })
+  videoUrl: string;
 
   @Column({ nullable: true, name: 'duration_minutes' })
   durationMinutes: number;
@@ -44,7 +45,7 @@ export class Lesson {
   moduleId: number;
 
   @ManyToOne(() => CourseModule, module => module.lessons, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'module_id' }) 
+  @JoinColumn({ name: 'module_id' })
   module: CourseModule;
 
   @OneToMany(() => LessonMaterial, material => material.lesson)

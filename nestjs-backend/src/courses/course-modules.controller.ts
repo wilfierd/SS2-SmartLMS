@@ -1,13 +1,13 @@
-import { 
-  Body, 
-  Controller, 
-  Delete, 
-  Get, 
-  Param, 
-  Post, 
-  Put, 
-  Request, 
-  UseGuards 
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Request,
+  UseGuards
 } from '@nestjs/common';
 import { CourseModulesService } from './course-modules.service';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
@@ -19,7 +19,7 @@ import { UserRole } from '../users/entities/user.entity';
 
 @Controller('courses/:courseId/modules')
 export class CourseModulesController {
-  constructor(private readonly courseModulesService: CourseModulesService) {}
+  constructor(private readonly courseModulesService: CourseModulesService) { }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,7 +32,7 @@ export class CourseModulesController {
     console.log('Creating module for courseId:', courseId);
     console.log('Request body:', JSON.stringify(createCourseModuleDto));
     console.log('User:', JSON.stringify(req.user));
-    
+
     try {
       const result = await this.courseModulesService.create(
         +courseId,
@@ -40,9 +40,9 @@ export class CourseModulesController {
         req.user.id,
         req.user.role,
       );
-      
+
       console.log('Module created successfully:', JSON.stringify(result));
-      
+
       return {
         message: 'Module created successfully',
         moduleId: result.id
@@ -58,17 +58,17 @@ export class CourseModulesController {
   async findAll(@Param('courseId') courseId: string, @Request() req) {
     try {
       console.log(`Getting modules for course ${courseId}`);
-      
+
       // Use direct SQL to match server.js
       const connection = await this.courseModulesService.getConnection();
-      
+
       // Get all modules for the course
       const modules = await connection.query(`
         SELECT * FROM course_modules
         WHERE course_id = ?
         ORDER BY order_index ASC
       `, [courseId]);
-      
+
       // For each module, get its lessons with materials
       const modulesWithLessons = await Promise.all(modules.map(async (module) => {
         const lessons = await connection.query(`
@@ -83,18 +83,18 @@ export class CourseModulesController {
           GROUP BY l.id
           ORDER BY l.order_index ASC
         `, [module.id]);
-        
+
         // Format lessons and materials
         const formattedLessons = lessons.map(lesson => {
           let materials = [];
-          
+
           if (lesson.material_ids) {
             const ids = lesson.material_ids.split(',');
             const titles = lesson.material_titles ? lesson.material_titles.split(',') : [];
             const paths = lesson.material_paths ? lesson.material_paths.split(',') : [];
             const urls = lesson.material_urls ? lesson.material_urls.split(',') : [];
             const types = lesson.material_types ? lesson.material_types.split(',') : [];
-            
+
             materials = ids.map((id, index) => ({
               id,
               title: titles[index] || '',
@@ -103,20 +103,20 @@ export class CourseModulesController {
               materialType: types[index] || 'document'
             }));
           }
-          
           return {
             id: lesson.id,
             title: lesson.title,
             description: lesson.description,
             contentType: lesson.content_type,
             content: lesson.content,
+            videoUrl: lesson.video_url,
             durationMinutes: lesson.duration_minutes,
             orderIndex: lesson.order_index,
             isPublished: lesson.is_published === 1,
             materials
           };
         });
-        
+
         return {
           id: module.id,
           title: module.title,
@@ -126,7 +126,7 @@ export class CourseModulesController {
           lessons: formattedLessons
         };
       }));
-      
+
       return modulesWithLessons;
     } catch (error) {
       console.error('Error fetching course modules:', error);

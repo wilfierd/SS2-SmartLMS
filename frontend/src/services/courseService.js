@@ -64,22 +64,28 @@ class CourseService {
     const response = await this.api.delete(`/courses/${courseId}/modules/${moduleId}`);
     return response.data;
   }
-
   // Lesson Operations
   async createLesson(courseId, lessonData) {
     const formData = new FormData();
-    
+
     // Add text fields
     Object.keys(lessonData).forEach(key => {
-      if (key !== 'materials' && lessonData[key] !== undefined) {
+      if (key !== 'materials' && key !== 'images' && lessonData[key] !== undefined) {
         formData.append(key, lessonData[key]);
       }
     });
 
-    // Add files
+    // Add material files
     if (lessonData.materials && lessonData.materials.length > 0) {
       Array.from(lessonData.materials).forEach(file => {
         formData.append('materials', file);
+      });
+    }
+
+    // Add image files
+    if (lessonData.images && lessonData.images.length > 0) {
+      Array.from(lessonData.images).forEach(image => {
+        formData.append('images', image);
       });
     }
 
@@ -127,11 +133,11 @@ class CourseService {
 
   async submitAssignment(assignmentId, submissionData) {
     const formData = new FormData();
-    
+
     if (submissionData.file) {
       formData.append('file', submissionData.file);
     }
-    
+
     if (submissionData.comments) {
       formData.append('comments', submissionData.comments);
     }
@@ -300,12 +306,12 @@ class CourseService {
   async uploadThumbnail(file, courseId = null) {
     const formData = new FormData();
     formData.append('thumbnail', file);
-    
+
     // Use course-specific endpoint if courseId is provided, otherwise use general endpoint
-    const endpoint = courseId 
+    const endpoint = courseId
       ? `/uploads/courses/${courseId}/thumbnail`
       : '/uploads/thumbnail';
-    
+
     const response = await this.api.post(endpoint, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });

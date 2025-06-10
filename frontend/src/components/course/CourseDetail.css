@@ -483,7 +483,7 @@
   }  /* Material Video Section */
   .material-video {
     width: 100%;
-    max-width: 100%; /* Revert to original full width */
+    max-width: 1000px; /* Keep original larger width */
     overflow: hidden;
     box-sizing: border-box;
   }
@@ -1064,5 +1064,106 @@
 
   .course-detail-content {
     padding: 10px;
+  }
+}
+
+/* Rich Content Styling */
+.rich-content-video {
+  margin: 25px 0;
+  padding: 20px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #8b5cf6;
+}
+
+.rich-content-video h4 {
+  margin: 0 0 15px 0;
+  color: #374151;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.rich-content-images {
+  margin: 25px 0;
+  padding: 20px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.rich-content-images h4 {
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.lesson-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.lesson-image-item {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lesson-image-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lesson-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-caption {
+  padding: 12px 15px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+  background-color: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Responsive adjustments for rich content */
+@media (max-width: 768px) {
+  .rich-content-video,
+  .rich-content-images {
+    margin: 20px 0;
+    padding: 15px;
+  }
+
+  .lesson-images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+
+  .lesson-image {
+    height: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lesson-images-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .lesson-image {
+    height: 180px;
+  }
+
+  .rich-content-video,
+  .rich-content-images {
+    padding: 12px;
   }
 }

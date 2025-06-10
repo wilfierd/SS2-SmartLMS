@@ -152,13 +152,13 @@ CREATE TABLE IF NOT EXISTS lessons (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   content_type ENUM(
-    'video',
-    'document',
+    'rich_content',
     'quiz',
     'assignment',
     'live_session'
   ) NOT NULL,
   content TEXT,
+  video_url VARCHAR(512),
   duration_minutes INT,
   order_index INT NOT NULL,
   is_published BOOLEAN DEFAULT FALSE,
@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS assignments (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-  FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE
+  FOREIGN KEY (lesson_id) REFERENCES course_modules(id) ON DELETE
   SET NULL
 );
 -- Assignment submissions
@@ -640,6 +640,206 @@ VALUES (
     '2023-04-01',
     '2023-07-01',
     FALSE
+  ),
+  (
+    'PY101',
+    'enrollment_key_8',
+    'Python Programming Fundamentals',
+    'Learn Python programming from basics to advanced concepts. Cover data structures, file handling, and object-oriented programming.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Computer Science'
+    ),
+    'published',
+    '2023-03-15',
+    '2023-06-15',
+    TRUE
+  ),
+  (
+    'DS201',
+    'enrollment_key_9',
+    'Data Structures and Algorithms',
+    'Master fundamental data structures and algorithms. Learn about arrays, linked lists, trees, graphs, sorting, and searching algorithms.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'sarah.johnson@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Computer Science'
+    ),
+    'published',
+    '2023-04-01',
+    '2023-07-01',
+    TRUE
+  ),
+  (
+    'ML101',
+    'enrollment_key_10',
+    'Machine Learning Basics',
+    'Introduction to machine learning concepts, supervised and unsupervised learning, and popular ML algorithms.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Data Science'
+    ),
+    'published',
+    '2023-05-01',
+    '2023-08-01',
+    TRUE
+  ),
+  (
+    'REACT101',
+    'enrollment_key_11',
+    'React.js Development',
+    'Build modern web applications with React.js. Learn components, state management, hooks, and best practices.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'david.clark@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Web Development'
+    ),
+    'published',
+    '2023-04-15',
+    '2023-07-15',
+    TRUE
+  ),
+  (
+    'UX101',
+    'enrollment_key_12',
+    'User Experience Design',
+    'Learn the principles of UX design, user research, wireframing, prototyping, and usability testing.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'anna.lee@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Arts & Design'
+    ),
+    'published',
+    '2023-03-01',
+    '2023-06-01',
+    FALSE
+  ),
+  (
+    'GD101',
+    'enrollment_key_13',
+    'Graphic Design Fundamentals',
+    'Master the basics of graphic design including typography, color theory, composition, and design software.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'anna.lee@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Arts & Design'
+    ),
+    'published',
+    '2023-02-15',
+    '2023-05-15',
+    TRUE
+  ),
+  (
+    'CYBER101',
+    'enrollment_key_14',
+    'Cybersecurity Fundamentals',
+    'Learn essential cybersecurity concepts, threat assessment, network security, and ethical hacking basics.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'michael.brown@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Computer Science'
+    ),
+    'published',
+    '2023-06-01',
+    '2023-09-01',
+    FALSE
+  ),
+  (
+    'STAT101',
+    'enrollment_key_15',
+    'Statistics for Data Science',
+    'Essential statistics concepts for data analysis, probability, hypothesis testing, and statistical inference.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Mathematics'
+    ),
+    'published',
+    '2023-05-15',
+    '2023-08-15',
+    TRUE
+  ),
+  (
+    'CLOUD101',
+    'enrollment_key_16',
+    'Cloud Computing Essentials',
+    'Introduction to cloud computing platforms, services, and deployment models. Focus on AWS, Azure, and GCP.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'michael.brown@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Computer Science'
+    ),
+    'published',
+    '2023-07-01',
+    '2023-10-01',
+    FALSE
+  ),
+  (
+    'BIZ101',
+    'enrollment_key_17',
+    'Digital Marketing Fundamentals',
+    'Learn digital marketing strategies, social media marketing, SEO, content marketing, and analytics.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'david.clark@lms.com'
+    ),
+    (
+      SELECT id
+      FROM departments
+      WHERE name = 'Business'
+    ),
+    'published',
+    '2023-06-15',
+    '2023-09-15',
+    TRUE
   );
 -- Insert Enrollments
 INSERT INTO enrollments (
@@ -868,6 +1068,7 @@ INSERT INTO lessons (
     description,
     content_type,
     content,
+    video_url,
     duration_minutes,
     order_index,
     is_published
@@ -886,8 +1087,9 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'What is Programming?',
     'An introduction to computer programming and why it matters.',
-    'document',
+    'rich_content',
     'Programming is the process of creating a set of instructions that tell a computer how to perform a task. Programming can be done using a variety of computer programming languages, such as JavaScript, Python, and C++.',
+    NULL,
     30,
     1,
     TRUE
@@ -905,8 +1107,9 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'Setting Up Your Development Environment',
     'Installing and configuring the tools you need to start programming.',
-    'document',
+    'rich_content',
     'In this lesson, we will install Visual Studio Code, Node.js, and set up our first JavaScript project. We will also discuss various extensions that can help make development easier.',
+    NULL,
     45,
     2,
     TRUE
@@ -924,7 +1127,8 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'Writing Your First Program',
     'Creating and running a simple "Hello World" program.',
-    'video',
+    'rich_content',
+    'In this lesson, you will create and run your first JavaScript program. This is an exciting milestone in your programming journey!',
     'https://example.com/videos/first-program.mp4',
     20,
     3,
@@ -944,8 +1148,9 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'Variables and Data Types',
     'Understanding how to store and manipulate data in JavaScript.',
-    'document',
+    'rich_content',
     'JavaScript has several data types: String, Number, Boolean, Object, Undefined, and Null. Variables are declared using let, const, or var keywords.',
+    NULL,
     60,
     1,
     TRUE
@@ -963,7 +1168,8 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'Operators and Expressions',
     'Using operators to perform operations on variables and values.',
-    'video',
+    'rich_content',
+    'This lesson covers arithmetic, comparison, logical, and assignment operators in JavaScript.',
     'https://example.com/videos/operators.mp4',
     45,
     2,
@@ -982,8 +1188,9 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'Basic Input and Output',
     'Getting input from users and displaying output.',
-    'document',
+    'rich_content',
     'In a web browser, you can use prompt() to get input and console.log() or document.write() to display output. In Node.js, you can use the readline module.',
+    NULL,
     30,
     3,
     TRUE
@@ -1002,8 +1209,9 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'Introduction to HTML',
     'Understanding what HTML is and how it structures web content.',
-    'document',
+    'rich_content',
     'HTML (HyperText Markup Language) is the standard markup language for documents designed to be displayed in a web browser. It defines the structure and content of a web page.',
+    NULL,
     30,
     1,
     TRUE
@@ -1021,7 +1229,8 @@ VALUES -- Getting Started with Programming Lessons
     ),
     'HTML Document Structure',
     'Creating properly structured HTML documents with all necessary elements.',
-    'video',
+    'rich_content',
+    'Learn how to create a complete HTML document with DOCTYPE, html, head, and body elements.',
     'https://example.com/videos/html-structure.mp4',
     45,
     2,
@@ -1042,6 +1251,7 @@ VALUES -- Getting Started with Programming Lessons
     'Working with headings, paragraphs, lists, and hyperlinks.',
     'assignment',
     'Create a simple web page with headings, paragraphs, lists, and links to other websites.',
+    NULL,
     60,
     3,
     TRUE
@@ -1066,8 +1276,8 @@ VALUES -- Assignments for Introduction to Programming
     ),
     (
       SELECT id
-      FROM lessons
-      WHERE title = 'Writing Your First Program'
+      FROM course_modules
+      WHERE title = 'Programming Fundamentals' AND course_id = (SELECT id FROM courses WHERE code = 'CS101')
     ),
     'Hello World Program',
     'Create a JavaScript program that displays "Hello, World!" in the console.',
@@ -1084,8 +1294,8 @@ VALUES -- Assignments for Introduction to Programming
     ),
     (
       SELECT id
-      FROM lessons
-      WHERE title = 'Variables and Data Types'
+      FROM course_modules
+      WHERE title = 'Programming Fundamentals' AND course_id = (SELECT id FROM courses WHERE code = 'CS101')
     ),
     'Variable Manipulation',
     'Create a program that demonstrates the use of different variable types.',
@@ -1093,8 +1303,7 @@ VALUES -- Assignments for Introduction to Programming
     20,
     '2023-02-15 23:59:59',
     FALSE
-  ),
-  -- Assignments for Web Development Basics
+  ),  -- Assignments for Web Development Basics
   (
     (
       SELECT id
@@ -1103,8 +1312,8 @@ VALUES -- Assignments for Introduction to Programming
     ),
     (
       SELECT id
-      FROM lessons
-      WHERE title = 'Text Elements and Links'
+      FROM course_modules
+      WHERE title = 'HTML Fundamentals' AND course_id = (SELECT id FROM courses WHERE code = 'WD101')
     ),
     'Personal Bio Page',
     'Create a simple personal biography page using HTML elements.',
@@ -1165,6 +1374,316 @@ VALUES -- Discussions for Introduction to Programming
       SELECT id
       FROM users
       WHERE email = 'john.smith@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Python Programming Fundamentals
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'PY101'
+    ),
+    'Python vs Other Languages',
+    'Compare Python with other programming languages. What makes Python special for beginners?',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'PY101'
+    ),
+    'Practical Python Projects',
+    'Share ideas for beginner-friendly Python projects and discuss implementation strategies.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Data Structures and Algorithms
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'DS201'
+    ),
+    'Algorithm Complexity Discussion',
+    'Discuss time and space complexity of different algorithms. Share your analysis approaches.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'sarah.johnson@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'DS201'
+    ),
+    'Real-world Data Structure Applications',
+    'Where do you see data structures being used in real-world applications?',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'sarah.johnson@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Machine Learning Basics
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'ML101'
+    ),
+    'ML in Daily Life',
+    'Discuss how machine learning impacts our daily lives. Share examples you have encountered.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'ML101'
+    ),
+    'Supervised vs Unsupervised Learning',
+    'Compare different learning paradigms and discuss when to use each approach.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for React.js Development
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'REACT101'
+    ),
+    'React vs Other Frameworks',
+    'Compare React with Vue, Angular, and other front-end frameworks. Share your experiences.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'david.clark@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'REACT101'
+    ),
+    'State Management Solutions',
+    'Discuss different state management approaches in React: Context, Redux, Zustand, etc.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'david.clark@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for User Experience Design
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'UX101'
+    ),
+    'UX Design Tools and Resources',
+    'Share your favorite UX design tools, prototyping software, and learning resources.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'anna.lee@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'UX101'
+    ),
+    'User Research Methods',
+    'Discuss different user research techniques and when to apply them in your design process.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'anna.lee@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Graphic Design Fundamentals
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'GD101'
+    ),
+    'Typography Best Practices',
+    'Share tips and discuss best practices for typography in graphic design.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'anna.lee@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'GD101'
+    ),
+    'Color Theory in Practice',
+    'Discuss how color theory applies to real design projects. Share your color palette strategies.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'anna.lee@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Cybersecurity Fundamentals
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'CYBER101'
+    ),
+    'Current Cybersecurity Threats',
+    'Discuss current cybersecurity threats and how to protect against them.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'michael.brown@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'CYBER101'
+    ),
+    'Ethical Hacking vs Malicious Hacking',
+    'Discuss the differences between ethical hacking and malicious activities in cybersecurity.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'michael.brown@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Statistics for Data Science
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'STAT101'
+    ),
+    'Statistics in Data Science Projects',
+    'Share how statistical concepts apply to real data science projects and analysis.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'STAT101'
+    ),
+    'Hypothesis Testing Examples',
+    'Discuss real-world examples of hypothesis testing and statistical inference.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'lisa.wong@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Cloud Computing Essentials
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'CLOUD101'
+    ),
+    'AWS vs Azure vs GCP',
+    'Compare the major cloud platforms and discuss their strengths and use cases.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'michael.brown@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'CLOUD101'
+    ),
+    'Cloud Migration Strategies',
+    'Discuss strategies for migrating applications and data to the cloud.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'michael.brown@lms.com'
+    ),
+    FALSE
+  ),
+  -- Discussions for Digital Marketing Fundamentals
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'BIZ101'
+    ),
+    'Social Media Marketing Trends',
+    'Discuss current trends in social media marketing and effective strategies.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'david.clark@lms.com'
+    ),
+    FALSE
+  ),
+  (
+    (
+      SELECT id
+      FROM courses
+      WHERE code = 'BIZ101'
+    ),
+    'SEO Best Practices',
+    'Share your experiences with SEO and discuss effective optimization techniques.',
+    (
+      SELECT id
+      FROM users
+      WHERE email = 'david.clark@lms.com'
     ),
     FALSE
   );

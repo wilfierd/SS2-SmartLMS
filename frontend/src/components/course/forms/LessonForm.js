@@ -5,66 +5,85 @@ import courseService from '../../../services/courseService';
 import notification from '../../../utils/notification';
 import './LessonForm.css';
 
-const LessonForm = ({ 
-  onClose, 
-  onSubmit, 
+const LessonForm = ({
+  onClose,
+  onSubmit,
   modules = [],
-  lesson = null, 
-  isEdit = false 
+  lesson = null,
+  isEdit = false
 }) => {
   const { courseId } = useParams();
-  
   const [formData, setFormData] = useState({
     title: lesson?.title || '',
     description: lesson?.description || '',
-    moduleId: lesson?.module_id || (modules.length > 0 ? modules[0].id : ''),
-    contentType: lesson?.content_type || 'document',
+    moduleId: lesson?.module_id || (modules.length > 0 ? modules[0].id : ''), contentType: lesson?.content_type || 'rich_content',
     content: lesson?.content || '',
-    videoUrl: '',
+    videoUrl: lesson?.video_url || '',
     durationMinutes: lesson?.duration_minutes || 30,
     materials: null,
+    images: null,
     isPublished: lesson?.is_published !== undefined ? lesson.is_published : true
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [selectedFiles, setSelectedFiles] = useState([]);
-
-  const contentTypes = [
-    { value: 'document', label: 'Document/Text Content' },
-    { value: 'video', label: 'Video Lesson' },
-    { value: 'quiz', label: 'Quiz' },
-    { value: 'assignment', label: 'Assignment' },
-    { value: 'live_session', label: 'Live Session' }
+  const [selectedImages, setSelectedImages] = useState([]); const contentTypes = [
+    { value: 'rich_content', label: '📚 Rich Content (Text + Video + Images)' },
+    { value: 'quiz', label: '🧩 Quiz' },
+    { value: 'assignment', label: '📝 Assignment' },
+    { value: 'live_session', label: '🎪 Live Session' }
   ];
-
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.title.trim()) {
       newErrors.title = 'Lesson title is required';
     }
-    
+
     if (!formData.moduleId) {
       newErrors.moduleId = 'Please select a module';
     }
-    
-    if (formData.contentType === 'video' && formData.videoUrl && !isValidUrl(formData.videoUrl)) {
-      newErrors.videoUrl = 'Please enter a valid URL';
+
+    if (formData.videoUrl && !isValidVideoUrl(formData.videoUrl)) {
+      newErrors.videoUrl = 'Please enter a valid video URL';
     }
-    
+
     if (formData.durationMinutes < 1 || formData.durationMinutes > 300) {
       newErrors.durationMinutes = 'Duration must be between 1 and 300 minutes';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const isValidUrl = (string) => {
+  const isValidVideoUrl = (url) => {
     try {
-      new URL(string);
-      return true;
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+
+      // Check for supported video platforms
+      const supportedPlatforms = [
+        'youtube.com', 'www.youtube.com', 'youtu.be',
+        'vimeo.com', 'www.vimeo.com',
+        'player.vimeo.com'
+      ];
+
+      // Check if it's a supported platform
+      const isSupportedPlatform = supportedPlatforms.some(platform =>
+        hostname.includes(platform)
+      );
+
+      // Check if it's a direct video file
+      const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+      const hasVideoExtension = videoExtensions.some(ext =>
+        urlObj.pathname.toLowerCase().endsWith(ext)
+      );
+
+      // Prevent app URL recursion
+      const isNotAppUrl = !url.includes(window.location.origin) && !url.startsWith('/');
+
+      return (isSupportedPlatform || hasVideoExtension) && isNotAppUrl;
     } catch (_) {
       return false;
     }
@@ -72,12 +91,12 @@ const LessonForm = ({
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -86,7 +105,6 @@ const LessonForm = ({
       }));
     }
   };
-
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     setSelectedFiles(files);
@@ -96,38 +114,63 @@ const LessonForm = ({
     }));
   };
 
+  const handleImageChange = (e) => {
+    const images = Array.from(e.target.files);
+    setSelectedImages(images);
+    setFormData(prev => ({
+      ...prev,
+      images: e.target.files
+    }));
+  };
   const removeFile = (index) => {
     const newFiles = selectedFiles.filter((_, i) => i !== index);
     setSelectedFiles(newFiles);
-    
+
     // Create a new FileList
     const dt = new DataTransfer();
     newFiles.forEach(file => dt.items.add(file));
-    
+
     setFormData(prev => ({
       ...prev,
       materials: dt.files
     }));
   };
 
+  const removeImage = (index) => {
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    setSelectedImages(newImages);
+
+    // Create a new FileList
+    const dt = new DataTransfer();
+    newImages.forEach(image => dt.items.add(image));
+
+    setFormData(prev => ({
+      ...prev,
+      images: dt.files
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const submitData = {
         title: formData.title,
         description: formData.description,
         moduleId: formData.moduleId,
         contentType: formData.contentType,
-        content: formData.contentType === 'video' ? formData.videoUrl : formData.content,
-        videoUrl: formData.contentType !== 'video' ? formData.videoUrl : null,
-        materials: formData.materials
+        content: formData.content,
+        videoUrl: formData.videoUrl || null,
+        durationMinutes: formData.durationMinutes,
+        isPublished: formData.isPublished,
+        materials: formData.materials,
+        images: formData.images
       };
 
       if (isEdit) {
@@ -135,7 +178,7 @@ const LessonForm = ({
       } else {
         await courseService.createLesson(courseId, submitData);
       }
-      
+
       onSubmit(); // Refresh parent component
       onClose();
       notification.success(
@@ -162,7 +205,7 @@ const LessonForm = ({
       <div className="lesson-form-modal">
         <div className="modal-header">
           <h2>{isEdit ? 'Edit Lesson' : 'Create New Lesson'}</h2>
-          <button 
+          <button
             className="close-btn"
             onClick={onClose}
             type="button"
@@ -170,7 +213,7 @@ const LessonForm = ({
             ×
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="lesson-form">
           <div className="form-row">
             <div className="form-group">
@@ -267,29 +310,92 @@ const LessonForm = ({
                 <span className="error-message">{errors.durationMinutes}</span>
               )}
             </div>
-          </div>
+          </div>          {/* Unified Content Section */}
+          {formData.contentType === 'rich_content' ? (
+            <div className="rich-content-section">
+              <div className="form-group">
+                <label htmlFor="lesson-content">
+                  Lesson Content
+                </label>
+                <textarea
+                  id="lesson-content"
+                  name="content"
+                  value={formData.content}
+                  onChange={handleInputChange}
+                  placeholder="Write your lesson content here... You can include text, instructions, explanations, etc."
+                  rows="8"
+                  className="rich-content-textarea"
+                />
+                <small className="form-help">
+                  Write your lesson content using plain text or HTML. You can add video and images below.
+                </small>
+              </div>
 
-          {/* Content Section */}
-          {formData.contentType === 'video' ? (
-            <div className="form-group">
-              <label htmlFor="video-url">
-                Video URL <span className="required">*</span>
-              </label>
-              <input
-                type="url"
-                id="video-url"
-                name="videoUrl"
-                value={formData.videoUrl}
-                onChange={handleInputChange}
-                placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                className={errors.videoUrl ? 'error' : ''}
-              />
-              {errors.videoUrl && (
-                <span className="error-message">{errors.videoUrl}</span>
-              )}
-              <small className="form-help">
-                Supports YouTube, Vimeo, and direct video links
-              </small>
+              <div className="form-group">
+                <label htmlFor="video-url">
+                  Lesson Video (Optional)
+                </label>
+                <input
+                  type="url"
+                  id="video-url"
+                  name="videoUrl"
+                  value={formData.videoUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                  className={errors.videoUrl ? 'error' : ''}
+                />
+                {errors.videoUrl && (
+                  <span className="error-message">{errors.videoUrl}</span>
+                )}
+                <small className="form-help">
+                  Add a video to supplement your lesson content (YouTube, Vimeo, or direct video links)
+                </small>
+              </div>
+
+              {/* Image Upload Section */}
+              <div className="form-group">
+                <label htmlFor="lesson-images">
+                  Lesson Images
+                </label>
+                <input
+                  type="file"
+                  id="lesson-images"
+                  name="images"
+                  onChange={handleImageChange}
+                  multiple
+                  accept="image/*"
+                />
+                <small className="form-help">
+                  Upload images to include in your lesson
+                </small>
+
+                {selectedImages.length > 0 && (
+                  <div className="selected-images">
+                    <h4>Selected Images:</h4>
+                    <div className="image-preview-grid">
+                      {selectedImages.map((image, index) => (
+                        <div key={index} className="image-preview-item">
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Preview ${index + 1}`}
+                            className="image-preview"
+                          />
+                          <div className="image-info">
+                            <span className="image-name">{image.name}</span>
+                            <button
+                              type="button"
+                              className="remove-image-btn"
+                              onClick={() => removeImage(index)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="form-group">
@@ -301,31 +407,11 @@ const LessonForm = ({
                 name="content"
                 value={formData.content}
                 onChange={handleInputChange}
-                placeholder="Enter lesson content..."
+                placeholder="Enter content for this lesson type..."
                 rows="6"
               />
               <small className="form-help">
-                You can use HTML formatting for rich text content
-              </small>
-            </div>
-          )}
-
-          {/* Additional Video URL for non-video content types */}
-          {formData.contentType !== 'video' && (
-            <div className="form-group">
-              <label htmlFor="additional-video">
-                Additional Video URL (Optional)
-              </label>
-              <input
-                type="url"
-                id="additional-video"
-                name="videoUrl"
-                value={formData.videoUrl}
-                onChange={handleInputChange}
-                placeholder="https://youtube.com/watch?v=..."
-              />
-              <small className="form-help">
-                Add a supplementary video for this lesson
+                Content specific to {formData.contentType.replace('_', ' ')}
               </small>
             </div>
           )}
@@ -346,7 +432,7 @@ const LessonForm = ({
             <small className="form-help">
               Upload supporting materials (documents, images, videos, etc.)
             </small>
-            
+
             {selectedFiles.length > 0 && (
               <div className="selected-files">
                 <h4>Selected Files:</h4>

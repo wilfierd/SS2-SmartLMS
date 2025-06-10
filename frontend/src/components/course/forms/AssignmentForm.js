@@ -24,20 +24,13 @@ const AssignmentForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Get all lessons from all modules
-  const getAllLessons = () => {
-    const lessons = [];
-    modules.forEach(module => {
-      if (module.lessons) {
-        module.lessons.forEach(lesson => {
-          lessons.push({
-            ...lesson,
-            moduleTitle: module.title
-          });
-        });
-      }
-    });
-    return lessons;
+  // Get all modules for assignment association
+  const getAllModules = () => {
+    return modules.map(module => ({
+      id: module.id,
+      title: module.title,
+      description: module.description
+    }));
   };
 
   const validateForm = () => {
@@ -126,13 +119,12 @@ const AssignmentForm = ({
       onClose();
     }
   };
-
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toISOString().slice(0, 16);
   };
 
-  const lessons = getAllLessons();
+  const availableModules = getAllModules();
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
@@ -203,28 +195,26 @@ const AssignmentForm = ({
             <small className="form-help">
               Detailed instructions on how students should complete this assignment
             </small>
-          </div>
-
-          <div className="form-row">
+          </div>          <div className="form-row">
             <div className="form-group">
-              <label htmlFor="assignment-lesson">
-                Associated Lesson (Optional)
+              <label htmlFor="assignment-module">
+                Associated Module (Optional)
               </label>
               <select
-                id="assignment-lesson"
+                id="assignment-module"
                 name="lessonId"
                 value={formData.lessonId}
                 onChange={handleInputChange}
               >
-                <option value="">No specific lesson</option>
-                {lessons.map(lesson => (
-                  <option key={lesson.id} value={lesson.id}>
-                    {lesson.moduleTitle} - {lesson.title}
+                <option value="">No specific module</option>
+                {getAllModules().map(module => (
+                  <option key={module.id} value={module.id}>
+                    {module.title}
                   </option>
                 ))}
               </select>
               <small className="form-help">
-                Link this assignment to a specific lesson
+                Link this assignment to a specific module
               </small>
             </div>
 

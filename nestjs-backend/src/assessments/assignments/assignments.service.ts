@@ -306,7 +306,7 @@ export class AssignmentsService {
           maxPoints: assignment.maxPoints,
           dueDate: assignment.dueDate,
           allowLateSubmissions: assignment.allowLateSubmissions,
-          lessonTitle: assignment.lesson?.title || 'No lesson',
+          lessonTitle: assignment.lesson?.title || 'No module',
           submissionCount,
         };
       })
