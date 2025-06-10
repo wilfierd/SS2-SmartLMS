@@ -11,7 +11,7 @@ class NotificationService {
             const response = await axios.get(`${API_URL}/notifications`, {
                 params: filters,
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             return response.data;
@@ -26,7 +26,7 @@ class NotificationService {
         try {
             const response = await axios.get(`${API_URL}/notifications/unread-count`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             return response.data.unreadCount;
@@ -34,14 +34,12 @@ class NotificationService {
             console.error('Error fetching unread count:', error);
             throw error;
         }
-    }
-
-    // Mark notification as read
+    }    // Mark notification as read
     async markAsRead(notificationId) {
         try {
             const response = await axios.patch(`${API_URL}/notifications/${notificationId}/read`, {}, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             return response.data;
@@ -56,7 +54,7 @@ class NotificationService {
         try {
             const response = await axios.patch(`${API_URL}/notifications/mark-all-read`, {}, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             return response.data;
@@ -64,14 +62,12 @@ class NotificationService {
             console.error('Error marking all notifications as read:', error);
             throw error;
         }
-    }
-
-    // Delete notification
+    }    // Delete notification
     async deleteNotification(notificationId) {
         try {
             const response = await axios.delete(`${API_URL}/notifications/${notificationId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             return response.data;
@@ -86,7 +82,7 @@ class NotificationService {
         try {
             const response = await axios.delete(`${API_URL}/notifications`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             return response.data;
@@ -94,14 +90,12 @@ class NotificationService {
             console.error('Error deleting all notifications:', error);
             throw error;
         }
-    }
-
-    // Create a notification (for admins/instructors)
+    }    // Create a notification (for admins/instructors)
     async createNotification(notificationData) {
         try {
             const response = await axios.post(`${API_URL}/notifications`, notificationData, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             return response.data;

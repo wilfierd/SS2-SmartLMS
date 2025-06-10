@@ -18,7 +18,7 @@ export class AssignmentsService {
     @InjectRepository(AssignmentSubmission)
     private submissionsRepository: Repository<AssignmentSubmission>,
     private coursesService: CoursesService,
-  ) {}
+  ) { }
 
   async createAssignment(courseId: number, dto: CreateAssignmentDto, instructorId: number): Promise<Assignment> {
     // Verify course ownership
@@ -26,7 +26,7 @@ export class AssignmentsService {
     if (!course) {
       throw new NotFoundException('Course not found');
     }
-    
+
     const isInstructor = await this.coursesService.isInstructorOfCourse(courseId, instructorId);
     if (!isInstructor) {
       throw new ForbiddenException('You can only create assignments for your own courses');
@@ -104,8 +104,8 @@ export class AssignmentsService {
   }
 
   async submitAssignment(
-    assignmentId: number, 
-    studentId: number, 
+    assignmentId: number,
+    studentId: number,
     fileInfo: { path: string; type: string; size: number },
     comments?: string
   ): Promise<AssignmentSubmission> {
@@ -123,13 +123,13 @@ export class AssignmentsService {
 
     // Check file type using assignment's allowed file types
     const allowedTypes = assignment.allowedFileTypes.split(',').map(type => type.trim().toLowerCase());
-    const fileExt = fileInfo.type.split('/').pop()?.toLowerCase() || 
-                    fileInfo.path.split('.').pop()?.toLowerCase() || '';
-    
+    const fileExt = fileInfo.type.split('/').pop()?.toLowerCase() ||
+      fileInfo.path.split('.').pop()?.toLowerCase() || '';
+
     if (!allowedTypes.includes(fileExt)) {
       throw new BadRequestException(`Invalid file type. Allowed types: ${assignment.allowedFileTypes}`);
     }
-    
+
     // Check file size using assignment's max file size
     const fileSizeInMB = fileInfo.size / (1024 * 1024);
     if (fileSizeInMB > assignment.maxFileSize) {
@@ -175,7 +175,7 @@ export class AssignmentsService {
 
   async getStudentAssignmentWithSubmission(assignmentId: number, studentId: number): Promise<any> {
     const assignment = await this.findAssignmentById(assignmentId);
-    
+
     const submission = await this.submissionsRepository.findOne({
       where: {
         assignmentId,

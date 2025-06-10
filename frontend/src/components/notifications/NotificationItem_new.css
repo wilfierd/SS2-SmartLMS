@@ -1,0 +1,247 @@
+/* NotificationItem.css - YouTube-style design */
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 24px;
+  border-bottom: none;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  position: relative;
+  background: #ffffff;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+.notification-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notification-item.unread {
+  background-color: #f0f8ff;
+}
+
+.notification-item.unread:hover {
+  background-color: #e6f3ff;
+}
+
+.notification-item.compact {
+  padding: 10px 24px;
+}
+
+/* Priority indicators - minimal design */
+.notification-item.priority-urgent::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #ff4444;
+}
+
+.notification-item.priority-high::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #ff8800;
+}
+
+.notification-icon {
+  margin-right: 12px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+/* Type-based icon styling */
+.notification-icon.assignment {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.notification-icon.test {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.notification-icon.message {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+.notification-icon.course {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.notification-icon.system {
+  background: #fafafa;
+  color: #616161;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #030303;
+  margin: 0 0 2px 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #606060;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #909090;
+}
+
+.notification-time {
+  font-weight: 400;
+}
+
+.notification-type {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #606060;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Unread indicator */
+.notification-item.unread .notification-title {
+  font-weight: 600;
+}
+
+.notification-item.unread::after {
+  content: '';
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #065fd4;
+  border-radius: 50%;
+}
+
+/* Actions */
+.notification-actions {
+  opacity: 0;
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+  transition: opacity 0.1s ease;
+}
+
+.notification-item:hover .notification-actions {
+  opacity: 1;
+}
+
+.notification-action {
+  background: none;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #606060;
+  transition: all 0.1s ease;
+}
+
+.notification-action:hover {
+  background: #f0f0f0;
+  color: #030303;
+}
+
+/* Compact mode adjustments */
+.notification-item.compact .notification-title {
+  font-size: 13px;
+  -webkit-line-clamp: 1;
+}
+
+.notification-item.compact .notification-message {
+  font-size: 12px;
+  -webkit-line-clamp: 1;
+}
+
+.notification-item.compact .notification-meta {
+  font-size: 11px;
+}
+
+/* Due date styling */
+.notification-due-date {
+  background: #fff8e1;
+  color: #f57c00;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.notification-due-date.overdue {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+/* Interactive states */
+.notification-item:active {
+  background-color: #e0e0e0;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .notification-item {
+    padding: 8px 16px;
+  }
+  
+  .notification-item.compact {
+    padding: 6px 16px;
+  }
+  
+  .notification-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+  }
+  
+  .notification-title {
+    font-size: 13px;
+  }
+  
+  .notification-message {
+    font-size: 12px;
+  }
+}
