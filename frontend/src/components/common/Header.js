@@ -7,6 +7,7 @@ import profileService from '../../services/profileService';
 import notification from '../../utils/notification';
 import config from '../../config';
 import SearchBar from './SearchBar';
+import NotificationBell from '../notifications/NotificationBell';
 
 // Base URL without the /api prefix for serving static assets
 const baseUrl = config.apiUrl.replace(/\/api$/, '');
@@ -135,7 +136,7 @@ const Header = ({ title }) => {
       case 'course':
         const courseId = result.id.replace('course_', '');
         navigate(`/courses/${courseId}/detail`);
-        break;      case 'discussion':
+        break; case 'discussion':
         const discussionId = result.id.replace('discussion_', '');
         // Check if we have courseId in the result
         if (result.courseId) {
@@ -164,21 +165,16 @@ const Header = ({ title }) => {
 
       <div className="header-search">
         <SearchBar onResultSelect={handleSearchResult} />
-      </div>
-
-      <div className="header-right">        <div className="header-date">
+      </div>      <div className="header-right">        <div className="header-date">
         <span className="date-icon">
           {renderIcon('calendar')}
         </span>
         <span>{currentMonth} {currentYear}</span>
       </div>
 
-        <div className="header-notifications">
-          <span className="notification-icon">
-            {renderIcon('notification')}
-          </span>
-          <div className="notification-badge">2</div>
-        </div>        <div className="header-profile" ref={dropdownRef}>
+        <NotificationBell />
+
+        <div className="header-profile" ref={dropdownRef}>
           <div
             className="profile-section"
             onClick={handleProfileClick}

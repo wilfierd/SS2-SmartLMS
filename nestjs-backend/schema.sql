@@ -1789,28 +1789,37 @@ CREATE TABLE IF NOT EXISTS session_participants (
   INDEX idx_session_participants_session (session_id),
   INDEX idx_session_participants_user (user_id)
 );
--- Notifications table (optional - for system notifications)
+-- Notifications table (for assignment due, test due, messages, etc.)
 CREATE TABLE IF NOT EXISTS notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
-  type ENUM('info', 'success', 'warning', 'error') DEFAULT 'info',
-  is_read BOOLEAN DEFAULT FALSE,
-  related_type ENUM(
-    'course',
-    'assignment',
-    'quiz',
-    'discussion',
-    'grade'
-  ) NULL,
-  related_id INT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  read_at TIMESTAMP NULL,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_notifications_user (user_id),
-  INDEX idx_notifications_read (is_read),
-  INDEX idx_notifications_created (created_at)
+  type ENUM(
+    'assignment_due',
+    'test_due',
+    'message_received',
+    'course_update',
+    'grade_posted',
+    'announcement'
+  ) NOT NULL,
+  priority ENUM('low', 'medium', 'high', 'urgent') NOT NULL DEFAULT 'medium',
+  isRead BOOLEAN NOT NULL DEFAULT FALSE,
+  dueDate DATETIME NULL,
+  metadata JSON NULL,
+  actionUrl VARCHAR(500) NULL,
+  userId INT NOT NULL,
+  createdAt DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updatedAt DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  deletedAt DATETIME NULL,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_notifications_userId (userId),
+  INDEX idx_notifications_type (type),
+  INDEX idx_notifications_isRead (isRead),
+  INDEX idx_notifications_createdAt (createdAt),
+  INDEX idx_notifications_deletedAt (deletedAt),
+  INDEX idx_notifications_user_unread (userId, isRead, deletedAt),
+  INDEX idx_notifications_user_type (userId, type, deletedAt),
+  INDEX idx_notifications_due_date (dueDate)
 );
 -- Course analytics table (for tracking course metrics)
 CREATE TABLE IF NOT EXISTS course_analytics (

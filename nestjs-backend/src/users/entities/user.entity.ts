@@ -47,13 +47,15 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
   // Use proper TypeScript type-only imports to avoid circular dependencies
   @OneToMany('VirtualSession', (session: any) => session.instructor)
   instructedSessions: any[];
 
   @OneToMany('SessionRegistration', (registration: any) => registration.user)
   sessionRegistrations: any[];
+
+  @OneToMany('Notification', (notification: any) => notification.user)
+  notifications: any[];
 
   @BeforeInsert()
   @BeforeUpdate()
@@ -68,10 +70,10 @@ export class User {
     console.log('Attempt:', attempt);
     console.log('Stored hash:', this.passwordHash);
     console.log('Hash length:', this.passwordHash ? this.passwordHash.length : 'null');
-    
+
     const result = await bcrypt.compare(attempt, this.passwordHash);
     console.log('Comparison result:', result);
-    
+
     return result;
   }
 } 

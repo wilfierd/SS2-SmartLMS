@@ -12,6 +12,7 @@ import AdminUsers from '../users/AdminUsers';
 import UnauthorizedPage from '../common/UnauthorizedPage';
 import QuizDetail from '../quiz/QuizDetail';
 import UserProfile from '../profile/UserProfile';
+import NotificationsPage from '../notifications/NotificationsPage';
 
 /**
  * A component that routes users to different dashboards based on their role
@@ -24,7 +25,6 @@ const RoleBasedRoute = ({ component }) => {
   if (!auth.isAuthenticated) {
     return <Navigate to="/login" />;
   }
-
   const componentMap = {
     admin: {
       dashboard: <AdminDashboard />,
@@ -33,6 +33,7 @@ const RoleBasedRoute = ({ component }) => {
       quizDetail: <QuizDetail />,
       users: <AdminUsers />,
       profile: <UserProfile />,
+      notifications: <NotificationsPage />,
       reports: <div>Reports & Analytics (Coming Soon)</div>,
       settings: <div>Settings (Coming Soon)</div>,
       messages: <div>Messages (Coming Soon)</div>,
@@ -44,6 +45,7 @@ const RoleBasedRoute = ({ component }) => {
       courseDetail: <CourseDetail />,
       quizDetail: <QuizDetail />,
       profile: <UserProfile />,
+      notifications: <NotificationsPage />,
       classroom: <VirtualClassroom />,
       assessment: <div>Assessment Tools (Coming Soon)</div>,
       messages: <div>Messages (Coming Soon)</div>,
@@ -54,6 +56,7 @@ const RoleBasedRoute = ({ component }) => {
       courseDetail: <CourseDetail />,
       quizDetail: <QuizDetail />,
       profile: <UserProfile />,
+      notifications: <NotificationsPage />,
       classroom: <VirtualClassroom />,
       messages: <div>Messages (Coming Soon)</div>,
     }

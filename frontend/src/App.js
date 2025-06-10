@@ -13,6 +13,7 @@ import CourseDetail from './components/course/CourseDetail';
 import QuizDetail from './components/quiz/QuizDetail';
 import AuthContext from './context/AuthContext';
 import { ChatbotProvider } from './context/ChatbotContext';
+import { NotificationProvider } from './context/NotificationContext';
 import Chatbot from './components/chatbot/Chatbot';
 import axios from 'axios';
 import './App.css';
@@ -190,203 +191,204 @@ function App() {
       {children}
     </React.Suspense>
   );
-
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthContext.Provider value={{ auth, login, logout, updateUser }}>
-        <ChatbotProvider>
-          <Toaster />
+        <NotificationProvider>
+          <ChatbotProvider>
+            <Toaster />
 
-          <Router>
-            <div className="App">
-              <Routes>
-                {/* Public routes */}
-                <Route
-                  path="/login"
-                  element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />}
-                />
-                <Route
-                  path="/forgot-password"
-                  element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />}
-                />
-                <Route
-                  path="/reset-password/:token"
-                  element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />}
-                />
-                <Route path="/unauthorized" element={<UnauthorizedPage />} />
-
-                {/* Dashboard routes */}
-                <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
-
-                {/* Course management routes */}
-                <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
-                <Route
-                  path="/courses/:courseId/detail"
-                  element={
-                    <ProtectedRoute>
-                      <CourseDetail />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Assessment routes with lazy loading */}
-                <Route
-                  path="/quizzes/:quizId"
-                  element={
-                    <ProtectedRoute>
-                      <QuizDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/assignments/:assignmentId"
-                  element={
-                    <ProtectedRoute>
-                      <LazyWrapper>
-                        <AssignmentDetail />
-                      </LazyWrapper>
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Grading routes (instructors/admins only) */}
-                <Route
-                  path="/courses/:courseId/assignments/:assignmentId/submissions/:submissionId/grade"
-                  element={
-                    <ProtectedRoute>
-                      <LazyWrapper>
-                        <GradeAssignment />
-                      </LazyWrapper>
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Student progress routes (instructors/admins only) */}
-                <Route
-                  path="/courses/:courseId/students/:studentId"
-                  element={
-                    <ProtectedRoute>
-                      <LazyWrapper>
-                        <StudentProgressView />
-                      </LazyWrapper>
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Virtual Classroom routes */}
-                <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} />
-                <Route path="/virtual-classroom" element={<Navigate to="/classroom" />} />
-                <Route
-                  path="/classroom/analytics/:sessionId"
-                  element={
-                    <ProtectedRoute>
-                      <SessionAnalytics />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/classroom/recording/:sessionId/:recordingId"
-                  element={
-                    <ProtectedRoute>
-                      <SessionRecordingView />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/classroom/recording/:sessionId"
-                  element={
-                    <ProtectedRoute>
-                      <SessionRecordingView />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Admin routes */}
-                <Route path="/users" element={<RoleBasedRoute component="users" />} />
-                <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
-                <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
-
-                {/* Profile route - available to all authenticated users */}
-                <Route path="/profile" element={<RoleBasedRoute component="profile" />} />
-
-                {/* Assessment tools route */}
-                <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} />
-
-                {/* Messages route */}
-                <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
-
-                {/* Course export/import routes */}
-                <Route
-                  path="/courses/:courseId/export"
-                  element={
-                    <ProtectedRoute>
-                      <RoleBasedRoute component="courseExport" />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/course-import"
-                  element={
-                    <ProtectedRoute>
-                      <RoleBasedRoute component="courseImport" />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Analytics routes */}
-                <Route
-                  path="/analytics"
-                  element={<RoleBasedRoute component="analytics" />}
-                />
-                <Route
-                  path="/analytics/course/:courseId"
-                  element={
-                    <ProtectedRoute>
-                      <RoleBasedRoute component="courseAnalytics" />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* API testing route (development only) */}
-                {process.env.NODE_ENV === 'development' && (
+            <Router>
+              <div className="App">
+                <Routes>
+                  {/* Public routes */}
                   <Route
-                    path="/api-test"
+                    path="/login"
+                    element={!auth.isAuthenticated ? <Login /> : <Navigate to="/dashboard" />}
+                  />
+                  <Route
+                    path="/forgot-password"
+                    element={!auth.isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" />}
+                  />
+                  <Route
+                    path="/reset-password/:token"
+                    element={!auth.isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />}
+                  />
+                  <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+                  {/* Dashboard routes */}
+                  <Route path="/dashboard" element={<RoleBasedRoute component="dashboard" />} />
+
+                  {/* Course management routes */}
+                  <Route path="/courses" element={<RoleBasedRoute component="courses" />} />
+                  <Route
+                    path="/courses/:courseId/detail"
                     element={
                       <ProtectedRoute>
-                        <RoleBasedRoute component="apiTest" />
+                        <CourseDetail />
                       </ProtectedRoute>
                     }
                   />
+
+                  {/* Assessment routes with lazy loading */}
+                  <Route
+                    path="/quizzes/:quizId"
+                    element={
+                      <ProtectedRoute>
+                        <QuizDetail />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/assignments/:assignmentId"
+                    element={
+                      <ProtectedRoute>
+                        <LazyWrapper>
+                          <AssignmentDetail />
+                        </LazyWrapper>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Grading routes (instructors/admins only) */}
+                  <Route
+                    path="/courses/:courseId/assignments/:assignmentId/submissions/:submissionId/grade"
+                    element={
+                      <ProtectedRoute>
+                        <LazyWrapper>
+                          <GradeAssignment />
+                        </LazyWrapper>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Student progress routes (instructors/admins only) */}
+                  <Route
+                    path="/courses/:courseId/students/:studentId"
+                    element={
+                      <ProtectedRoute>
+                        <LazyWrapper>
+                          <StudentProgressView />
+                        </LazyWrapper>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Virtual Classroom routes */}
+                  <Route path="/classroom" element={<RoleBasedRoute component="classroom" />} />
+                  <Route path="/virtual-classroom" element={<Navigate to="/classroom" />} />
+                  <Route
+                    path="/classroom/analytics/:sessionId"
+                    element={
+                      <ProtectedRoute>
+                        <SessionAnalytics />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/classroom/recording/:sessionId/:recordingId"
+                    element={
+                      <ProtectedRoute>
+                        <SessionRecordingView />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/classroom/recording/:sessionId"
+                    element={
+                      <ProtectedRoute>
+                        <SessionRecordingView />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Admin routes */}
+                  <Route path="/users" element={<RoleBasedRoute component="users" />} />
+                  <Route path="/reports" element={<RoleBasedRoute component="reports" />} />
+                  <Route path="/settings" element={<RoleBasedRoute component="settings" />} />
+
+                  {/* Profile route - available to all authenticated users */}
+                  <Route path="/profile" element={<RoleBasedRoute component="profile" />} />
+
+                  {/* Assessment tools route */}
+                  <Route path="/assessment" element={<RoleBasedRoute component="assessment" />} />                {/* Messages route */}
+                  <Route path="/messages" element={<RoleBasedRoute component="messages" />} />
+
+                  {/* Notifications route */}
+                  <Route path="/notifications" element={<RoleBasedRoute component="notifications" />} />
+
+                  {/* Course export/import routes */}
+                  <Route
+                    path="/courses/:courseId/export"
+                    element={
+                      <ProtectedRoute>
+                        <RoleBasedRoute component="courseExport" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/course-import"
+                    element={
+                      <ProtectedRoute>
+                        <RoleBasedRoute component="courseImport" />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Analytics routes */}
+                  <Route
+                    path="/analytics"
+                    element={<RoleBasedRoute component="analytics" />}
+                  />
+                  <Route
+                    path="/analytics/course/:courseId"
+                    element={
+                      <ProtectedRoute>
+                        <RoleBasedRoute component="courseAnalytics" />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* API testing route (development only) */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <Route
+                      path="/api-test"
+                      element={
+                        <ProtectedRoute>
+                          <RoleBasedRoute component="apiTest" />
+                        </ProtectedRoute>
+                      }
+                    />
+                  )}
+
+                  {/* Default routes */}
+                  <Route
+                    path="/"
+                    element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />}
+                  />
+                  <Route
+                    path="*"
+                    element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />}
+                  />
+                </Routes>
+
+                {/* Password change modal */}
+                {showPasswordModal && (
+                  <ChangePasswordModal
+                    onClose={() => {
+                      if (auth.user.isPasswordChanged) {
+                        setShowPasswordModal(false);
+                      }
+                    }}
+                    forceChange={!auth.user.isPasswordChanged}
+                  />
                 )}
 
-                {/* Default routes */}
-                <Route
-                  path="/"
-                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />}
-                />
-                <Route
-                  path="*"
-                  element={<Navigate to={auth.isAuthenticated ? "/dashboard" : "/login"} />}
-                />
-              </Routes>
-
-              {/* Password change modal */}
-              {showPasswordModal && (
-                <ChangePasswordModal
-                  onClose={() => {
-                    if (auth.user.isPasswordChanged) {
-                      setShowPasswordModal(false);
-                    }
-                  }}
-                  forceChange={!auth.user.isPasswordChanged}
-                />
-              )}
-
-              {/* Chatbot for authenticated users */}
-              {auth.isAuthenticated && <Chatbot />}
-            </div>
-          </Router>
-        </ChatbotProvider>
+                {/* Chatbot for authenticated users */}
+                {auth.isAuthenticated && <Chatbot />}            </div>
+            </Router>
+          </ChatbotProvider>
+        </NotificationProvider>
       </AuthContext.Provider>
     </GoogleOAuthProvider>
   );

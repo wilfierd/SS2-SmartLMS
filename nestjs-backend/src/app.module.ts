@@ -2,6 +2,7 @@ import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { BullModule } from '@nestjs/bull';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -19,6 +20,7 @@ import configuration from './config/configuration';
 import { DiscussionsModule } from './discussions/discussions.module';
 import { RecommendationModule } from './recommendations/recommendation.module';
 import { SearchModule } from './search/search.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { UserActivity } from './users/entities/user-activity.entity';
 import { UserSession } from './users/entities/user-session.entity';
 
@@ -44,6 +46,17 @@ import { UserSession } from './users/entities/user-session.entity';
       }),
     }),
     TypeOrmModule.forFeature([UserActivity, UserSession]),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD'),
+        },
+      }),
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
@@ -54,10 +67,10 @@ import { UserSession } from './users/entities/user-session.entity';
     EnrollmentsModule,
     VirtualClassroomModule,
     MailerModule.register(), UploadsModule,
-    AssessmentsModule,
-    DiscussionsModule,
+    AssessmentsModule, DiscussionsModule,
     RecommendationModule,
     SearchModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
