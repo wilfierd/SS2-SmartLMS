@@ -12,6 +12,7 @@ import AdminUsers from '../users/AdminUsers';
 import UnauthorizedPage from '../common/UnauthorizedPage';
 import QuizDetail from '../quiz/QuizDetail';
 import UserProfile from '../profile/UserProfile';
+import MessagesPage from '../message/MessagesPage';
 import NotificationsPage from '../notifications/NotificationsPage';
 
 /**
@@ -36,7 +37,7 @@ const RoleBasedRoute = ({ component }) => {
       notifications: <NotificationsPage />,
       reports: <div>Reports & Analytics (Coming Soon)</div>,
       settings: <div>Settings (Coming Soon)</div>,
-      messages: <div>Messages (Coming Soon)</div>,
+      messages: <MessagesPage />,
       classroom: <VirtualClassroom />
     },
     instructor: {
@@ -48,7 +49,7 @@ const RoleBasedRoute = ({ component }) => {
       notifications: <NotificationsPage />,
       classroom: <VirtualClassroom />,
       assessment: <div>Assessment Tools (Coming Soon)</div>,
-      messages: <div>Messages (Coming Soon)</div>,
+      messages: <MessagesPage />,
     },
     student: {
       dashboard: <StudentDashboard />,
@@ -58,7 +59,7 @@ const RoleBasedRoute = ({ component }) => {
       profile: <UserProfile />,
       notifications: <NotificationsPage />,
       classroom: <VirtualClassroom />,
-      messages: <div>Messages (Coming Soon)</div>,
+      messages: <MessagesPage />,
     }
   };
 

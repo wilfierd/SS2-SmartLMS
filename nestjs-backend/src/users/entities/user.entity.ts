@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Message } from '../../messages/entities/message.entity';
 
 export enum UserRole {
   STUDENT = 'student',
@@ -56,6 +57,10 @@ export class User {
 
   @OneToMany('Notification', (notification: any) => notification.user)
   notifications: any[];
+  
+  @OneToMany(() => Message, m => m.sender) sentMessages: Message[];
+  @OneToMany(() => Message, m => m.receiver) receivedMessages: Message[];
+
 
   @BeforeInsert()
   @BeforeUpdate()
