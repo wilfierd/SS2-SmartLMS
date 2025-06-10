@@ -497,4 +497,15 @@ export class UsersService {
     // Finally delete the user
     await this.usersRepository.remove(user);
   }
+
+  async search(query: string): Promise<User[]> {
+  return this.usersRepository
+    .createQueryBuilder('user')
+    .where(
+      'CONCAT(user.first_name, " ", user.last_name) LIKE :query OR user.email LIKE :query',
+      { query: `%${query}%` },
+    )
+    .getMany();
+}
+
 }

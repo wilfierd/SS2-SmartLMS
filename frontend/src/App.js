@@ -25,6 +25,8 @@ import VirtualClassroom from './components/classroom/VirtualClassroom';
 import SessionAnalytics from './components/classroom/SessionAnalytics';
 import SessionRecordingView from './components/classroom/SessionRecordingView';
 
+import MessagesPage from './components/message/MessagesPage';
+
 const GradeAssignment = React.lazy(() =>
   import('./components/assessment/GradeAssignment').catch(() => ({
     default: () => <div className="error-message">Grade Assignment component not found. Please check the file path.</div>
@@ -58,6 +60,7 @@ function App() {
   useEffect(() => {
     const checkServerStatus = async () => {
       try {
+        axios.defaults.baseURL = API_URL; // hoặc `${API_URL}/api` nếu có prefix
         const response = await axios.get(`${API_URL}/status`);
         console.log('Server status:', response.data);
       } catch (error) {
@@ -346,6 +349,16 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+
+                <Route
+                    path="/messages"
+                    element={
+                        <ProtectedRoute>
+                        <MessagesPage />
+                        </ProtectedRoute>
+                    }
+                />
+
 
                 {/* API testing route (development only) */}
                 {process.env.NODE_ENV === 'development' && (

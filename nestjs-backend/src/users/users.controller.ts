@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Request, ParseIntPipe, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Request, ParseIntPipe, UseInterceptors, UploadedFile, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
@@ -21,9 +21,15 @@ import { UserRole } from './entities/user.entity';
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
+
+  @Roles(UserRole.INSTRUCTOR, UserRole.STUDENT)
+  @Get('search-basic')
+  async searchUsersBasic(@Query('query') query: string) {
+    return this.usersService.search(query); // ⚠️ users.service.ts cần có hàm search()
+  }
 
   @Get()
   @UseGuards(RolesGuard)

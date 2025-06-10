@@ -21,6 +21,7 @@ import { RecommendationModule } from './recommendations/recommendation.module';
 import { SearchModule } from './search/search.module';
 import { UserActivity } from './users/entities/user-activity.entity';
 import { UserSession } from './users/entities/user-session.entity';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { UserSession } from './users/entities/user-session.entity';
     DiscussionsModule,
     RecommendationModule,
     SearchModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

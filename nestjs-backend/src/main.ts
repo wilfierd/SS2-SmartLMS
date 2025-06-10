@@ -99,6 +99,7 @@ async function bootstrap() {
 
   // Start the server using port from configuration
   const port = configService.get<number>('port', 5000);
+  app.setGlobalPrefix('api');
   await app.listen(port);
   console.log(`Application running on port ${port}`);
 }

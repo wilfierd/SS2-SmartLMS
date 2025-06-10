@@ -12,7 +12,6 @@ import { AuthController } from './auth.controller';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { UserActivity } from '../users/entities/user-activity.entity';
 import { UserSession } from '../users/entities/user-session.entity';
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([PasswordResetToken, UserActivity, UserSession]),
@@ -34,6 +33,6 @@ import { UserSession } from '../users/entities/user-session.entity';
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule { }

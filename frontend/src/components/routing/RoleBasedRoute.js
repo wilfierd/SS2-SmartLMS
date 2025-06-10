@@ -12,6 +12,7 @@ import AdminUsers from '../users/AdminUsers';
 import UnauthorizedPage from '../common/UnauthorizedPage';
 import QuizDetail from '../quiz/QuizDetail';
 import UserProfile from '../profile/UserProfile';
+import MessagesPage from '../message/MessagesPage';
 
 /**
  * A component that routes users to different dashboards based on their role
@@ -35,7 +36,7 @@ const RoleBasedRoute = ({ component }) => {
       profile: <UserProfile />,
       reports: <div>Reports & Analytics (Coming Soon)</div>,
       settings: <div>Settings (Coming Soon)</div>,
-      messages: <div>Messages (Coming Soon)</div>,
+      messages: <MessagesPage />,
       classroom: <VirtualClassroom />
     },
     instructor: {
@@ -46,7 +47,7 @@ const RoleBasedRoute = ({ component }) => {
       profile: <UserProfile />,
       classroom: <VirtualClassroom />,
       assessment: <div>Assessment Tools (Coming Soon)</div>,
-      messages: <div>Messages (Coming Soon)</div>,
+      messages: <MessagesPage />,
     },
     student: {
       dashboard: <StudentDashboard />,
@@ -55,7 +56,7 @@ const RoleBasedRoute = ({ component }) => {
       quizDetail: <QuizDetail />,
       profile: <UserProfile />,
       classroom: <VirtualClassroom />,
-      messages: <div>Messages (Coming Soon)</div>,
+      messages: <MessagesPage />,
     }
   };
 
