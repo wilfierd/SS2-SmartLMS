@@ -276,19 +276,50 @@
 
 .search-results {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 8px); /* Small gap below search bar like YouTube */
   left: 0;
   right: 0;
   background: white;
   border: 1px solid #dadce0;
-  border-radius: 12px;
-  max-height: 480px;
+  border-radius: 12px; /* Rounded corners all around */
+  max-height: 70vh; /* Shorter - 70% of viewport height */
+  min-height: 350px; /* Reduced minimum height */
   overflow-y: auto;
-  box-shadow: 0 4px 16px rgba(32,33,36,.28);
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  box-shadow: 0 8px 28px rgba(32,33,36,.28); /* Strong shadow like YouTube */
   z-index: 1000;
   /* Smooth animation */
   animation: searchResultsSlideIn 0.2s ease-out;
   transform-origin: top center;
+}
+
+/* Elegant scrollbar for search results */
+.search-results::-webkit-scrollbar {
+  width: 4px; /* Much thinner scrollbar */
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 2px;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: transparent; /* Initially invisible */
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+
+/* Only show scrollbar when hovering over the results container */
+.search-results:hover::-webkit-scrollbar-thumb {
+  background: #dadce0;
+}
+
+.search-results:hover::-webkit-scrollbar-thumb:hover {
+  background: #9aa0a6;
+}
+
+.search-results:hover::-webkit-scrollbar-thumb:active {
+  background: #5f6368;
 }
 
 @keyframes searchResultsSlideIn {
@@ -311,17 +342,21 @@
   font-weight: 400; /* Google's font weight */
   color: #5f6368; /* Google's text color */
   background: #fafafa; /* Lighter background */
-  border-radius: 12px 12px 0 0;
+  border-radius: 12px 12px 0 0; /* Rounded top corners */
+  margin: 0; /* Remove any margin */
 }
 
 .search-result-item {
   position: relative;
-  padding: 16px 20px;
+  padding: 20px 24px; /* Increased padding for more space */
   border-bottom: 1px solid #f1f3f4;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
   transform: translateX(0);
   background: white;
+  display: flex; /* Use flexbox for better layout */
+  flex-direction: column;
+  gap: 8px;
 }
 
 .search-result-item:hover {
@@ -337,7 +372,7 @@
 
 .search-result-item:last-child {
   border-bottom: none;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 12px 12px; /* Rounded bottom corners */
 }
 
 .result-header {
@@ -364,11 +399,12 @@
 }
 
 .result-title {
-  font-size: 16px; /* Increased font size */
-  font-weight: 400; /* Google's font weight */
-  margin-bottom: 6px; /* Increased margin */
+  font-size: 18px; /* Larger title font */
+  font-weight: 500; /* Slightly bolder */
+  margin-bottom: 8px; /* Increased margin */
   color: #1a73e8; /* Google blue for titles */
   line-height: 1.4;
+  max-width: none; /* Allow full width usage */
 }
 
 .result-title mark {
@@ -379,14 +415,15 @@
 }
 
 .result-content {
-  font-size: 14px; /* Increased font size */
+  font-size: 15px; /* Increased font size */
   color: #5f6368; /* Google's text color */
-  margin-bottom: 10px; /* Increased margin */
-  line-height: 1.5; /* Increased line height */
+  margin-bottom: 12px; /* Increased margin */
+  line-height: 1.6; /* Better line height */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3; /* Show more lines of content */
   -webkit-box-orient: vertical;
   overflow: hidden;
+  max-width: none; /* Allow full width usage */
 }
 
 .result-content mark {
@@ -450,12 +487,15 @@
     left: -16px;
     right: -16px;
     margin: 0 16px;
-  }
-  
-  .search-results {
-    left: -16px;
-    right: -16px;
-    margin: 0 16px;
+  }    .search-results {
+    left: -20px; /* Less extension on mobile */
+    right: -20px;
+    width: calc(100% + 40px);
+    min-width: auto; /* Remove minimum width on mobile */
+    margin: 0 20px;
+    max-height: 60vh; /* Shorter on mobile too */
+    min-height: 300px; /* Reduced minimum height on mobile */
+    border-radius: 12px; /* Keep rounded corners on mobile */
   }
   
   .filter-text {
@@ -490,5 +530,26 @@
   
   .filters-header h4 {
     font-size: 16px;
+  }    .search-results {
+    left: -10px; /* Minimal extension on small mobile */
+    right: -10px;
+    width: calc(100% + 20px);
+    margin: 0 10px;
+    max-height: 55vh; /* Shorter on small screens too */
+    min-height: 250px; /* Reduced minimum height on small mobile */
+    border-radius: 12px; /* Keep rounded corners on small mobile */
+  }
+  
+  .search-result-item {
+    padding: 16px 20px; /* Reduced padding on mobile */
+  }
+  
+  .result-title {
+    font-size: 16px; /* Smaller title on mobile */
+  }
+  
+  .result-content {
+    font-size: 14px; /* Smaller content on mobile */
+    -webkit-line-clamp: 2; /* Fewer lines on mobile */
   }
 }

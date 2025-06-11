@@ -10,7 +10,7 @@ const SearchBar = ({
   className = "",
   compact = false
 }) => {
-  const { auth } = useContext(AuthContext);  const [query, setQuery] = useState('');
+  const { auth } = useContext(AuthContext); const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [filters, setFilters] = useState({
@@ -172,7 +172,7 @@ const SearchBar = ({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}          className="search-input"
+          placeholder={placeholder} className="search-input"
           onFocus={() => {
             if (results.length > 0) setShowResults(true);
           }}
