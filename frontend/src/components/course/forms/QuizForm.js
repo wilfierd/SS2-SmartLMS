@@ -616,7 +616,7 @@ const QuizForm = ({
             >
               {isSubmitting ? (
                 <>
-                  <span className="spinner"></span>
+                                                  <div className="loading-spinner" style={{display: 'inline-block', width: '16px', height: '16px'}}>Loading...</div>
                   {isEdit ? 'Updating...' : 'Creating...'}
                 </>
               ) : (

@@ -14,9 +14,11 @@ import QuizDetail from './components/quiz/QuizDetail';
 import AuthContext from './context/AuthContext';
 import { ChatbotProvider } from './context/ChatbotContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { initGlobalLoading } from './utils/globalLoading';
 import Chatbot from './components/chatbot/Chatbot';
 import axios from 'axios';
 import './App.css';
+import './styles/globalLoading.css';
 import config from './config';
 import SidebarManager from './components/common/SidebarManager';
 import AssignmentDetail from './components/assessment/AssignmentDetail';
@@ -52,9 +54,10 @@ function App() {
   const API_URL = config.apiUrl;
   const googleClientId = config.googleClientId || '';
 
-  // Initialize sidebar state manager
+  // Initialize sidebar state manager and global loading
   useEffect(() => {
     SidebarManager.initialize();
+    initGlobalLoading();
   }, []);
 
   // Set up axios defaults and check server status
@@ -182,7 +185,7 @@ function App() {
   };
 
   if (auth.isLoading) {
-    return <div className="loading">Loading...</div>;
+    return <div className="loading-spinner" data-text="Initializing application...">Loading...</div>;
   }
 
   const ProtectedRoute = ({ children }) => {
@@ -190,7 +193,7 @@ function App() {
   };
 
   const LazyWrapper = ({ children }) => (
-    <React.Suspense fallback={<div className="loading-spinner">Loading component...</div>}>
+    <React.Suspense fallback={<div className="loading-spinner" data-text="Loading component...">Loading...</div>}>
       {children}
     </React.Suspense>
   );

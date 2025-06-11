@@ -208,10 +208,7 @@ const NotificationsPage = () => {
                         )}
 
                         {loading ? (
-                            <div className="notifications-loading">
-                                <div className="loading-spinner"></div>
-                                <p>Loading notifications...</p>
-                            </div>
+                            <div className="loading-spinner">Loading notifications...</div>
                         ) : filteredNotifications.length === 0 ? (
                             <div className="no-notifications">
                                 <div className="no-notifications-icon">🔔</div>

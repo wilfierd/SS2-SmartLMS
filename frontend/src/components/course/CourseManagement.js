@@ -703,7 +703,7 @@ const CourseManagement = () => {
           </div>
           
           {isLoading ? (
-            <div className="loading-spinner">Loading...</div>
+            <div className="loading-spinner">Loading courses...</div>
           ) : (
             <div className="course-grid">
               {/* For students in "My Enrolled Courses" view */}

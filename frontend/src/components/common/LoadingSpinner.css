@@ -1,0 +1,85 @@
+/* LoadingSpinner Component Styles */
+
+.loading-spinner-component {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.loading-spinner-component.spinner-centered {
+  padding: 40px 20px;
+  min-height: 120px;
+  width: 100%;
+}
+
+/* Spinner Circle */
+.spinner-circle {
+  border: 3px solid #e3e3e3;
+  border-top: 3px solid #4285f4;
+  border-radius: 50%;
+  animation: spin-clean 1s linear infinite;
+}
+
+/* Size variants */
+.loading-spinner-component .spinner-circle {
+  width: 32px;
+  height: 32px;
+}
+
+.loading-spinner-component.spinner-small .spinner-circle {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.loading-spinner-component.spinner-large .spinner-circle {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+/* Spinner Text */
+.spinner-text {
+  color: #5f6368;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.loading-spinner-component.spinner-small .spinner-text {
+  font-size: 12px;
+}
+
+.loading-spinner-component.spinner-large .spinner-text {
+  font-size: 16px;
+}
+
+/* Clean spin animation - only for the circle */
+@keyframes spin-clean {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .spinner-circle {
+    border-color: #3c4043;
+    border-top-color: #8ab4f8;
+  }
+  
+  .spinner-text {
+    color: #e8eaed;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-circle {
+    animation: none;
+    border: 3px solid #4285f4;
+  }
+}

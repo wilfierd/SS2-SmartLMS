@@ -1,0 +1,200 @@
+/* PROPER CENTERED LOADING SPINNER - OVERRIDE ALL CONFLICTS */
+
+/* High specificity to override component styles */
+div.loading-spinner,
+.loading-spinner.loading-spinner,
+[class*="loading-spinner"] {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  min-height: 80vh !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  position: relative !important;
+  width: 100% !important;
+  text-align: center !important;
+  animation: none !important; /* STOP ANY ROTATION ON THE CONTAINER */
+  transform: none !important;  /* PREVENT ANY TRANSFORMS */
+}
+
+/* Override any inherited styles that might affect positioning */
+.loading-spinner,
+div.loading-spinner,
+.loading-spinner.loading-spinner {
+  margin: 0 auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+}
+
+/* The spinner circle - CENTERED and CLEAN */
+.loading-spinner::before,
+div.loading-spinner::before,
+.loading-spinner.loading-spinner::before {
+  content: '' !important;
+  display: block !important;
+  width: 32px !important;
+  height: 32px !important;
+  border: 3px solid rgba(0, 0, 0, 0.1) !important;
+  border-top: 3px solid #4285f4 !important;
+  border-radius: 50% !important;
+  animation: smooth-spin 1.2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite !important;
+  margin: 0 auto 16px auto !important;
+  position: relative !important;
+  transform-origin: center center !important;
+  transition: all 0.3s ease !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+}
+
+/* The text - BELOW the spinner - NO ANIMATION */
+.loading-spinner::after,
+div.loading-spinner::after,
+.loading-spinner.loading-spinner::after {
+  content: attr(data-text) !important;
+  display: block !important;
+  color: #5f6368 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  animation: none !important; /* NEVER ANIMATE THE TEXT */
+  transform: none !important;
+  margin: 0 auto !important;
+  opacity: 0.8 !important;
+  transition: opacity 0.3s ease !important;
+  position: relative !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Fallback text */
+.loading-spinner:not([data-text])::after,
+div.loading-spinner:not([data-text])::after,
+.loading-spinner.loading-spinner:not([data-text])::after {
+  content: 'Loading...' !important;
+}
+
+/* Smooth Google-style spin animation */
+@keyframes smooth-spin {
+  0% { 
+    transform: rotate(0deg);
+    border-top-color: #4285f4;
+  }
+  25% { 
+    border-top-color: #34a853;
+  }
+  50% { 
+    transform: rotate(180deg);
+    border-top-color: #fbbc05;
+  }
+  75% { 
+    border-top-color: #ea4335;
+  }
+  100% { 
+    transform: rotate(360deg);
+    border-top-color: #4285f4;
+  }
+}
+
+/* Fallback simple spin for older browsers */
+@keyframes loading-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .loading-spinner::before {
+    border-color: #3c4043 !important;
+    border-top-color: #8ab4f8 !important;
+  }
+  
+  .loading-spinner::after {
+    color: #e8eaed !important;
+  }
+}
+
+/* Accessibility - no animation for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner::before {
+    animation: none !important;
+    border: 3px solid #4285f4 !important;
+  }
+}
+
+/* Override ANY other loading spinner styles that might conflict */
+body div.loading-spinner,
+body .loading-spinner.loading-spinner,
+html div.loading-spinner,
+html .loading-spinner.loading-spinner {
+  animation: none !important;
+  transform: none !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+/* Prevent any pseudo-element border artifacts */
+.loading-spinner,
+div.loading-spinner,
+.loading-spinner.loading-spinner {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* Only the ::before pseudo-element should spin */
+body div.loading-spinner::before,
+body .loading-spinner.loading-spinner::before,
+html div.loading-spinner::before,
+html .loading-spinner.loading-spinner::before {
+  animation: smooth-spin 1.2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite !important;
+  border: 3px solid rgba(0, 0, 0, 0.1) !important;
+  border-top: 3px solid #4285f4 !important;
+}
+
+/* Ensure text never spins */
+body div.loading-spinner::after,
+body .loading-spinner.loading-spinner::after,
+html div.loading-spinner::after,
+html .loading-spinner.loading-spinner::after {
+  animation: none !important;
+  transform: none !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .loading-spinner {
+    padding: 30px 15px !important;
+    min-height: 100px !important;
+  }
+  
+  .loading-spinner::before {
+    width: 28px !important;
+    height: 28px !important;
+    border-width: 2px !important;
+  }
+  
+  .loading-spinner::after {
+    font-size: 13px !important;
+  }
+}

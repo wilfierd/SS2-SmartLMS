@@ -1081,9 +1081,9 @@ const VirtualClassroom = () => {
         <Header title="Virtual Classroom" />
         
         <div className="classroom-content">
-          {isLoading ? (
-            <div className="loading-spinner">Loading sessions...</div>
-          ) : (
+                  {isLoading ? (
+                      <div className="loading-spinner">Loading virtual classroom sessions...</div>
+        ) : (
             <>
               {auth.user.role === 'instructor' && (
                 <div className="instructor-actions">

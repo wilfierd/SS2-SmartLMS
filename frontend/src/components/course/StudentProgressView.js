@@ -153,7 +153,7 @@ const StudentProgressView = () => {
   };
 
   if (isLoading) {
-    return <div className="loading-spinner">Loading student data...</div>;
+    return <div className="loading-spinner">Loading student progress...</div>;
   }
 
   if (!student) {
