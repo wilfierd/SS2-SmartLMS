@@ -2379,3 +2379,14 @@ CREATE TABLE IF NOT EXISTS user_activity_log (
     INDEX idx_activity_log_type (activity_type),
     INDEX idx_activity_log_created (created_at)
 );
+
+CREATE TABLE IF NOT EXISTS messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sender_id INT NOT NULL,
+  receiver_id INT NOT NULL,
+  content TEXT NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+-- ALTER TABLE messages CHANGE created_at createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
