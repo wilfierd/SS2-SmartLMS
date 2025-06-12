@@ -8,7 +8,7 @@ import EnrolledStudentList from './EnrolledStudentList';
 import CourseStatistics from './CourseStatistics';
 import DiscussionForum from './DiscussionForum';
 import ModuleForm from './forms/ModuleForm';
-import LessonForm from './forms/LessonForm';
+import LessonContent from './LessonContent/LessonContent';
 import AssignmentForm from './forms/AssignmentForm';
 import QuizForm from './forms/QuizForm';
 import EnrollmentModal from './modals/EnrollmentModal';
@@ -40,13 +40,14 @@ const CourseDetail = () => {
   // UI state
   const [activeTab, setActiveTab] = useState('content');
   const [selectedModule, setSelectedModule] = useState(null);
-  const [selectedLesson, setSelectedLesson] = useState(null);
-  // Modal states
+  const [selectedLesson, setSelectedLesson] = useState(null);  // Modal states
   const [showModuleModal, setShowModuleModal] = useState(false);
-  const [showLessonModal, setShowLessonModal] = useState(false);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
+
+  // Editing states
+  const [isCreatingLesson, setIsCreatingLesson] = useState(false);
 
   // Handle URL parameters for tab and discussion navigation
   const discussionId = searchParams.get('discussionId');
@@ -168,16 +169,14 @@ const CourseDetail = () => {
                     onClick={() => setShowModuleModal(true)}
                   >
                     <span className="btn-icon">📚</span> Add Module
-                  </button>
-
-                  <button
+                  </button>                  <button
                     className="secondary-btn"
                     onClick={() => {
                       if (modules.modules.length === 0) {
                         notification.warning('Create a module first');
                         return;
                       }
-                      setShowLessonModal(true);
+                      setIsCreatingLesson(true);
                     }}
                   >
                     <span className="btn-icon">📄</span> Add Lesson
@@ -381,128 +380,31 @@ const CourseDetail = () => {
                   if (!currentLesson) {
                     return (
                       <div className="empty-state">
-                        <p>Select a lesson to view content</p>
-                        {permissions.canEdit && modules.modules.length > 0 && (
+                        <p>Select a lesson to view content</p>                        {permissions.canEdit && modules.modules.length > 0 && (
                           <button
                             className="add-btn"
-                            onClick={() => setShowLessonModal(true)}
+                            onClick={() => setIsCreatingLesson(true)}
                           >
                             Add First Lesson
                           </button>
                         )}
                       </div>
                     );
-                  }
-
-                  return (
+                  } return (
                     <div className="session-content">
-                      <div className="session-header">
-                        <h2>{currentLesson.title}</h2>
-                        <div className="lesson-label">
-                          Duration: {currentLesson.durationMinutes || 0} minutes
-                        </div>
-                      </div>
-
-                      {currentLesson.description && (
-                        <div className="session-description">
-                          {currentLesson.description}
-                        </div>
-                      )}                      {/* Rich Content Type - combines text, video, and images */}
-                      {currentLesson.contentType === 'rich_content' && (
-                        <>
-                          {/* Text Content */}
-                          {currentLesson.content && (
-                            <div className="session-main-content">
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: currentLesson.content
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {/* Video Content */}
-                          {currentLesson.videoUrl && (
-                            <div className="rich-content-video">
-                              <h4>Lesson Video</h4>
-                              <VideoPlayer
-                                videoUrl={currentLesson.videoUrl}
-                                title={currentLesson.title}
-                              />
-                            </div>
-                          )}
-                        </>
-                      )}{/* Materials */}
-                      {currentLesson.materials && currentLesson.materials.length > 0 && (
-                        <div className="session-materials">
-                          <h4>Lesson Materials</h4>
-
-                          {/* Display Images separately */}
-                          {currentLesson.materials.filter(m => m.materialType === 'image').length > 0 && (
-                            <div className="lesson-images-grid">
-                              {currentLesson.materials
-                                .filter(material => material.materialType === 'image')
-                                .map(image => (
-                                  <div key={image.id} className="lesson-image-item">
-                                    <img
-                                      src={`/api${image.filePath}`}
-                                      alt={image.title}
-                                      className="lesson-image"
-                                    />
-                                    <p className="image-caption">{image.title}</p>
-                                  </div>
-                                ))
-                              }
-                            </div>
-                          )}
-
-                          {/* Display other materials */}
-                          {currentLesson.materials.filter(m => m.materialType !== 'image').length > 0 && (
-                            <div className="materials-list">
-                              {currentLesson.materials
-                                .filter(material => material.materialType !== 'image')
-                                .map(material => (
-                                  <div key={material.id} className="material-item">
-                                    {material.externalUrl ? (
-                                      // Check if it's a video URL (YouTube, Vimeo, etc.) 
-                                      material.materialType === 'video' ||
-                                        material.externalUrl.includes('youtube.com') ||
-                                        material.externalUrl.includes('youtu.be') ||
-                                        material.externalUrl.includes('vimeo.com') ? (
-                                        <div className="material-video">
-                                          <h5 className="material-title">{material.title}</h5>
-                                          <VideoPlayer
-                                            videoUrl={material.externalUrl}
-                                            title={material.title}
-                                          />
-                                        </div>
-                                      ) : (
-                                        <a
-                                          href={material.externalUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="external-link"
-                                        >
-                                          {material.title} 🔗
-                                        </a>
-                                      )
-                                    ) : (
-                                      <button
-                                        className="download-material-btn"
-                                        onClick={() => downloadMaterial(material.id, material.title)}
-                                        title="Download material"
-                                      >
-                                        <span className="download-icon">📥</span>
-                                        {material.title}
-                                      </button>
-                                    )}
-                                  </div>
-                                ))
-                              }
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <LessonContent
+                        lesson={currentLesson}
+                        selectedModule={selectedModule}
+                        isInstructor={permissions.canEdit}
+                        onLessonUpdate={modules.refetch}
+                        isCreatingLesson={isCreatingLesson}
+                        onLessonCreated={() => {
+                          setIsCreatingLesson(false);
+                          modules.refetch();
+                        }}
+                        onCancelCreate={() => setIsCreatingLesson(false)}
+                        modules={modules.modules}
+                      />
                     </div>
                   );
                 })()}
@@ -521,21 +423,11 @@ const CourseDetail = () => {
             <DiscussionForum courseId={courseId} selectedDiscussionId={discussionId} />
           )}
         </div>
-      </div>
-
-      {/* Modals */}
+      </div>      {/* Modals */}
       {showModuleModal && (
         <ModuleForm
           onClose={() => setShowModuleModal(false)}
           onSubmit={modules.createModule}
-        />
-      )}
-
-      {showLessonModal && (
-        <LessonForm
-          modules={modules.modules}
-          onClose={() => setShowLessonModal(false)}
-          onSubmit={modules.refetch} // Refresh modules after lesson creation
         />
       )}
 

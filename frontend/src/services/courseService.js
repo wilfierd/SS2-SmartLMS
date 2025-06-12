@@ -63,14 +63,13 @@ class CourseService {
   async deleteModule(courseId, moduleId) {
     const response = await this.api.delete(`/courses/${courseId}/modules/${moduleId}`);
     return response.data;
-  }
-  // Lesson Operations
+  }  // Lesson Operations
   async createLesson(courseId, lessonData) {
     const formData = new FormData();
 
     // Add text fields
     Object.keys(lessonData).forEach(key => {
-      if (key !== 'materials' && key !== 'images' && lessonData[key] !== undefined) {
+      if (key !== 'materials' && key !== 'images' && key !== 'contentBlocks' && lessonData[key] !== undefined) {
         formData.append(key, lessonData[key]);
       }
     });
