@@ -16,7 +16,7 @@
 .lesson-builder-container {
   background: white;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1100px;
   height: 95vh;
   border-radius: 16px;
   overflow: hidden;
@@ -78,7 +78,6 @@
 
 .save-btn:hover:not(:disabled) {
   background: #059669;
-  transform: translateY(-1px);
 }
 
 .save-btn:disabled {
@@ -155,13 +154,14 @@
 .lesson-builder-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   background: #f8fafc;
 }
 
 .content-canvas {
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 30px;
+  padding: 30px 20px;
   min-height: 100%;
   box-sizing: border-box;
 }
@@ -213,7 +213,6 @@
 }
 
 .add-first-block-btn:hover {
-  transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
@@ -229,48 +228,60 @@
   background: white;
   border-radius: 12px;
   border: 2px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   overflow: hidden;
+  margin-left: 30px;
+  max-width: calc(100% - 30px);
 }
 
 .content-block-wrapper:hover {
   border-color: #e5e7eb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .content-block-wrapper.dragging {
-  transform: rotate(3deg);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
   border-color: #667eea;
+  z-index: 1000;
+  opacity: 0.9;
 }
 
 .drag-handle {
   position: absolute;
-  left: -15px;
+  left: -30px;
   top: 50%;
   transform: translateY(-50%);
-  background: #6b7280;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  width: 30px;
-  height: 40px;
+  width: 28px;
+  height: 50px;
   border-radius: 0 8px 8px 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
   opacity: 0;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   font-size: 14px;
   line-height: 1;
+  z-index: 5;
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border: none;
 }
 
 .content-block-wrapper:hover .drag-handle {
   opacity: 1;
-  left: -20px;
+  left: -15px;
 }
 
 .drag-handle:active {
   cursor: grabbing;
+  background: linear-gradient(135deg, #5a67d8 0%, #667eea 100%);
+}
+
+.drag-handle:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 /* Add Block Section */
@@ -306,11 +317,14 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1100;
+  z-index: 2000;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 20px;
+  /* Ensure it doesn't go under sidebar */
+  padding-left: max(20px, 260px);
+  padding-right: 20px;
 }
 
 .add-block-menu {
@@ -321,6 +335,10 @@
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  /* Center within available space after sidebar offset */
+  margin: 0 auto;
+  /* Prevent overflow by constraining width */
+  max-width: min(600px, calc(100vw - 280px - 40px));
 }
 
 .menu-header {
@@ -378,7 +396,6 @@
 
 .block-type-card:hover {
   border-color: #667eea;
-  transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
 }
 
@@ -484,7 +501,6 @@
 
 .control-btn:hover {
   background: rgba(0, 0, 0, 0.9);
-  transform: scale(1.1);
 }
 
 .control-btn.edit { background: #3b82f6; }
@@ -621,7 +637,6 @@
 }
 
 .create-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
@@ -661,6 +676,42 @@
     grid-template-columns: 1fr;
     gap: 15px;
   }
+  
+  /* Adjust modal positioning for tablets and smaller desktops */
+  .add-block-menu-overlay {
+    padding-left: max(20px, 200px);
+  }
+  
+  .add-block-menu {
+    max-width: min(600px, calc(100vw - 220px - 40px));
+  }
+}
+
+@media (max-width: 1024px) {
+  .lesson-builder-container {
+    max-width: 95vw;
+    height: 90vh;
+  }
+  
+  .content-canvas {
+    max-width: 600px;
+    padding: 20px 15px;
+  }
+  
+  .content-block-wrapper {
+    margin-left: 25px;
+    max-width: calc(100% - 25px);
+  }
+  
+  .drag-handle {
+    left: -25px;
+    width: 24px;
+    height: 45px;
+  }
+  
+  .content-block-wrapper:hover .drag-handle {
+    left: -12px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -669,31 +720,38 @@
   }
   
   .lesson-builder-container {
-    height: 100vh;
-    border-radius: 0;
+    height: 85vh;
   }
   
-  .lesson-builder-header {
-    padding: 15px 20px;
+  .content-canvas {
+    max-width: 100%;
+    padding: 15px 10px;
+  }
+  
+  .content-block-wrapper {
+    margin-left: 20px;
+    max-width: calc(100% - 20px);
+  }
+  
+  .drag-handle {
+    left: -20px;
+    width: 20px;
+    height: 40px;
+    font-size: 12px;
+  }
+  
+  .content-block-wrapper:hover .drag-handle {
+    left: -10px;
   }
   
   .header-content {
     flex-direction: column;
     gap: 15px;
-    align-items: stretch;
   }
   
   .header-actions {
+    width: 100%;
     justify-content: center;
-  }
-  
-  .content-canvas {
-    padding: 20px;
-  }
-  
-  .block-types-grid {
-    grid-template-columns: 1fr;
-    padding: 20px;
   }
 }
 

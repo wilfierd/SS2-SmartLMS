@@ -1,17 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-// import uploadService from '../../../../services/uploadService';
+import uploadService from '../../../services/uploadService';
 import './BlockStyles.css';
-
-// Temporary upload service fallback
-const uploadService = {
-    uploadImage: async (file, courseId) => {
-        // Temporary mock - replace with real implementation
-        return { filePath: URL.createObjectURL(file) };
-    },
-    generatePreviewUrl: (file) => URL.createObjectURL(file),
-    revokePreviewUrl: (url) => URL.revokeObjectURL(url)
-};
 
 const ImageBlock = ({
     block,

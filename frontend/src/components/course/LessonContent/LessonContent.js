@@ -54,9 +54,16 @@ const SortableItem = ({ id, children }) => {
             ref={setNodeRef}
             style={style}
             {...attributes}
-            {...listeners}
-            className={isDragging ? 'is-dragging' : ''}
+            className={`content-block-wrapper ${isDragging ? 'is-dragging' : ''}`}
         >
+            {/* Drag Handle */}
+            <div
+                className="drag-handle"
+                {...listeners}
+                title="Drag to reorder"
+            >
+                ⋮⋮
+            </div>
             {children}
         </div>
     );
@@ -115,9 +122,9 @@ const LessonContent = ({
                 const legacyBlock = {
                     id: `legacy_${Date.now()}`,
                     type: 'text',
-                    data: { 
-                        content: lesson.content, 
-                        style: 'paragraph' 
+                    data: {
+                        content: lesson.content,
+                        style: 'paragraph'
                     },
                     order: 0
                 };

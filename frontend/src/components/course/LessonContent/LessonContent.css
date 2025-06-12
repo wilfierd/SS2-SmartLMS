@@ -68,7 +68,6 @@
 
 .edit-lesson-btn:hover {
   background: #2563eb;
-  transform: translateY(-1px);
 }
 
 .edit-controls {
@@ -163,7 +162,6 @@
 
 .add-first-block-btn:hover {
   background: #2563eb;
-  transform: translateY(-1px);
 }
 
 .empty-view-state {
@@ -234,11 +232,14 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 2000;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 20px;
+  /* Ensure it doesn't go under sidebar */
+  padding-left: max(20px, 260px);
+  padding-right: 20px;
 }
 
 .add-block-menu {
@@ -249,6 +250,10 @@
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
+  /* Center within available space after sidebar offset */
+  margin: 0 auto;
+  /* Prevent overflow by constraining width */
+  max-width: min(600px, calc(100vw - 280px - 40px));
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
 }
 
@@ -305,8 +310,7 @@
 .block-type-card:hover {
   border-color: #3b82f6;
   background: #f8faff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .block-icon {
@@ -345,26 +349,26 @@
   font-size: 2rem;
   font-weight: bold;
   color: #1e293b;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .text-content.text-heading2 {
   font-size: 1.5rem;
   font-weight: semibold;
   color: #1e293b;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .text-content.text-heading3 {
   font-size: 1.25rem;
   font-weight: medium;
   color: #1e293b;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .text-content.text-paragraph {
   font-size: 1rem;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
 }
 
 .text-content.text-quote {
@@ -372,7 +376,7 @@
   border-left: 4px solid #3b82f6;
   background: #f8faff;
   font-style: italic;
-  margin: 16px 0;
+  margin: 8px 0 4px 0;
 }
 
 .text-content.text-code {
@@ -383,6 +387,7 @@
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.875rem;
   overflow-x: auto;
+  margin: 8px 0 4px 0;
 }
 
 .video-content {
@@ -522,14 +527,97 @@
   border: 1px solid #e2e8f0;
 }
 
-/* Drag and Drop */
-.is-dragging {
-  opacity: 0.8;
-  transform: rotate(5deg);
+/* Content Block Wrapper */
+.content-block-wrapper {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.content-block-wrapper:hover {
+  border-color: #e5e7eb;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.content-block-wrapper.is-dragging {
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  border-color: #667eea;
   z-index: 1000;
+  opacity: 0.9;
+}
+
+.drag-handle {
+  position: absolute;
+  left: -60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 50px;
+  height: 60px;
+  border-radius: 0 12px 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  opacity: 0;
+  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  font-size: 16px;
+  line-height: 1;
+  z-index: 5;
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border: none;
+}
+
+.content-block-wrapper:hover .drag-handle {
+  opacity: 1;
+  left: -25px;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  background: linear-gradient(135deg, #5a67d8 0%, #667eea 100%);
+}
+
+.drag-handle:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Remove bottom margin from last text content elements */
+.text-content.text-heading1:last-child,
+.text-content.text-heading2:last-child,
+.text-content.text-heading3:last-child,
+.text-content.text-paragraph:last-child,
+.text-content.text-quote:last-child,
+.text-content.text-code:last-child {
+  margin-bottom: 0;
+}
+
+/* Ensure text content is properly contained */
+.text-content {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+  /* Adjust modal positioning for tablets and smaller desktops */
+  .add-block-menu-overlay {
+    padding-left: max(20px, 200px);
+  }
+  
+  .add-block-menu {
+    max-width: min(600px, calc(100vw - 220px - 40px));
+  }
+}
+
 @media (max-width: 768px) {
   .lesson-content-header {
     flex-direction: column;
@@ -552,6 +640,18 @@
   }
   .edit-controls button {
     width: 100%;
+  }
+  
+  /* Fix modal positioning on mobile */
+  .add-block-menu-overlay {
+    padding: 10px;
+    padding-left: 10px;
+    justify-content: center;
+  }
+  
+  .add-block-menu {
+    max-width: 95vw;
+    max-height: 85vh;
   }
 }
 
@@ -669,7 +769,6 @@
 }
 
 .add-first-block-btn:hover {
-  transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
@@ -724,7 +823,6 @@
 }
 
 .create-lesson-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
 }
 

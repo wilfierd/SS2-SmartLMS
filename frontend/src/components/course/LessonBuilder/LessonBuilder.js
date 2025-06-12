@@ -53,9 +53,16 @@ const SortableItem = ({ id, children }) => {
             ref={setNodeRef}
             style={style}
             {...attributes}
-            {...listeners}
-            className={isDragging ? 'is-dragging' : ''}
+            className={`content-block-wrapper ${isDragging ? 'is-dragging' : ''}`}
         >
+            {/* Drag Handle */}
+            <div
+                className="drag-handle"
+                {...listeners}
+                title="Drag to reorder"
+            >
+                ⋮⋮
+            </div>
             {children}
         </div>
     );
