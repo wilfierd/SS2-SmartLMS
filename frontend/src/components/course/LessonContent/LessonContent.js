@@ -99,17 +99,15 @@ const LessonContent = ({
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
-    );
-
-    // Available block types
+    );    // Available block types
     const blockTypes = [
         { type: 'text', icon: '📝', label: 'Text Block', description: 'Add rich text content' },
-        { type: 'video', icon: '🎥', label: 'Video', description: 'YouTube, Vimeo or upload' },
+        { type: 'video', icon: '🎥', label: 'Video', description: 'YouTube, Vimeo or upload (no CAPTCHA)' },
         { type: 'image', icon: '🖼️', label: 'Image', description: 'Upload or link images' },
         { type: 'file', icon: '📁', label: 'Files', description: 'Documents and downloads' },
         { type: 'quiz', icon: '🧩', label: 'Mini Quiz', description: 'Quick knowledge check' },
-        { type: 'embed', icon: '🔗', label: 'Embed', description: 'External content (iframe)' }
-    ];    // Initialize content blocks from lesson
+        { type: 'embed', icon: '🔗', label: 'Embed', description: 'External content (simple iframe)' }
+    ];// Initialize content blocks from lesson
     useEffect(() => {
         if (lesson?.content) {
             try {

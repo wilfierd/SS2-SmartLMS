@@ -53,15 +53,16 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         console.log(`Successfully fetched ${response.data.length} discussions`);
 
         const discussionsData = response.data || []; setDiscussions(discussionsData);
+
         // Priority selection: selectedDiscussionId prop > current selection > first discussion
         if (selectedDiscussionId) {
           const discussionExists = discussionsData.find(d => d.id === parseInt(selectedDiscussionId));
-          if (discussionExists && selectedDiscussion === null) {
-            console.log(`🎯 Setting discussion from prop during fetch: ${selectedDiscussionId}`);
+          if (discussionExists) {
             setSelectedDiscussion(parseInt(selectedDiscussionId));
+          } else if (discussionsData.length > 0 && !selectedDiscussion) {
+            setSelectedDiscussion(discussionsData[0].id);
           }
-        } else if (discussionsData.length > 0 && selectedDiscussion === null) {
-          console.log(`🎯 Setting first discussion as default: ${discussionsData[0].id}`);
+        } else if (discussionsData.length > 0 && !selectedDiscussion) {
           setSelectedDiscussion(discussionsData[0].id);
         }
       } catch (error) {
@@ -83,25 +84,18 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     if (courseId && auth.token) {
       fetchDiscussions();
     }
-  }, [courseId, auth.token, API_URL]);  // Fetch posts when a discussion is selected
+  }, [courseId, auth.token, API_URL]);
+
+  // Fetch posts when a discussion is selected
   useEffect(() => {
-    console.log(`🔄 useEffect triggered - selectedDiscussion: ${selectedDiscussion}, courseId: ${courseId}`);
-
     const fetchDiscussionPosts = async () => {
-      if (!selectedDiscussion || !courseId) {
-        console.log(`⚠️ Skipping fetch - selectedDiscussion: ${selectedDiscussion}, courseId: ${courseId}`);
-        return;
-      }
+      if (!selectedDiscussion || !courseId) return;
 
-      console.log(`🚀 Starting to fetch posts for discussion ${selectedDiscussion}`);
       setIsPostsLoading(true);
+
       try {
         const validCourseId = parseInt(courseId);
         const validDiscussionId = parseInt(selectedDiscussion);
-
-        console.log(`🔍 Fetching discussion ${validDiscussionId} for course ${validCourseId}`);
-        console.log(`📡 API URL: ${API_URL}/courses/${validCourseId}/discussions/${validDiscussionId}`);
-        console.log(`🔑 Auth token present: ${!!auth.token}`);
 
         // Fetch discussion details with posts
         const response = await axios.get(
@@ -109,34 +103,32 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
           { headers: { Authorization: `Bearer ${auth.token}` } }
         );
 
-        console.log(`✅ Discussion data received:`, response.data);
         setDiscussionDetail(response.data);
         setPosts(response.data.posts || []);
       } catch (error) {
-        console.error('🚨 Error fetching discussion posts:', error);
-        console.error('🚨 Error response:', error.response?.data);
-        console.error('🚨 Error status:', error.response?.status);
-        notification.error('Failed to load discussion posts');
+        console.error('Error fetching discussion posts:', error);
+        // Only show notification for non-404 errors to avoid spam
+        if (error.response?.status !== 404) {
+          notification.error('Failed to load discussion posts');
+        }
       } finally {
         setIsPostsLoading(false);
       }
     };
-
     if (selectedDiscussion) {
       fetchDiscussionPosts();
     }
   }, [selectedDiscussion, courseId, auth.token, API_URL]);
-  // Handle selectedDiscussionId prop changes - only set initially, don't override user navigation
+
+  // Handle selectedDiscussionId prop changes
   useEffect(() => {
     if (selectedDiscussionId && discussions.length > 0) {
       const discussionExists = discussions.find(d => d.id === parseInt(selectedDiscussionId));
-      if (discussionExists && selectedDiscussion === null) {
-        // Only set from prop if no discussion is currently selected
-        console.log(`🎯 Setting initial discussion from prop: ${selectedDiscussionId}`);
+      if (discussionExists && selectedDiscussion !== parseInt(selectedDiscussionId)) {
         setSelectedDiscussion(parseInt(selectedDiscussionId));
       }
     }
-  }, [selectedDiscussionId, discussions]); // Removed selectedDiscussion from dependencies
+  }, [selectedDiscussionId, discussions, selectedDiscussion]);
 
   // Create a new discussion
   const handleCreateDiscussion = async (e) => {
@@ -404,28 +396,22 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
             <div className="discussions-loading">Loading discussions...</div>
           ) : discussions.length > 0 ? (
             <ul className="discussions">
-              {discussions.map(discussion => (<li
-                key={discussion.id}
-                className={`discussion-item ${selectedDiscussion === discussion.id ? 'active' : ''}`} onClick={() => {
-                  console.log(`🖱️ Clicked discussion: ${discussion.id}, current selected: ${selectedDiscussion}`);
-                  if (selectedDiscussion !== discussion.id) {
-                    // Clear previous discussion data to force refresh
-                    setDiscussionDetail(null);
-                    setPosts([]);
-                    setSelectedDiscussion(discussion.id);
-                  }
-                }}
-              >
-                <div className="discussion-item-title">{discussion.title}</div>
-                <div className="discussion-item-meta">
-                  <span>By {getCreatorName(discussion)}</span>
-                  <span>{formatDate(discussion.created_at)}</span>
-                </div>
-                <div className="discussion-item-stats">
-                  <span>{discussion.post_count || 0} posts</span>
-                  {discussion.is_locked && <span className="locked-tag">Locked</span>}
-                </div>
-              </li>
+              {discussions.map(discussion => (
+                <li
+                  key={discussion.id}
+                  className={`discussion-item ${selectedDiscussion === discussion.id ? 'active' : ''}`}
+                  onClick={() => setSelectedDiscussion(discussion.id)}
+                >
+                  <div className="discussion-item-title">{discussion.title}</div>
+                  <div className="discussion-item-meta">
+                    <span>By {getCreatorName(discussion)}</span>
+                    <span>{formatDate(discussion.created_at)}</span>
+                  </div>
+                  <div className="discussion-item-stats">
+                    <span>{discussion.post_count || 0} posts</span>
+                    {discussion.is_locked && <span className="locked-tag">Locked</span>}
+                  </div>
+                </li>
               ))}
             </ul>
           ) : (

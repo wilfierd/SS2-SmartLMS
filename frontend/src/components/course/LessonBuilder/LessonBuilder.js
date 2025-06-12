@@ -97,16 +97,14 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
-    );
-
-    // Available block types
+    );    // Available block types
     const blockTypes = [
         { type: 'text', icon: '📝', label: 'Text Block', description: 'Add rich text content' },
-        { type: 'video', icon: '🎥', label: 'Video', description: 'YouTube, Vimeo or upload' },
+        { type: 'video', icon: '🎥', label: 'Video', description: 'YouTube, Vimeo or upload (no CAPTCHA)' },
         { type: 'image', icon: '🖼️', label: 'Image', description: 'Upload or link images' },
         { type: 'file', icon: '📁', label: 'Files', description: 'Documents and downloads' },
         { type: 'quiz', icon: '🧩', label: 'Mini Quiz', description: 'Quick knowledge check' },
-        { type: 'embed', icon: '🔗', label: 'Embed', description: 'External content (iframe)' }
+        { type: 'embed', icon: '🔗', label: 'Embed', description: 'External content (simple iframe)' }
     ];
     // Handle drag and drop reordering
     const handleDragEnd = (event) => {
@@ -134,9 +132,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
         setContentBlocks([...contentBlocks, newBlock]);
         setShowAddMenu(false);
         setEditingBlock(newBlock.id);
-    };
-
-    // Get default data for block type
+    };    // Get default data for block type
     const getDefaultBlockData = (type) => {
         switch (type) {
             case 'text':
@@ -215,9 +211,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
             onMoveDown: () => moveBlock(block.id, 'down'),
             canMoveUp: index > 0,
             canMoveDown: index < contentBlocks.length - 1
-        };
-
-        switch (block.type) {
+        };        switch (block.type) {
             case 'text':
                 return <TextBlock {...blockProps} />;
             case 'video':

@@ -34,8 +34,10 @@ import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import { CreateLessonDto } from './dto/create-lesson.dto';
+import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { CourseModule } from './entities/course-module.entity';
+import { LessonsService } from './lessons.service';
 
 // Configure multer storage for lesson materials
 const lessonStorage = diskStorage({
@@ -62,10 +64,11 @@ const lessonStorage = diskStorage({
 @ApiBearerAuth()
 @Controller('courses')
 export class CoursesController {
-  constructor(
-    private readonly coursesService: CoursesService,
-    private readonly dataSource: DataSource
-  ) { }
+    constructor(
+      private readonly coursesService: CoursesService,
+      private readonly lessonsService: LessonsService,
+      private readonly dataSource: DataSource
+    ) { }
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -809,6 +812,36 @@ export class CoursesController {
       throw error;
     } finally {
       await connection.release();
+    }
+  }
+
+  @Put(':courseId/lessons/:lessonId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
+  async updateLesson(
+    @Param('courseId') courseId: string,
+    @Param('lessonId') lessonId: string,
+    @Body() updateLessonDto: UpdateLessonDto,
+    @Request() req,
+  ) {
+    console.log(`Updating lesson ${lessonId} for course ${courseId}`);
+    console.log('Update DTO:', JSON.stringify(updateLessonDto));
+
+    try {
+      const result = await this.lessonsService.update(
+        +lessonId,
+        updateLessonDto,
+        req.user.userId,
+        req.user.role,
+      );
+
+      return {
+        message: 'Lesson updated successfully',
+        lesson: result
+      };
+    } catch (error) {
+      console.error('Error updating lesson:', error);
+      throw error;
     }
   }
 

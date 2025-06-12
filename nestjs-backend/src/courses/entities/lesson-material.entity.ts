@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Lesson } from './lesson.entity';
 
 export enum MaterialType {
@@ -34,11 +34,11 @@ export class LessonMaterial {
 
   @Column({ name: 'file_size', type: 'int', nullable: true })
   fileSize: number;
-
   @Column({ name: 'lesson_id' })
   lessonId: number;
 
   @ManyToOne(() => Lesson, lesson => lesson.materials, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
   @CreateDateColumn({ name: 'created_at' })

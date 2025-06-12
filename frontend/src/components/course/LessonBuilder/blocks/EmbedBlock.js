@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VideoPlayer from '../../VideoPlayer';
 import './BlockStyles.css';
 
 const EmbedBlock = ({
@@ -39,9 +40,7 @@ const EmbedBlock = ({
             allowFullscreen: block.data.allowFullscreen || true
         });
         onStopEdit();
-    };
-
-    const isValidUrl = (url) => {
+    };    const isValidUrl = (url) => {
         try {
             new URL(url);
             return true;
@@ -50,7 +49,24 @@ const EmbedBlock = ({
         }
     };
 
-    const renderEmbedPreview = () => {
+    // Check if URL is a YouTube URL
+    const isYouTubeUrl = (url) => {
+        return url && (url.includes('youtube.com') || url.includes('youtu.be'));
+    };
+
+    // Check if URL is a video URL that should use VideoPlayer
+    const isVideoUrl = (url) => {
+        if (!url) return false;
+        
+        const videoStreamingDomains = [
+            'youtube.com',
+            'youtu.be', 
+            'vimeo.com',
+            'dailymotion.com'
+        ];
+        
+        return videoStreamingDomains.some(domain => url.toLowerCase().includes(domain));
+    };    const renderEmbedPreview = () => {
         if (!block.data.url || !isValidUrl(block.data.url)) {
             return (
                 <div className="embed-placeholder">
@@ -63,6 +79,29 @@ const EmbedBlock = ({
             );
         }
 
+        // If it's a video URL (YouTube, Vimeo, etc.), use VideoPlayer component (no CAPTCHA!)
+        if (isVideoUrl(block.data.url)) {
+            return (
+                <div className="embed-container video-embed">
+                    {block.data.title && (
+                        <h4 className="embed-title">{block.data.title}</h4>
+                    )}
+                    <div className="video-wrapper" style={{ height: `${block.data.height}px` }}>
+                        <VideoPlayer 
+                            videoUrl={block.data.url} 
+                            title={block.data.title || 'Embedded Video'} 
+                        />
+                    </div>
+                    {isYouTubeUrl(block.data.url) && (
+                        <div className="video-info">
+                            ✅ YouTube video loaded without CAPTCHA issues!
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // For non-video content, use simplified iframe
         return (
             <div className="embed-container">
                 {block.data.title && (
@@ -76,7 +115,7 @@ const EmbedBlock = ({
                     frameBorder="0"
                     allowFullScreen={block.data.allowFullscreen}
                     className="embed-iframe"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 />
             </div>
         );
@@ -137,9 +176,8 @@ const EmbedBlock = ({
                                     onChange={(e) => setLocalData({ ...localData, url: e.target.value })}
                                     placeholder="https://example.com/embed..."
                                     className="embed-url-input"
-                                />
-                                <small className="input-help">
-                                    Enter the URL you want to embed (e.g., Google Forms, Padlet, external tools)
+                                />                                <small className="input-help">
+                                    Enter any URL to embed. YouTube/Vimeo URLs will use our optimized player (no CAPTCHA issues!)
                                 </small>
                             </div>
 
@@ -181,21 +219,33 @@ const EmbedBlock = ({
                                     </label>
                                 </div>
                             </div>
-                        </div>
-
-                        {localData.url && isValidUrl(localData.url) && (
+                        </div>                        {localData.url && isValidUrl(localData.url) && (
                             <div className="embed-preview-section">
                                 <h5>Preview:</h5>
                                 <div className="embed-preview">
-                                    <iframe
-                                        src={localData.url}
-                                        title="Preview"
-                                        width="100%"
-                                        height="200px"
-                                        frameBorder="0"
-                                        className="embed-preview-iframe"
-                                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                                    />
+                                    {isVideoUrl(localData.url) ? (
+                                        <div className="video-preview">
+                                            <VideoPlayer 
+                                                videoUrl={localData.url} 
+                                                title="Preview" 
+                                            />
+                                            {isYouTubeUrl(localData.url) && (
+                                                <div className="preview-info">
+                                                    ✅ This YouTube URL will load without CAPTCHA issues!
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <iframe
+                                            src={localData.url}
+                                            title="Preview"
+                                            width="100%"
+                                            height="200px"
+                                            frameBorder="0"
+                                            className="embed-preview-iframe"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        />
+                                    )}
                                 </div>
                             </div>
                         )}

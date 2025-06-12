@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Course } from './course.entity';
 import { Lesson } from './lesson.entity';
 
@@ -18,11 +18,11 @@ export class CourseModule {
 
   @Column({ default: false, name: 'is_published' })
   isPublished: boolean;
-
   @Column({ name: 'course_id' })
   courseId: number;
 
   @ManyToOne(() => Course, course => course.modules, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'course_id' })
   course: Course;
 
   @OneToMany(() => Lesson, lesson => lesson.module)
