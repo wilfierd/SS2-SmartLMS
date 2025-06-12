@@ -24,7 +24,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     description: ''
   });
   const [postContent, setPostContent] = useState('');
-  
+
   const API_URL = config.apiUrl;
   const isInstructor = auth.user?.role === 'instructor' || auth.user?.role === 'admin';
 
@@ -33,7 +33,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     const fetchDiscussions = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       // Validate courseId
       if (!courseId || isNaN(parseInt(courseId))) {
         console.error(`Invalid courseId: ${courseId}`);
@@ -41,40 +41,39 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         const validCourseId = parseInt(courseId);
         console.log(`Fetching discussions for course ${validCourseId}`);
-        
+
         const response = await axios.get(`${API_URL}/courses/${validCourseId}/discussions`, {
           headers: { Authorization: `Bearer ${auth.token}` }
         });
-        
+
         console.log(`Successfully fetched ${response.data.length} discussions`);
-        
-        const discussionsData = response.data || [];        setDiscussions(discussionsData);
-        
+
+        const discussionsData = response.data || []; setDiscussions(discussionsData);
         // Priority selection: selectedDiscussionId prop > current selection > first discussion
         if (selectedDiscussionId) {
           const discussionExists = discussionsData.find(d => d.id === parseInt(selectedDiscussionId));
-          if (discussionExists) {
+          if (discussionExists && selectedDiscussion === null) {
+            console.log(`🎯 Setting discussion from prop during fetch: ${selectedDiscussionId}`);
             setSelectedDiscussion(parseInt(selectedDiscussionId));
-          } else if (discussionsData.length > 0 && !selectedDiscussion) {
-            setSelectedDiscussion(discussionsData[0].id);
           }
-        } else if (discussionsData.length > 0 && !selectedDiscussion) {
+        } else if (discussionsData.length > 0 && selectedDiscussion === null) {
+          console.log(`🎯 Setting first discussion as default: ${discussionsData[0].id}`);
           setSelectedDiscussion(discussionsData[0].id);
         }
       } catch (error) {
         console.error('Error fetching discussions:', error);
-        
+
         if (error.response) {
           console.error('Response data:', error.response.data);
           setError(`Failed to load discussions: ${error.response.data.message || error.message}`);
         } else {
           setError('Unable to load discussions. Please try again later.');
         }
-        
+
         notification.error('Failed to load discussions');
       } finally {
         setIsLoading(false);
@@ -84,69 +83,81 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     if (courseId && auth.token) {
       fetchDiscussions();
     }
-  }, [courseId, auth.token, API_URL]);
-
-  // Fetch posts when a discussion is selected
+  }, [courseId, auth.token, API_URL]);  // Fetch posts when a discussion is selected
   useEffect(() => {
+    console.log(`🔄 useEffect triggered - selectedDiscussion: ${selectedDiscussion}, courseId: ${courseId}`);
+
     const fetchDiscussionPosts = async () => {
-      if (!selectedDiscussion || !courseId) return;
-      
+      if (!selectedDiscussion || !courseId) {
+        console.log(`⚠️ Skipping fetch - selectedDiscussion: ${selectedDiscussion}, courseId: ${courseId}`);
+        return;
+      }
+
+      console.log(`🚀 Starting to fetch posts for discussion ${selectedDiscussion}`);
       setIsPostsLoading(true);
-      
       try {
         const validCourseId = parseInt(courseId);
         const validDiscussionId = parseInt(selectedDiscussion);
-        
+
+        console.log(`🔍 Fetching discussion ${validDiscussionId} for course ${validCourseId}`);
+        console.log(`📡 API URL: ${API_URL}/courses/${validCourseId}/discussions/${validDiscussionId}`);
+        console.log(`🔑 Auth token present: ${!!auth.token}`);
+
         // Fetch discussion details with posts
         const response = await axios.get(
           `${API_URL}/courses/${validCourseId}/discussions/${validDiscussionId}`,
           { headers: { Authorization: `Bearer ${auth.token}` } }
         );
-        
+
+        console.log(`✅ Discussion data received:`, response.data);
         setDiscussionDetail(response.data);
         setPosts(response.data.posts || []);
       } catch (error) {
-        console.error('Error fetching discussion posts:', error);
+        console.error('🚨 Error fetching discussion posts:', error);
+        console.error('🚨 Error response:', error.response?.data);
+        console.error('🚨 Error status:', error.response?.status);
         notification.error('Failed to load discussion posts');
       } finally {
         setIsPostsLoading(false);
       }
     };
-      if (selectedDiscussion) {
+
+    if (selectedDiscussion) {
       fetchDiscussionPosts();
     }
   }, [selectedDiscussion, courseId, auth.token, API_URL]);
-
-  // Handle selectedDiscussionId prop changes
+  // Handle selectedDiscussionId prop changes - only set initially, don't override user navigation
   useEffect(() => {
     if (selectedDiscussionId && discussions.length > 0) {
       const discussionExists = discussions.find(d => d.id === parseInt(selectedDiscussionId));
-      if (discussionExists && selectedDiscussion !== parseInt(selectedDiscussionId)) {
+      if (discussionExists && selectedDiscussion === null) {
+        // Only set from prop if no discussion is currently selected
+        console.log(`🎯 Setting initial discussion from prop: ${selectedDiscussionId}`);
         setSelectedDiscussion(parseInt(selectedDiscussionId));
       }
     }
-  }, [selectedDiscussionId, discussions, selectedDiscussion]);
+  }, [selectedDiscussionId, discussions]); // Removed selectedDiscussion from dependencies
 
   // Create a new discussion
   const handleCreateDiscussion = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       notification.warning('Please enter a discussion title');
       return;
     }
-    
+
     // Validate courseId
     if (!courseId || isNaN(parseInt(courseId))) {
       notification.error('Invalid course ID. Cannot create discussion.');
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const validCourseId = parseInt(courseId);
-      
+
       const response = await axios.post(
         `${API_URL}/courses/${validCourseId}/discussions`,
         {
@@ -155,7 +166,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         },
         { headers: { Authorization: `Bearer ${auth.token}` } }
       );
-      
+
       // Add the new discussion to the state
       const newDiscussion = {
         id: response.data.discussionId,
@@ -168,18 +179,18 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         last_name: auth.user.lastName || '',
         createdBy: `${auth.user.firstName || ''} ${auth.user.lastName || ''}`.trim() || auth.user.email
       };
-      
+
       setDiscussions([newDiscussion, ...discussions]);
       setSelectedDiscussion(response.data.discussionId);
-      
+
       // Reset form and close modal
       setFormData({ title: '', description: '' });
       setShowCreateModal(false);
-      
+
       notification.success('Discussion created successfully');
     } catch (error) {
       console.error('Error creating discussion:', error);
-      
+
       if (error.response) {
         notification.error(`Failed to create discussion: ${error.response.data.message || 'Please try again.'}`);
       } else {
@@ -193,23 +204,23 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
   // Create a new post or reply
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    
+
     if (!postContent.trim()) {
       notification.warning('Please enter post content');
       return;
     }
-    
+
     if (!selectedDiscussion || !courseId) {
       notification.error('Missing discussion or course information');
       return;
     }
-    
+
     setIsPostsLoading(true);
-    
+
     try {
       const validCourseId = parseInt(courseId);
       const validDiscussionId = parseInt(selectedDiscussion);
-      
+
       const response = await axios.post(
         `${API_URL}/courses/${validCourseId}/discussions/${validDiscussionId}/posts`,
         {
@@ -218,7 +229,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         },
         { headers: { Authorization: `Bearer ${auth.token}` } }
       );
-      
+
       // Update posts state
       if (replyTo) {
         // Find the parent post and add this reply
@@ -236,7 +247,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         // Add as a new top-level post
         setPosts([...posts, { ...response.data.post, replies: [] }]);
       }
-      
+
       // Update post count in discussions list
       const updatedDiscussions = discussions.map(discussion => {
         if (discussion.id === validDiscussionId) {
@@ -248,16 +259,16 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         return discussion;
       });
       setDiscussions(updatedDiscussions);
-      
+
       // Reset form and close modal if needed
       setPostContent('');
       setReplyTo(null);
       setShowReplyModal(false);
-      
+
       notification.success(replyTo ? 'Reply posted successfully' : 'Post created successfully');
     } catch (error) {
       console.error('Error creating post:', error);
-      
+
       if (error.response) {
         notification.error(`Failed to create post: ${error.response.data.message || 'Please try again.'}`);
       } else {
@@ -271,11 +282,11 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'Just now';
-    
+
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'Invalid date';
-      
+
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -292,13 +303,13 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
   // Safely get creator name
   const getCreatorName = (discussion) => {
     if (!discussion) return 'Unknown';
-    
+
     // Check all possible fields in order of preference
     if (discussion.createdBy) return discussion.createdBy;
-    if (discussion.first_name || discussion.last_name) 
+    if (discussion.first_name || discussion.last_name)
       return `${discussion.first_name || ''} ${discussion.last_name || ''}`.trim();
     if (discussion.created_by === auth.user?.id) return 'You';
-    
+
     return 'Unknown User';
   };
 
@@ -311,10 +322,10 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
   // Render a single post with replies
   const renderPost = (post) => {
     const isCurrentUser = post.user_id === auth.user?.id;
-    
+
     return (
-      <div 
-        key={post.id} 
+      <div
+        key={post.id}
         className={`discussion-post ${isCurrentUser ? 'current-user-post' : ''}`}
       >
         <div className="post-header">
@@ -323,20 +334,20 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         </div>
         <div className="post-content">{post.content}</div>
         <div className="post-actions">
-          <button 
+          <button
             className="reply-button"
             onClick={() => handleReplyClick(post)}
           >
             Reply
           </button>
         </div>
-        
+
         {/* Replies */}
         {post.replies && post.replies.length > 0 && (
           <div className="post-replies">
             {post.replies.map(reply => (
-              <div 
-                key={reply.id} 
+              <div
+                key={reply.id}
                 className={`post-reply ${reply.user_id === auth.user?.id ? 'current-user-post' : ''}`}
               >
                 <div className="post-header">
@@ -345,7 +356,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                 </div>
                 <div className="post-content">{reply.content}</div>
                 <div className="post-actions">
-                  <button 
+                  <button
                     className="reply-button"
                     onClick={() => handleReplyClick(post)} // Reply to the parent post
                   >
@@ -364,7 +375,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     <div className="discussion-forum-container">
       <div className="forum-header">
         <h2>Discussion Forum</h2>
-        <button 
+        <button
           className="create-discussion-btn"
           onClick={() => setShowCreateModal(true)}
         >
@@ -372,14 +383,14 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
           Create New Discussion
         </button>
       </div>
-      
+
       {error && (
         <div className="discussion-error">
           <p>{error}</p>
           <p>Please try refreshing the page or contact support if the problem persists.</p>
         </div>
       )}
-      
+
       <div className="forum-content">
         <div className="discussion-list">
           <div className="discussion-list-header">
@@ -388,33 +399,39 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
               {discussions.length} discussion{discussions.length !== 1 ? 's' : ''}
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="discussions-loading">Loading discussions...</div>
           ) : discussions.length > 0 ? (
             <ul className="discussions">
-              {discussions.map(discussion => (
-                <li 
-                  key={discussion.id} 
-                  className={`discussion-item ${selectedDiscussion === discussion.id ? 'active' : ''}`}
-                  onClick={() => setSelectedDiscussion(discussion.id)}
-                >
-                  <div className="discussion-item-title">{discussion.title}</div>
-                  <div className="discussion-item-meta">
-                    <span>By {getCreatorName(discussion)}</span>
-                    <span>{formatDate(discussion.created_at)}</span>
-                  </div>
-                  <div className="discussion-item-stats">
-                    <span>{discussion.post_count || 0} posts</span>
-                    {discussion.is_locked && <span className="locked-tag">Locked</span>}
-                  </div>
-                </li>
+              {discussions.map(discussion => (<li
+                key={discussion.id}
+                className={`discussion-item ${selectedDiscussion === discussion.id ? 'active' : ''}`} onClick={() => {
+                  console.log(`🖱️ Clicked discussion: ${discussion.id}, current selected: ${selectedDiscussion}`);
+                  if (selectedDiscussion !== discussion.id) {
+                    // Clear previous discussion data to force refresh
+                    setDiscussionDetail(null);
+                    setPosts([]);
+                    setSelectedDiscussion(discussion.id);
+                  }
+                }}
+              >
+                <div className="discussion-item-title">{discussion.title}</div>
+                <div className="discussion-item-meta">
+                  <span>By {getCreatorName(discussion)}</span>
+                  <span>{formatDate(discussion.created_at)}</span>
+                </div>
+                <div className="discussion-item-stats">
+                  <span>{discussion.post_count || 0} posts</span>
+                  {discussion.is_locked && <span className="locked-tag">Locked</span>}
+                </div>
+              </li>
               ))}
             </ul>
           ) : (
             <div className="empty-discussions">
               <p>No discussions have been created yet.</p>
-              <button 
+              <button
                 className="start-discussion-btn"
                 onClick={() => setShowCreateModal(true)}
               >
@@ -423,7 +440,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
             </div>
           )}
         </div>
-        
+
         <div className="posts-container">
           {selectedDiscussion ? (
             isPostsLoading && !discussionDetail ? (
@@ -446,7 +463,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                     Started by {getCreatorName(discussionDetail)} · {formatDate(discussionDetail.created_at)}
                   </div>
                 </div>
-                
+
                 {/* Post creation form */}
                 {!discussionDetail.is_locked && (
                   <div className="create-post-form">
@@ -459,8 +476,8 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                         rows="3"
                         required
                       ></textarea>
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         className="post-btn"
                         disabled={isPostsLoading || !postContent.trim()}
                       >
@@ -469,11 +486,11 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                     </form>
                   </div>
                 )}
-                
+
                 {/* Posts list */}
                 <div className="posts-list">
                   <h4>Discussion Posts</h4>
-                  
+
                   {isPostsLoading ? (
                     <div className="loading-posts">Loading posts...</div>
                   ) : posts.length > 0 ? (
@@ -495,15 +512,15 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
             )
           ) : (
             <div className="select-discussion">
-              {discussions.length > 0 ? 
-                'Select a discussion from the list to view details' : 
+              {discussions.length > 0 ?
+                'Select a discussion from the list to view details' :
                 'No discussions available yet'
               }
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Create Discussion Modal */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
@@ -512,7 +529,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
               <h2>Create New Discussion</h2>
               <button className="close-btn" onClick={() => setShowCreateModal(false)}>×</button>
             </div>
-            
+
             <form onSubmit={handleCreateDiscussion}>
               <div className="form-group">
                 <label htmlFor="title">Discussion Title*</label>
@@ -521,34 +538,34 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                   id="title"
                   name="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Enter a title for this discussion"
                   required
                 />
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="description">Description (Optional)</label>
                 <textarea
                   id="description"
                   name="description"
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Provide a brief description to help students understand what to discuss"
                   rows="4"
                 ></textarea>
               </div>
-              
+
               <div className="form-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="cancel-btn"
                   onClick={() => setShowCreateModal(false)}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="submit-btn"
                   disabled={!formData.title.trim() || isLoading}
                 >
@@ -559,7 +576,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
           </div>
         </div>
       )}
-      
+
       {/* Reply Modal */}
       {showReplyModal && (
         <div className="modal-overlay" onClick={() => setShowReplyModal(false)}>
@@ -568,7 +585,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
               <h2>Reply to Post</h2>
               <button className="close-btn" onClick={() => setShowReplyModal(false)}>×</button>
             </div>
-            
+
             {replyTo && (
               <div className="reply-to-preview">
                 <h4>Replying to:</h4>
@@ -576,7 +593,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                 <div className="post-content">{replyTo.content}</div>
               </div>
             )}
-            
+
             <form onSubmit={handleCreatePost}>
               <div className="form-group">
                 <label htmlFor="replyContent">Your Reply*</label>
@@ -590,17 +607,17 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                   required
                 ></textarea>
               </div>
-              
+
               <div className="form-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="cancel-btn"
                   onClick={() => setShowReplyModal(false)}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="submit-btn"
                   disabled={!postContent.trim() || isPostsLoading}
                 >
