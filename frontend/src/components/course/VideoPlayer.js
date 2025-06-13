@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './VideoPlayer.css';
 
-const VideoPlayer = ({ videoUrl, title, onProgress, onComplete }) => {
+const VideoPlayer = ({ videoUrl, title, onProgress, onComplete, containerMode = 'responsive' }) => {
     const videoRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -66,20 +66,19 @@ const VideoPlayer = ({ videoUrl, title, onProgress, onComplete }) => {
                     </div>
                 </div>
             );
-        }
-
-        // Handle YouTube URLs
+        }        // Handle YouTube URLs - convert to embed URL if needed
         if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
             const videoId = extractYouTubeId(videoUrl);
             if (videoId) {
                 return (
                     <iframe
-                        src={`https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&modestbranding=1`}
+                        src={`https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&modestbranding=1&autoplay=0`}
                         title={title}
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
                         className="video-iframe"
+                        referrerPolicy="strict-origin-when-cross-origin"
                     />
                 );
             }
@@ -120,12 +119,20 @@ const VideoPlayer = ({ videoUrl, title, onProgress, onComplete }) => {
                 Your browser does not support the video tag.
             </video>
         );
-    };
-
-    const extractYouTubeId = (url) => {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
+    };    const extractYouTubeId = (url) => {
+        // Handle various YouTube URL formats
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^#&?]*)/,
+            /youtube\.com\/watch\?.*v=([^#&?]*)/
+        ];
+        
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match && match[1] && match[1].length === 11) {
+                return match[1];
+            }
+        }
+        return null;
     };
 
     const extractVimeoId = (url) => {
@@ -164,10 +171,8 @@ const VideoPlayer = ({ videoUrl, title, onProgress, onComplete }) => {
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    };
-
-    return (
-        <div className="video-player">
+    };    return (
+        <div className={`video-player ${containerMode === 'fixed' ? 'fixed-container' : ''}`}>
             <div className="video-container">
                 {renderVideoContent()}
             </div>

@@ -1632,24 +1632,50 @@
 
 /* Video Embed Styles - Enhanced embed block for video content */
 .video-embed {
-  border-left: 4px solid #22c55e;
-  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
 }
 
 .video-wrapper {
   position: relative;
   width: 100%;
-  min-height: 300px;
   background: #000;
   border-radius: 8px;
   overflow: hidden;
+  /* Maintain 16:9 aspect ratio */
+  aspect-ratio: 16 / 9;
+}
+
+/* Force remove any inline height styles */
+.video-wrapper[style*="height"] {
+  height: auto !important;
+}
+
+/* Override height for video wrapper when aspect-ratio is supported */
+.video-wrapper {
+  height: auto !important;
+}
+
+/* Fallback for browsers that don't support aspect-ratio */
+@supports not (aspect-ratio: 16 / 9) {
+  .video-wrapper {
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+  }
+  
+  .video-wrapper .video-player {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .video-info {
   padding: 12px 16px;
-  background: rgba(34, 197, 94, 0.1);
-  border-top: 1px solid rgba(34, 197, 94, 0.2);
-  color: #166534;
+  background: rgba(59, 130, 246, 0.1);
+  border-top: 1px solid rgba(59, 130, 246, 0.2);
+  color: #1e40af;
   font-size: 14px;
   font-weight: 500;
   text-align: center;
@@ -1657,8 +1683,8 @@
 
 .preview-info {
   padding: 8px 12px;
-  background: rgba(34, 197, 94, 0.1);
-  color: #166534;
+  background: rgba(59, 130, 246, 0.1);
+  color: #1e40af;
   font-size: 13px;
   text-align: center;
   margin-top: 8px;
@@ -1667,7 +1693,28 @@
 
 .video-preview {
   position: relative;
-  height: 200px;
+  width: 100%;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  /* Maintain 16:9 aspect ratio for preview */
+  aspect-ratio: 16 / 9;
+}
+
+/* Fallback for browsers that don't support aspect-ratio */
+@supports not (aspect-ratio: 16 / 9) {
+  .video-preview {
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+  }
+  
+  .video-preview .video-player {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 /* Enhanced embed preview */
@@ -1689,4 +1736,29 @@
   border-radius: 8px;
   overflow: hidden;
   background: #f8fafc;
+}
+
+/* Embed Container Styles */
+.embed-container {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.embed-container.video-embed {
+  width: 100%;
+  max-width: 100%;
+}
+
+.embed-title {
+  margin: 0 0 15px 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.embed-iframe {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
 }

@@ -20,15 +20,19 @@ const EmbedBlock = ({
         title: block.data.title || '',
         height: block.data.height || '400',
         allowFullscreen: block.data.allowFullscreen || true
-    });
-
-    const handleSave = () => {
+    });    const handleSave = () => {
         if (!localData.url.trim()) {
             alert('Please enter a valid URL');
             return;
         }
 
-        onUpdate(localData);
+        // Convert YouTube URLs to embed format to avoid "refused to connect" errors
+        const processedUrl = isYouTubeUrl(localData.url) ? convertToEmbedUrl(localData.url) : localData.url;
+        
+        onUpdate({
+            ...localData,
+            url: processedUrl
+        });
         onStopEdit();
     };
 
@@ -40,7 +44,7 @@ const EmbedBlock = ({
             allowFullscreen: block.data.allowFullscreen || true
         });
         onStopEdit();
-    };    const isValidUrl = (url) => {
+    }; const isValidUrl = (url) => {
         try {
             new URL(url);
             return true;
@@ -57,16 +61,43 @@ const EmbedBlock = ({
     // Check if URL is a video URL that should use VideoPlayer
     const isVideoUrl = (url) => {
         if (!url) return false;
-        
+
         const videoStreamingDomains = [
             'youtube.com',
-            'youtu.be', 
+            'youtu.be',
             'vimeo.com',
             'dailymotion.com'
         ];
-        
+
         return videoStreamingDomains.some(domain => url.toLowerCase().includes(domain));
-    };    const renderEmbedPreview = () => {
+    };
+
+    // Convert YouTube URLs to embed format
+    const convertToEmbedUrl = (url) => {
+        if (!url) return url;
+        
+        // If it's already an embed URL, return as is
+        if (url.includes('youtube.com/embed/')) {
+            return url;
+        }
+        
+        // Extract video ID and convert to embed URL
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/v\/)([^#&?]*)/,
+            /youtube\.com\/watch\?.*v=([^#&?]*)/
+        ];
+        
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match && match[1] && match[1].length === 11) {
+                return `https://www.youtube.com/embed/${match[1]}`;
+            }
+        }
+        
+        return url; // Return original URL if not YouTube
+    };
+
+    const renderEmbedPreview = () => {
         if (!block.data.url || !isValidUrl(block.data.url)) {
             return (
                 <div className="embed-placeholder">
@@ -77,26 +108,18 @@ const EmbedBlock = ({
                     </button>
                 </div>
             );
-        }
-
-        // If it's a video URL (YouTube, Vimeo, etc.), use VideoPlayer component (no CAPTCHA!)
+        }        // If it's a video URL (YouTube, Vimeo, etc.), use VideoPlayer component (no CAPTCHA!)
         if (isVideoUrl(block.data.url)) {
             return (
                 <div className="embed-container video-embed">
                     {block.data.title && (
                         <h4 className="embed-title">{block.data.title}</h4>
-                    )}
-                    <div className="video-wrapper" style={{ height: `${block.data.height}px` }}>
-                        <VideoPlayer 
-                            videoUrl={block.data.url} 
-                            title={block.data.title || 'Embedded Video'} 
-                        />
-                    </div>
-                    {isYouTubeUrl(block.data.url) && (
-                        <div className="video-info">
-                            ✅ YouTube video loaded without CAPTCHA issues!
-                        </div>
-                    )}
+                    )}                    <div className="video-wrapper">
+                        <VideoPlayer
+                            videoUrl={isYouTubeUrl(block.data.url) ? convertToEmbedUrl(block.data.url) : block.data.url}
+                            title={block.data.title || 'Embedded Video'}
+                            containerMode="fixed"
+                        />                    </div>
                 </div>
             );
         }
@@ -223,11 +246,11 @@ const EmbedBlock = ({
                             <div className="embed-preview-section">
                                 <h5>Preview:</h5>
                                 <div className="embed-preview">
-                                    {isVideoUrl(localData.url) ? (
-                                        <div className="video-preview">
-                                            <VideoPlayer 
-                                                videoUrl={localData.url} 
-                                                title="Preview" 
+                                    {isVideoUrl(localData.url) ? (                                        <div className="video-preview">
+                                            <VideoPlayer
+                                                videoUrl={isYouTubeUrl(localData.url) ? convertToEmbedUrl(localData.url) : localData.url}
+                                                title="Preview"
+                                                containerMode="fixed"
                                             />
                                             {isYouTubeUrl(localData.url) && (
                                                 <div className="preview-info">
