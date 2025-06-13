@@ -1798,3 +1798,164 @@
   height: 100% !important;
   min-height: 580px !important;
 }
+
+/* Performance optimizations for Image Block */
+.preview-image {
+  /* Optimize image rendering during scroll */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+  image-rendering: optimizeQuality;
+}
+
+.image-preview-section {
+  /* Prevent layout thrashing during scroll */
+  contain: layout;
+  min-height: 100px;
+  position: relative;
+}
+
+.image-preview {
+  /* Optimize container for better performance */
+  transform: translateZ(0);
+  will-change: auto;
+  contain: layout;
+}
+
+/* Smooth scrolling optimizations */
+.edit-form {
+  /* Hardware acceleration for smooth scrolling */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Contain paint to prevent reflows */
+  contain: paint;
+}
+
+/* Reduce reflows for image loading states */
+.lesson-image, .preview-image {
+  /* Prevent layout shifts during image loading */
+  contain: layout;
+  /* Optimize image scaling */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+}
+
+/* Optimize form elements */
+.form-group input, .form-group textarea {
+  /* Reduce input focus repaints */
+  will-change: border-color, box-shadow;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+  /* Prevent unnecessary repaints */
+  transform: translateZ(0);
+}
+
+/* Optimize alignment buttons */
+.alignment-btn {
+  /* Reduce button hover effects */
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+  will-change: background-color, border-color;
+}
+
+.alignment-btn:hover {
+  transform: translateZ(0);
+}
+
+/* Lazy loading optimization */
+.lesson-image[loading="lazy"] {
+  /* Optimize lazy loading appearance */
+  background: #f3f4f6;
+  min-height: 100px;
+  display: block;
+}
+
+/* Smooth upload progress */
+.upload-progress {
+  contain: layout;
+  will-change: width;
+}
+
+.progress-fill {
+  transition: width 0.3s ease;
+  will-change: width;
+}
+
+/* Scroll performance optimizations */
+.form-simplified {
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.scroll-message {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.simplified-preview-section {
+  padding: 20px;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.preview-placeholder {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.simplified-preview {
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* Enhanced performance CSS */
+.content-block.image-block {
+  /* Force hardware acceleration */
+  transform: translateZ(0);
+  /* Reduce paint complexity */
+  contain: layout style paint;
+  /* Optimize for frequent changes */
+  will-change: scroll-position;
+}
+
+.edit-form {
+  /* Prevent layout thrashing */
+  contain: layout;
+  /* Optimize transforms */
+  transform: translateZ(0);
+  /* Reduce reflow/repaint */
+  backface-visibility: hidden;
+}
+
+/* Scroll-specific optimizations */
+.form-grid {
+  /* Optimize grid during scroll */
+  will-change: auto;
+  contain: layout;
+}
+
+.form-group input,
+.form-group textarea {
+  /* Prevent input repaints during scroll */
+  will-change: auto;
+  contain: layout;
+}
+
+/* Disable transitions during scroll for better performance */
+.content-block.scrolling * {
+  transition: none !important;
+  animation: none !important;
+}

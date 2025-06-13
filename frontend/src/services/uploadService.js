@@ -1,7 +1,8 @@
 // Upload Service for handling file uploads
 import axios from 'axios';
+import config from '../config.js';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_URL = config.apiUrl;
 
 class UploadService {
   constructor() {
@@ -65,7 +66,6 @@ class UploadService {
     });
     return response.data;
   }
-
   // Generate a temporary URL for preview
   generatePreviewUrl(file) {
     return URL.createObjectURL(file);
@@ -74,6 +74,23 @@ class UploadService {
   // Clean up preview URL
   revokePreviewUrl(url) {
     URL.revokeObjectURL(url);
+  }
+
+  // Convert file path to full URL
+  getFileUrl(filePath) {
+    if (!filePath) return null;
+    
+    // If it's already a full URL, return as is
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+      return filePath;
+    }
+    
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    
+    // Use base URL (without /api) for static files
+    const baseUrl = API_URL.replace('/api', '');
+    return `${baseUrl}/${cleanPath}`;
   }
 }
 
