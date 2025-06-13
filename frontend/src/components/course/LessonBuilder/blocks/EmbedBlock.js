@@ -122,24 +122,24 @@ const EmbedBlock = ({
                         />                    </div>
                 </div>
             );
-        }
-
-        // For non-video content, use simplified iframe
+        }        // For non-video content, use simplified iframe
         return (
             <div className="embed-container">
                 {block.data.title && (
                     <h4 className="embed-title">{block.data.title}</h4>
                 )}
-                <iframe
-                    src={block.data.url}
-                    title={block.data.title || 'Embedded Content'}
-                    width="100%"
-                    height={`${block.data.height}px`}
-                    frameBorder="0"
-                    allowFullScreen={block.data.allowFullscreen}
-                    className="embed-iframe"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
+                <div className="embed-iframe-wrapper">
+                    <iframe
+                        src={block.data.url}
+                        title={block.data.title || 'Embedded Content'}
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allowFullScreen={block.data.allowFullscreen}
+                        className="embed-iframe"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                </div>
             </div>
         );
     };

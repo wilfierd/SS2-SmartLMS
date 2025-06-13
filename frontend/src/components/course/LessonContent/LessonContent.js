@@ -406,17 +406,20 @@ const LessonContent = ({
                             ))}
                         </div>
                     </div>
-                );
-            case 'embed':
+                );            case 'embed':
                 return (
                     <div className="embed-content">
                         {block.data.title && <h4>{block.data.title}</h4>}
-                        <iframe
-                            src={block.data.url}
-                            height={block.data.height}
-                            width="100%"
-                            frameBorder="0"
-                        />
+                        <div className="embed-iframe-wrapper">
+                            <iframe
+                                src={block.data.url}
+                                height="100%"
+                                width="100%"
+                                frameBorder="0"
+                                allowFullScreen={block.data.allowFullscreen}
+                                className="embed-iframe"
+                            />
+                        </div>
                     </div>
                 );
             default:

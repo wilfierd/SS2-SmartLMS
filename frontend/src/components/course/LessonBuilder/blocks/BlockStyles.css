@@ -1762,3 +1762,39 @@
   border: none;
   border-radius: 8px;
 }
+
+/* Responsive iframe wrapper for proper sizing */
+.embed-iframe-wrapper {
+  position: relative !important;
+  width: 100% !important;
+  height: 580px !important; /* Force correct height to match content block wrapper */
+  min-height: 580px !important;
+  max-height: 580px !important;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f8fafc;
+  box-sizing: border-box !important;
+}
+
+.embed-iframe-wrapper iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 8px;
+  box-sizing: border-box !important;
+}
+
+/* More specific selectors to ensure override */
+.content-block .embed-container .embed-iframe-wrapper {
+  height: 580px !important;
+  min-height: 580px !important;
+  max-height: 580px !important;
+}
+
+.content-block .embed-container .embed-iframe-wrapper iframe.embed-iframe {
+  height: 100% !important;
+  min-height: 580px !important;
+}
