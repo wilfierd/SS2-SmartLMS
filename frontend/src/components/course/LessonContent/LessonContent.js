@@ -24,7 +24,6 @@ import VideoPlayer from '../VideoPlayer';
 
 // Content Block Components
 import TextBlock from '../LessonBuilder/blocks/TextBlock';
-import VideoBlock from '../LessonBuilder/blocks/VideoBlock';
 import ImageBlock from '../LessonBuilder/blocks/ImageBlock';
 import FileBlock from '../LessonBuilder/blocks/FileBlock';
 import QuizBlock from '../LessonBuilder/blocks/QuizBlock';
@@ -102,18 +101,34 @@ const LessonContent = ({
     );    // Available block types
     const blockTypes = [
         { type: 'text', icon: '📝', label: 'Text Block', description: 'Add rich text content' },
-        { type: 'video', icon: '🎥', label: 'Video', description: 'YouTube, Vimeo or upload (no CAPTCHA)' },
         { type: 'image', icon: '🖼️', label: 'Image', description: 'Upload or link images' },
         { type: 'file', icon: '📁', label: 'Files', description: 'Documents and downloads' },
         { type: 'quiz', icon: '🧩', label: 'Mini Quiz', description: 'Quick knowledge check' },
-        { type: 'embed', icon: '🔗', label: 'Embed', description: 'External content (simple iframe)' }
+        { type: 'embed', icon: '🔗', label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
     ];// Initialize content blocks from lesson
     useEffect(() => {
         if (lesson?.content) {
             try {
                 // Try to parse as JSON (new format)
                 const blocks = JSON.parse(lesson.content);
-                setContentBlocks(Array.isArray(blocks) ? blocks : []);
+                
+                // Migrate video blocks to embed blocks
+                const migratedBlocks = Array.isArray(blocks) ? blocks.map(block => {
+                    if (block.type === 'video') {
+                        return {
+                            ...block,
+                            type: 'embed',
+                            data: {
+                                ...block.data,
+                                height: 400,
+                                allowFullscreen: true
+                            }
+                        };
+                    }
+                    return block;
+                }) : [];
+                
+                setContentBlocks(migratedBlocks);
             } catch (error) {
                 // If parsing fails, it's old format (plain text/HTML) - convert it
                 console.log('Converting legacy content to block format');
@@ -148,12 +163,9 @@ const LessonContent = ({
     };
 
     // Get default data for block type
-    const getDefaultBlockData = (type) => {
-        switch (type) {
+    const getDefaultBlockData = (type) => {        switch (type) {
             case 'text':
                 return { content: '', style: 'paragraph' };
-            case 'video':
-                return { url: '', title: '', autoplay: false };
             case 'image':
                 return { url: '', alt: '', caption: '', alignment: 'center' };
             case 'file':
@@ -336,14 +348,10 @@ const LessonContent = ({
                     {renderReadOnlyBlock(block)}
                 </div>
             );
-        }
-
-        // In edit mode, render editable blocks
+        }        // In edit mode, render editable blocks
         switch (block.type) {
             case 'text':
                 return <TextBlock {...blockProps} />;
-            case 'video':
-                return <VideoBlock {...blockProps} />;
             case 'image':
                 return <ImageBlock {...blockProps} />;
             case 'file':
@@ -365,15 +373,7 @@ const LessonContent = ({
                     <div className={`text-content text-${block.data.style}`}>
                         <div dangerouslySetInnerHTML={{ __html: block.data.content }} />
                     </div>
-                );
-            case 'video':
-                return (
-                    <div className="video-content">
-                        {block.data.title && <h4>{block.data.title}</h4>}
-                        <VideoPlayer videoUrl={block.data.url} title={block.data.title} />
-                    </div>
-                );
-            case 'image':
+                );            case 'image':
                 return (
                     <div className={`image-content align-${block.data.alignment}`}>
                         <img src={block.data.url} alt={block.data.alt} />

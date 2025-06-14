@@ -25,7 +25,6 @@ import './LessonBuilder.css';
 
 // Content Block Components
 import TextBlock from './blocks/TextBlock';
-import VideoBlock from './blocks/VideoBlock';
 import ImageBlock from './blocks/ImageBlock';
 import FileBlock from './blocks/FileBlock';
 import QuizBlock from './blocks/QuizBlock';
@@ -76,11 +75,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
         moduleId: lesson?.module_id || (modules.length > 0 ? modules[0].id : ''),
         durationMinutes: lesson?.duration_minutes || 30,
         isPublished: lesson?.is_published !== undefined ? lesson.is_published : true
-    });
-
-    const [contentBlocks, setContentBlocks] = useState(
-        lesson?.content_blocks || []
-    );
+    });    const [contentBlocks, setContentBlocks] = useState([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showAddMenu, setShowAddMenu] = useState(false);
@@ -91,6 +86,30 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
     const [isInEditMode, setIsInEditMode] = useState(isEdit);
     const [currentLesson, setCurrentLesson] = useState(lesson);
 
+    // Initialize content blocks with migration
+    useEffect(() => {
+        if (lesson?.content_blocks) {
+            // Migrate video blocks to embed blocks
+            const migratedBlocks = lesson.content_blocks.map(block => {
+                if (block.type === 'video') {
+                    return {
+                        ...block,
+                        type: 'embed',
+                        data: {
+                            ...block.data,
+                            height: 400,
+                            allowFullscreen: true
+                        }
+                    };
+                }
+                return block;
+            });
+            setContentBlocks(migratedBlocks);
+        } else {
+            setContentBlocks([]);
+        }
+    }, [lesson]);
+
     // Drag and drop sensors
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -100,11 +119,10 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
     );    // Available block types
     const blockTypes = [
         { type: 'text', icon: '📝', label: 'Text Block', description: 'Add rich text content' },
-        { type: 'video', icon: '🎥', label: 'Video', description: 'YouTube, Vimeo or upload (no CAPTCHA)' },
         { type: 'image', icon: '🖼️', label: 'Image', description: 'Upload or link images' },
         { type: 'file', icon: '📁', label: 'Files', description: 'Documents and downloads' },
         { type: 'quiz', icon: '🧩', label: 'Mini Quiz', description: 'Quick knowledge check' },
-        { type: 'embed', icon: '🔗', label: 'Embed', description: 'External content (simple iframe)' }
+        { type: 'embed', icon: '🔗', label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
     ];
     // Handle drag and drop reordering
     const handleDragEnd = (event) => {
@@ -137,8 +155,6 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
         switch (type) {
             case 'text':
                 return { content: '', style: 'paragraph' };
-            case 'video':
-                return { url: '', title: '', autoplay: false };
             case 'image':
                 return { url: '', alt: '', caption: '', alignment: 'center' };
             case 'file':
@@ -214,8 +230,6 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
         };        switch (block.type) {
             case 'text':
                 return <TextBlock {...blockProps} />;
-            case 'video':
-                return <VideoBlock {...blockProps} />;
             case 'image':
                 return <ImageBlock {...blockProps} />;
             case 'file':

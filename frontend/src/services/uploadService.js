@@ -52,6 +52,31 @@ class UploadService {
     return response.data;
   }
 
+  // Upload video file (max 10MB)
+  async uploadVideo(file, courseId) {
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      throw new Error('Video file size must be less than 10MB');
+    }
+
+    // Check file type
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/avi'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Unsupported video format. Please use MP4, WebM, OGG, MOV, or AVI');
+    }
+
+    const formData = new FormData();
+    formData.append('files', file);
+    formData.append('courseId', courseId);
+    formData.append('materialType', 'video');
+
+    const response = await this.api.post('/uploads/course-material', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  }
+
   // Upload course thumbnail
   async uploadThumbnail(file, courseId = null) {
     const formData = new FormData();

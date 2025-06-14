@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import VideoPlayer from '../../VideoPlayer';
+import uploadService from '../../../../services/uploadService';
+import { useParams } from 'react-router-dom';
 import './BlockStyles.css';
 
 const EmbedBlock = ({
@@ -20,7 +22,12 @@ const EmbedBlock = ({
         title: block.data.title || '',
         height: block.data.height || '400',
         allowFullscreen: block.data.allowFullscreen || true
-    });    const handleSave = () => {
+    });
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadedFile, setUploadedFile] = useState(null);
+    const fileInputRef = useRef(null);
+    const { courseId } = useParams();const handleSave = () => {
         if (!localData.url.trim()) {
             alert('Please enter a valid URL');
             return;
@@ -34,17 +41,73 @@ const EmbedBlock = ({
             url: processedUrl
         });
         onStopEdit();
-    };
-
-    const handleCancel = () => {
+    };    const handleCancel = () => {
         setLocalData({
             url: block.data.url || '',
             title: block.data.title || '',
             height: block.data.height || '400',
             allowFullscreen: block.data.allowFullscreen || true
         });
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadedFile(null);
         onStopEdit();
-    }; const isValidUrl = (url) => {
+    };
+
+    const handleVideoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            setIsUploading(true);
+            setUploadProgress(0);
+
+            // Progress simulation for better UX
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 90) {
+                        clearInterval(progressInterval);
+                        return 90;
+                    }
+                    return prev + 10;
+                });
+            }, 100);
+
+            // Upload the video
+            const uploadResponse = await uploadService.uploadVideo(file, courseId);
+            
+            clearInterval(progressInterval);
+            setUploadProgress(100);
+
+            // Get the uploaded video URL
+            let uploadedVideoUrl = null;
+            if (uploadResponse.files && uploadResponse.files.length > 0) {
+                uploadedVideoUrl = uploadResponse.files[0].filePath;
+            } else if (uploadResponse.filePath) {
+                uploadedVideoUrl = uploadResponse.filePath;
+            }
+
+            if (!uploadedVideoUrl) {
+                throw new Error('No file path returned from upload');
+            }
+
+            // Convert relative path to full URL
+            const fullVideoUrl = uploadService.getFileUrl(uploadedVideoUrl);
+            
+            setLocalData(prev => ({
+                ...prev,
+                url: fullVideoUrl
+            }));
+            setUploadedFile(file);
+
+        } catch (error) {
+            console.error('Video upload failed:', error);
+            alert(`Failed to upload video: ${error.message}`);
+            setUploadProgress(0);
+        } finally {
+            setIsUploading(false);
+        }
+    };const isValidUrl = (url) => {
         try {
             new URL(url);
             return true;
@@ -56,9 +119,7 @@ const EmbedBlock = ({
     // Check if URL is a YouTube URL
     const isYouTubeUrl = (url) => {
         return url && (url.includes('youtube.com') || url.includes('youtu.be'));
-    };
-
-    // Check if URL is a video URL that should use VideoPlayer
+    };    // Check if URL is a video URL that should use VideoPlayer
     const isVideoUrl = (url) => {
         if (!url) return false;
 
@@ -69,7 +130,17 @@ const EmbedBlock = ({
             'dailymotion.com'
         ];
 
-        return videoStreamingDomains.some(domain => url.toLowerCase().includes(domain));
+        const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+
+        const hasVideoExtension = videoExtensions.some(ext =>
+            url.toLowerCase().includes(ext)
+        );
+
+        const isStreamingUrl = videoStreamingDomains.some(domain => 
+            url.toLowerCase().includes(domain)
+        );
+
+        return hasVideoExtension || isStreamingUrl;
     };
 
     // Convert YouTube URLs to embed format
@@ -176,9 +247,8 @@ const EmbedBlock = ({
             {/* Block Content */}
             <div className="block-content">
                 {isEditing ? (
-                    <div className="embed-editor">
-                        <div className="editor-header">
-                            <h4>🔗 Embed Settings</h4>
+                    <div className="embed-editor">                        <div className="editor-header">
+                            <h4>🔗 Embed Content / Upload Video</h4>
                             <div className="editor-actions">
                                 <button className="save-btn" onClick={handleSave}>
                                     ✅ Save
@@ -187,21 +257,58 @@ const EmbedBlock = ({
                                     ❌ Cancel
                                 </button>
                             </div>
-                        </div>
-
-                        <div className="form-grid">
+                        </div>                        <div className="form-grid">
                             <div className="form-group">
-                                <label htmlFor="embed-url">Embed URL *</label>
+                                <label htmlFor="embed-url">Embed URL or Upload Video</label>
                                 <input
                                     id="embed-url"
                                     type="url"
                                     value={localData.url}
                                     onChange={(e) => setLocalData({ ...localData, url: e.target.value })}
-                                    placeholder="https://example.com/embed..."
+                                    placeholder="https://youtube.com/watch?v=... or paste any URL"
                                     className="embed-url-input"
-                                />                                <small className="input-help">
-                                    Enter any URL to embed. YouTube/Vimeo URLs will use our optimized player (no CAPTCHA issues!)
+                                    disabled={isUploading}
+                                />
+                                <small className="input-help">
+                                    Enter any URL to embed, or upload a video file (Max 10MB)
                                 </small>
+                                
+                                <div className="upload-section" style={{ marginTop: '12px' }}>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="video/mp4,video/webm,video/ogg,video/mov,video/avi"
+                                        onChange={handleVideoUpload}
+                                        style={{ display: 'none' }}
+                                        disabled={isUploading}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="upload-video-btn"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploading}
+                                    >
+                                        {isUploading ? '⏳ Uploading...' : '🎥 Upload Video (Max 10MB)'}
+                                    </button>
+                                    
+                                    {isUploading && (
+                                        <div className="upload-progress" style={{ marginTop: '8px' }}>
+                                            <div className="progress-bar">
+                                                <div
+                                                    className="progress-fill"
+                                                    style={{ width: `${uploadProgress}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="progress-text">{uploadProgress}%</span>
+                                        </div>
+                                    )}
+                                    
+                                    {uploadedFile && (
+                                        <div className="upload-success" style={{ marginTop: '8px' }}>
+                                            ✅ {uploadedFile.name} uploaded successfully
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="form-group">
@@ -278,11 +385,9 @@ const EmbedBlock = ({
                         {renderEmbedPreview()}
                     </div>
                 )}
-            </div>
-
-            {/* Block Type Indicator */}
+            </div>            {/* Block Type Indicator */}
             <div className="block-type-indicator">
-                🔗 Embed Block
+                🔗 Embed/Video Block
             </div>
         </div>
     );
