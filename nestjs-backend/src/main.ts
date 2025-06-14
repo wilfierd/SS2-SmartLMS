@@ -9,6 +9,7 @@ import * as express from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -24,6 +25,8 @@ async function bootstrap() {
     }
     next();
   });
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Define global validation pipe
   app.useGlobalPipes(new ValidationPipe({

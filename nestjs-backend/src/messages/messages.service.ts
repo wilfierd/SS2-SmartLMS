@@ -1,63 +1,91 @@
 // src/messages/messages.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Message } from './entities/message.entity';
 import { Repository } from 'typeorm';
-import { CreateMessageDto } from './dto/create-message.dto';
+import { Message } from './entities/message.entity';
 import { User } from '../users/entities/user.entity';
+import { CreateMessageDto } from './dto/create-message.dto';
 
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectRepository(Message)
-    private readonly messageRepo: Repository<Message>,
-
+    private messageRepository: Repository<Message>,
     @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    private userRepository: Repository<User>,
   ) {}
 
   async create(senderId: number, dto: CreateMessageDto): Promise<Message> {
-    const sender = await this.userRepo.findOneByOrFail({ id: senderId });
-    const receiver = await this.userRepo.findOneByOrFail({ id: dto.receiverId });
+  const sender = await this.userRepository.findOne({ where: { id: senderId } });
+  const receiver = await this.userRepository.findOne({ where: { id: dto.receiverId } });
 
-    const message = this.messageRepo.create({
-      sender,
-      receiver,
-      content: dto.content,
-    });
-
-    return this.messageRepo.save(message);
+  if (!sender || !receiver) {
+    throw new Error('Sender or receiver not found');
   }
 
-  async getConversation(userA: number, userB: number): Promise<Message[]> {
-    return this.messageRepo.find({
-      where: [
-        { sender: { id: userA }, receiver: { id: userB } },
-        { sender: { id: userB }, receiver: { id: userA } },
-      ],
-      order: { createdAt: 'ASC' },
-      relations: ['sender', 'receiver'],
-    });
+  const message = this.messageRepository.create({
+    sender,
+    receiver,
+    content: dto.content,
+  });
+
+  const savedMessage = await this.messageRepository.save(message);
+
+  const fullMessage = await this.messageRepository.findOne({
+    where: { id: savedMessage.id },
+    relations: ['sender', 'receiver'],
+  });
+
+  if (!fullMessage) {
+    throw new Error('Message not found after save');
   }
 
-  async getRecentChats(currentUserId: number): Promise<Message[]> {
-    const messages = await this.messageRepo
-    .createQueryBuilder('msg')
-    .leftJoin('msg.sender', 'sender')
-    .leftJoin('msg.receiver', 'receiver')
-    .where('sender.id = :id OR receiver.id = :id', { id: currentUserId })
-    .orderBy('msg.createdAt', 'DESC')
-    .getMany();
+  return fullMessage;
+}
 
 
-    const uniqueChats = new Map();
-    for (const msg of messages) {
-      const otherId = msg.sender.id === currentUserId ? msg.receiver.id : msg.sender.id;
-      if (!uniqueChats.has(otherId)) {
-        uniqueChats.set(otherId, msg);
-      }
+  async getConversation(userId: number, otherUserId: number): Promise<Message[]> {
+    try {
+      return this.messageRepository.find({
+        where: [
+          { sender: { id: userId }, receiver: { id: otherUserId } },
+          { sender: { id: otherUserId }, receiver: { id: userId } },
+        ],
+        relations: ['sender', 'receiver'],
+        order: { createdAt: 'ASC' },
+      });
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      return [];
     }
+  }
 
-    return Array.from(uniqueChats.values());
+  async getRecentChats(userId: number): Promise<Message[]> {
+    try {
+      const query = this.messageRepository
+        .createQueryBuilder('message')
+        .leftJoinAndSelect('message.sender', 'sender')
+        .leftJoinAndSelect('message.receiver', 'receiver')
+        .where('message.sender.id = :userId OR message.receiver.id = :userId', { userId })
+        .orderBy('message.createdAt', 'DESC');
+
+      const allMessages = await query.getMany();
+
+      // Group by conversation partner and get latest message for each
+      const conversationMap = new Map();
+      
+      allMessages.forEach(message => {
+        const partnerId = message.sender.id === userId ? message.receiver.id : message.sender.id;
+        
+        if (!conversationMap.has(partnerId)) {
+          conversationMap.set(partnerId, message);
+        }
+      });
+
+      return Array.from(conversationMap.values());
+    } catch (error) {
+      console.error('Error fetching recent chats:', error);
+      return [];
+    }
   }
 }
