@@ -11,6 +11,18 @@ import * as fs from 'fs';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
+// Helper function to get video MIME types
+function getVideoMimeType(ext: string): string {
+  const mimeTypes: { [key: string]: string } = {
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'ogg': 'video/ogg',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo'
+  };
+  return mimeTypes[ext] || 'video/mp4';
+}
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
@@ -94,9 +106,18 @@ async function bootstrap() {
   if (!fs.existsSync(profileUploadsDir)) {
     fs.mkdirSync(profileUploadsDir, { recursive: true });
   }
-
-  // Setup static file serving for uploads
-  app.use('/uploads', express.static(uploadsDir));
+  // Setup static file serving for uploads with proper headers for video files
+  app.use('/uploads', express.static(uploadsDir, {
+    setHeaders: (res, path) => {
+      // Set proper headers for video files to ensure they play inline
+      const ext = path.split('.').pop()?.toLowerCase();
+      if (ext && ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(ext)) {
+        res.setHeader('Content-Type', getVideoMimeType(ext));
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Disposition', 'inline');
+      }
+    }
+  }));
   // Apply global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 

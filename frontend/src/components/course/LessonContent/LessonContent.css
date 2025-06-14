@@ -527,6 +527,38 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Video wrapper styles for embed content */
+.embed-content .video-wrapper {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.embed-content .video-wrapper .video-player {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.embed-placeholder {
+  padding: 40px 20px;
+  text-align: center;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.embed-placeholder .placeholder-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.embed-placeholder p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
 /* Content Block Wrapper */
 .content-block-wrapper {
   position: relative;

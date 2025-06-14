@@ -410,22 +410,109 @@ const LessonContent = ({
                 return (
                     <div className="embed-content">
                         {block.data.title && <h4>{block.data.title}</h4>}
-                        <div className="embed-iframe-wrapper">
-                            <iframe
-                                src={block.data.url}
-                                height="100%"
-                                width="100%"
-                                frameBorder="0"
-                                allowFullScreen={block.data.allowFullscreen}
-                                className="embed-iframe"
-                            />
-                        </div>
+                        {renderEmbedReadOnly(block)}
                     </div>
                 );
             default:
                 return <div>Unknown content type</div>;
         }
-    }; return (
+    };
+
+    // Helper function to render embed content in readonly mode
+    const renderEmbedReadOnly = (block) => {
+        if (!block.data.url) {
+            return (
+                <div className="embed-placeholder">
+                    <div className="placeholder-icon">🔗</div>
+                    <p>No embed content available</p>
+                </div>
+            );
+        }
+
+        // Check if URL is a video URL that should use VideoPlayer
+        const isVideoUrl = (url) => {
+            if (!url) return false;
+
+            const videoStreamingDomains = [
+                'youtube.com',
+                'youtu.be',
+                'vimeo.com',
+                'dailymotion.com'
+            ];
+
+            const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+
+            const hasVideoExtension = videoExtensions.some(ext =>
+                url.toLowerCase().includes(ext)
+            );
+
+            const isStreamingUrl = videoStreamingDomains.some(domain => 
+                url.toLowerCase().includes(domain)
+            );
+
+            return hasVideoExtension || isStreamingUrl;
+        };
+
+        // Check if URL is a YouTube URL
+        const isYouTubeUrl = (url) => {
+            return url && (url.includes('youtube.com') || url.includes('youtu.be'));
+        };
+
+        // Convert YouTube URLs to embed format
+        const convertToEmbedUrl = (url) => {
+            if (!url) return url;
+            
+            // If it's already an embed URL, return as is
+            if (url.includes('youtube.com/embed/')) {
+                return url;
+            }
+            
+            // Extract video ID and convert to embed URL
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/v\/)([^#&?]*)/,
+                /youtube\.com\/watch\?.*v=([^#&?]*)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1] && match[1].length === 11) {
+                    return `https://www.youtube.com/embed/${match[1]}`;
+                }
+            }
+            
+            return url; // Return original URL if not YouTube
+        };
+
+        // If it's a video URL, use VideoPlayer component
+        if (isVideoUrl(block.data.url)) {
+            return (
+                <div className="video-wrapper">
+                    <VideoPlayer
+                        videoUrl={isYouTubeUrl(block.data.url) ? convertToEmbedUrl(block.data.url) : block.data.url}
+                        title={block.data.title || 'Embedded Video'}
+                        containerMode="fixed"
+                    />
+                </div>
+            );
+        }
+
+        // For non-video content, use regular iframe
+        return (
+            <div className="embed-iframe-wrapper">
+                <iframe
+                    src={block.data.url}
+                    height={block.data.height || '400px'}
+                    width="100%"
+                    frameBorder="0"
+                    allowFullScreen={block.data.allowFullscreen}
+                    className="embed-iframe"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                />
+            </div>
+        );
+    };
+
+    return (
         <div className="lesson-content-container">
             {/* If creating a new lesson, show the creation form */}
             {isCreatingLesson ? (
