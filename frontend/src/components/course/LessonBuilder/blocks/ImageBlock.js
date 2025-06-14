@@ -1,5 +1,24 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect, memo } from 'react';
 import { useParams } from 'react-router-dom';
+import {
+    MdEdit,
+    MdContentCopy,
+    MdDelete,
+    MdKeyboardArrowUp,
+    MdKeyboardArrowDown,
+    MdSave,
+    MdCancel,
+    MdImage,
+    MdAlignHorizontalLeft,
+    MdAlignHorizontalCenter,
+    MdAlignHorizontalRight,
+    MdFullscreen,
+    MdRefresh,
+    MdCloudUpload,
+    MdError,
+    MdFlashOn,
+    MdVisibilityOff
+} from 'react-icons/md';
 import uploadService from '../../../../services/uploadService';
 import './BlockStyles.css';
 
@@ -15,7 +34,8 @@ const ImageBlock = ({
     onMoveDown,
     canMoveUp,
     canMoveDown
-}) => {    const { courseId } = useParams();
+}) => {
+    const { courseId } = useParams();
     const [localData, setLocalData] = useState({
         url: block.data.url || '',
         alt: block.data.alt || '',
@@ -25,7 +45,7 @@ const ImageBlock = ({
     });
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState(null);    const [imageLoaded, setImageLoaded] = useState(false);    const [isScrolling, setIsScrolling] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null); const [imageLoaded, setImageLoaded] = useState(false); const [isScrolling, setIsScrolling] = useState(false);
     const fileInputRef = useRef(null);
     const scrollTimeout = useRef(null);
     const blockRef = useRef(null);
@@ -33,19 +53,19 @@ const ImageBlock = ({
     // Optimized scroll detection using passive events and throttling
     useEffect(() => {
         let ticking = false;
-        
+
         const handleScroll = () => {
             if (!ticking && isEditing) {
                 requestAnimationFrame(() => {
                     if (!isScrolling) {
                         setIsScrolling(true);
                     }
-                    
+
                     clearTimeout(scrollTimeout.current);
                     scrollTimeout.current = setTimeout(() => {
                         setIsScrolling(false);
                     }, 100); // Reduced timeout for faster response
-                    
+
                     ticking = false;
                 });
                 ticking = true;
@@ -55,11 +75,11 @@ const ImageBlock = ({
         if (isEditing) {
             // Use passive listener for better performance
             const scrollContainer = document.querySelector('.lesson-builder-container') || window;
-            scrollContainer.addEventListener('scroll', handleScroll, { 
+            scrollContainer.addEventListener('scroll', handleScroll, {
                 passive: true,
-                capture: false 
+                capture: false
             });
-            
+
             return () => {
                 scrollContainer.removeEventListener('scroll', handleScroll);
                 clearTimeout(scrollTimeout.current);
@@ -73,15 +93,13 @@ const ImageBlock = ({
             }
             clearTimeout(scrollTimeout.current);
         };
-    }, [previewUrl]);
-
-    // Memoize alignment options to prevent re-creation on every render
+    }, [previewUrl]);    // Memoize alignment options to prevent re-creation on every render
     const alignmentOptions = useMemo(() => [
-        { value: 'left', label: 'Left', icon: '⬅️' },
-        { value: 'center', label: 'Center', icon: '↔️' },
-        { value: 'right', label: 'Right', icon: '➡️' },
-        { value: 'full', label: 'Full Width', icon: '↕️' }
-    ], []);    // Memoize handlers to prevent unnecessary re-renders
+        { value: 'left', label: 'Left', icon: <MdAlignHorizontalLeft /> },
+        { value: 'center', label: 'Center', icon: <MdAlignHorizontalCenter /> },
+        { value: 'right', label: 'Right', icon: <MdAlignHorizontalRight /> },
+        { value: 'full', label: 'Full Width', icon: <MdFullscreen /> }
+    ], []);// Memoize handlers to prevent unnecessary re-renders
     const handleSave = useCallback(() => {
         if (localData.file) {
             // Handle file upload
@@ -115,7 +133,7 @@ const ImageBlock = ({
         setIsUploading(false);
         setImageLoaded(false);
         onStopEdit();
-    }, [previewUrl, block.data, onStopEdit]);    const handleFileSelect = useCallback((e) => {
+    }, [previewUrl, block.data, onStopEdit]); const handleFileSelect = useCallback((e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
             // Clean up previous preview URL
@@ -143,14 +161,14 @@ const ImageBlock = ({
             uploadService.revokePreviewUrl(previewUrl);
             setPreviewUrl(null);
         }
-        
-        setLocalData(prev => ({ 
-            ...prev, 
-            url: url, 
-            file: null 
+
+        setLocalData(prev => ({
+            ...prev,
+            url: url,
+            file: null
         }));
         setImageLoaded(false);
-    }, [previewUrl]);    const uploadImage = useCallback(async () => {
+    }, [previewUrl]); const uploadImage = useCallback(async () => {
         if (!localData.file) return;
 
         setIsUploading(true);
@@ -220,7 +238,7 @@ const ImageBlock = ({
         if (!block.data.url) {
             return (
                 <div className="image-placeholder">
-                    <div className="placeholder-icon">🖼️</div>
+                    <div className="placeholder-icon"><MdImage /></div>
                     <p>No image selected</p>
                     <button className="add-image-btn" onClick={onStartEdit}>
                         Add Image
@@ -255,14 +273,14 @@ const ImageBlock = ({
                     }}
                 />
                 <div className="image-error" style={{ display: 'none' }}>
-                    <p>❌ Failed to load image</p>
+                    <p><MdError /> Failed to load image</p>
                     <small style={{ wordBreak: 'break-all' }}>{block.data.url}</small>
-                    <button 
-                        className="retry-btn" 
+                    <button
+                        className="retry-btn"
                         onClick={() => window.location.reload()}
-                        style={{ 
-                            marginTop: '8px', 
-                            padding: '4px 8px', 
+                        style={{
+                            marginTop: '8px',
+                            padding: '4px 8px',
                             background: '#007bff',
                             color: 'white',
                             border: 'none',
@@ -270,7 +288,7 @@ const ImageBlock = ({
                             cursor: 'pointer'
                         }}
                     >
-                        🔄 Retry
+                        <MdRefresh /> Retry
                     </button>
                 </div>
                 {block.data.caption && (
@@ -289,7 +307,7 @@ const ImageBlock = ({
             return (
                 <div className="simplified-preview">
                     <div className="preview-placeholder">
-                        🖼️ Image Preview (Scroll to see full preview)
+                        <MdImage /> Image Preview (Scroll to see full preview)
                     </div>
                 </div>
             );
@@ -302,8 +320,8 @@ const ImageBlock = ({
                     alt={localData.alt || 'Image preview'}
                     className="lesson-image preview-image"
                     loading="lazy"
-                    style={{ 
-                        maxWidth: '300px', 
+                    style={{
+                        maxWidth: '300px',
                         maxHeight: '200px',
                         objectFit: 'contain',
                         border: '2px dashed #ccc'
@@ -321,8 +339,8 @@ const ImageBlock = ({
                 )}
             </div>
         );
-    }, [localData.url, localData.alt, localData.alignment, localData.caption, isScrolling]);    return (
-        <div 
+    }, [localData.url, localData.alt, localData.alignment, localData.caption, isScrolling]); return (
+        <div
             ref={blockRef}
             className={`content-block image-block ${isScrolling ? 'scrolling' : ''}`}
         >
@@ -331,10 +349,10 @@ const ImageBlock = ({
                 {!isEditing && (
                     <>
                         <button className="control-btn edit" onClick={onStartEdit} title="Edit">
-                            ✏️
+                            <MdEdit />
                         </button>
                         <button className="control-btn duplicate" onClick={onDuplicate} title="Duplicate">
-                            📋
+                            <MdContentCopy />
                         </button>
                         {canMoveUp && (
                             <button className="control-btn move" onClick={onMoveUp} title="Move Up">
@@ -347,7 +365,7 @@ const ImageBlock = ({
                             </button>
                         )}
                         <button className="control-btn delete" onClick={onDelete} title="Delete">
-                            🗑️
+                            <MdDelete />
                         </button>
                     </>
                 )}
@@ -358,7 +376,7 @@ const ImageBlock = ({
                 {isEditing ? (
                     <div className="edit-form">
                         <div className="form-header">
-                            <h3 className="form-title">🖼️ Edit Image</h3>
+                            <h3 className="form-title"><MdImage /> Edit Image</h3>
                             <div className="form-actions">
                                 <button
                                     className="save-btn"
@@ -529,11 +547,11 @@ export default memo(ImageBlock, (prevProps, nextProps) => {
     if (prevProps.canMoveUp !== nextProps.canMoveUp) return false;
     if (prevProps.canMoveDown !== nextProps.canMoveDown) return false;
     if (prevProps.block === nextProps.block) return true; // Same reference
-    
+
     // Only check data if blocks are different references
     const prevData = prevProps.block.data;
     const nextData = nextProps.block.data;
-    
+
     return (
         prevData.url === nextData.url &&
         prevData.alt === nextData.alt &&

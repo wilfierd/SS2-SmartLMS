@@ -897,3 +897,59 @@
     width: 100%;
   }
 }
+
+/* Material Design Icons for Lesson Content */
+.lesson-content-container svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Header action icons */
+.lesson-actions svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Empty state icons */
+.empty-icon svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.6;
+  margin-bottom: 12px;
+}
+
+/* Add block menu icons */
+.add-block-item svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+/* File download icons */
+.file-download svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Form buttons */
+.lesson-form-actions svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Close buttons */
+.close-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Block type buttons */
+.block-type-btn svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}

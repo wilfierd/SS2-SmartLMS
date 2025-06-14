@@ -2,6 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
+    MdDescription,
+    MdImage,
+    MdFolder,
+    MdQuiz,
+    MdLink,
+    MdClose,
+    MdEdit,
+    MdSave,
+    MdCancel,
+    MdContentCopy,
+    MdRefresh,
+    MdAutoAwesome,
+    MdAdd,
+    MdAttachFile
+} from 'react-icons/md';
+import {
     DndContext,
     closestCenter,
     KeyboardSensor,
@@ -99,12 +115,11 @@ const LessonContent = ({
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );    // Available block types
-    const blockTypes = [
-        { type: 'text', icon: '📝', label: 'Text Block', description: 'Add rich text content' },
-        { type: 'image', icon: '🖼️', label: 'Image', description: 'Upload or link images' },
-        { type: 'file', icon: '📁', label: 'Files', description: 'Documents and downloads' },
-        { type: 'quiz', icon: '🧩', label: 'Mini Quiz', description: 'Quick knowledge check' },
-        { type: 'embed', icon: '🔗', label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
+    const blockTypes = [        { type: 'text', icon: <MdDescription />, label: 'Text Block', description: 'Add rich text content' },
+        { type: 'image', icon: <MdImage />, label: 'Image', description: 'Upload or link images' },
+        { type: 'file', icon: <MdFolder />, label: 'Files', description: 'Documents and downloads' },
+        { type: 'quiz', icon: <MdQuiz />, label: 'Mini Quiz', description: 'Quick knowledge check' },
+        { type: 'embed', icon: <MdLink />, label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
     ];// Initialize content blocks from lesson
     useEffect(() => {
         if (lesson?.content) {
@@ -387,7 +402,7 @@ const LessonContent = ({
                         <div className="files-list">
                             {block.data.files.map((file, index) => (
                                 <a key={index} href={file.url} download className="file-download">
-                                    📁 {file.name}
+                                    <MdAttachFile /> {file.name}
                                 </a>
                             ))}
                         </div>
@@ -423,7 +438,7 @@ const LessonContent = ({
         if (!block.data.url) {
             return (
                 <div className="embed-placeholder">
-                    <div className="placeholder-icon">🔗</div>
+                    <div className="placeholder-icon"><MdLink /></div>
                     <p>No embed content available</p>
                 </div>
             );
@@ -564,10 +579,9 @@ const LessonContent = ({
 
                     {/* Content Blocks for New Lesson */}
                     <div className="lesson-content-builder">
-                        <h3>Lesson Content</h3>
-                        {contentBlocks.length === 0 ? (
+                        <h3>Lesson Content</h3>                        {contentBlocks.length === 0 ? (
                             <div className="empty-content-builder">
-                                <div className="empty-icon">📋</div>
+                                <div className="empty-icon"><MdContentCopy /></div>
                                 <p>Add content blocks to make your lesson engaging</p>
                                 <button
                                     className="add-first-block-btn"
@@ -612,7 +626,7 @@ const LessonContent = ({
                             onClick={handleCreateLesson}
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? '🔄 Creating...' : '✨ Create Lesson'}
+                            {isSubmitting ? <><MdRefresh /> Creating...</> : <><MdAutoAwesome /> Create Lesson</>}
                         </button>
                         <button
                             className="cancel-lesson-btn"
@@ -645,7 +659,7 @@ const LessonContent = ({
                                         className="edit-lesson-btn"
                                         onClick={() => setIsEditing(true)}
                                     >
-                                        ✏️ Edit Lesson
+                                        <MdEdit /> Edit Lesson
                                     </button>
                                 ) : (
                                     <div className="edit-controls">
@@ -654,13 +668,13 @@ const LessonContent = ({
                                             onClick={handleSaveContent}
                                             disabled={isSubmitting}
                                         >
-                                            {isSubmitting ? '💾 Saving...' : '💾 Save'}
+                                            {isSubmitting ? <><MdSave /> Saving...</> : <><MdSave /> Save</>}
                                         </button>
                                         <button
                                             className="cancel-btn"
                                             onClick={handleCancelEdit}
                                         >
-                                            ❌ Cancel
+                                            <MdCancel /> Cancel
                                         </button>
                                     </div>
                                 )}
@@ -673,9 +687,8 @@ const LessonContent = ({
                         {contentBlocks.length === 0 ? (
                             // Empty state
                             <div className="empty-lesson-content">
-                                {isEditing ? (
-                                    <div className="empty-edit-state">
-                                        <div className="empty-icon">📋</div>
+                                {isEditing ? (                                    <div className="empty-edit-state">
+                                        <div className="empty-icon"><MdContentCopy /></div>
                                         <h3>Start Building Your Lesson</h3>
                                         <p>Add content blocks to create an engaging lesson experience</p>
                                         <button
@@ -693,7 +706,7 @@ const LessonContent = ({
                                                 className="edit-lesson-btn"
                                                 onClick={() => setIsEditing(true)}
                                             >
-                                                ✏️ Add Content
+                                                <MdAdd /> Add Content
                                             </button>
                                         )}
                                     </div>
@@ -751,7 +764,7 @@ const LessonContent = ({
                             <div className="add-block-menu" onClick={(e) => e.stopPropagation()}>
                                 <div className="menu-header">
                                     <h3>Add Content Block</h3>
-                                    <button onClick={() => setShowAddMenu(false)}>✕</button>
+                                    <button onClick={() => setShowAddMenu(false)}><MdClose /></button>
                                 </div>
                                 <div className="block-types-grid">
                                     {blockTypes.map(blockType => (

@@ -1,4 +1,27 @@
 import React, { useState, useRef } from 'react';
+import {
+    MdEdit,
+    MdContentCopy,
+    MdDelete,
+    MdKeyboardArrowUp,
+    MdKeyboardArrowDown,
+    MdSave,
+    MdCancel,
+    MdFolder,
+    MdCloudUpload,
+    MdAdd,
+    MdClose,
+    MdAttachFile,
+    MdDownload,
+    MdImage,
+    MdVideoFile,
+    MdAudioFile,
+    MdPictureAsPdf,
+    MdDescription,
+    MdTableChart,
+    MdSlideshow,
+    MdArchive
+} from 'react-icons/md';
 import './BlockStyles.css';
 
 const FileBlock = ({
@@ -137,18 +160,16 @@ const FileBlock = ({
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
-
-    const getFileIcon = (fileType) => {
-        if (fileType.startsWith('image/')) return '🖼️';
-        if (fileType.startsWith('video/')) return '🎥';
-        if (fileType.startsWith('audio/')) return '🎵';
-        if (fileType.includes('pdf')) return '📄';
-        if (fileType.includes('word') || fileType.includes('document')) return '📝';
-        if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📊';
-        if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📽️';
-        if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) return '📦';
-        return '📁';
+    }; const getFileIcon = (fileType) => {
+        if (fileType.startsWith('image/')) return <MdImage />;
+        if (fileType.startsWith('video/')) return <MdVideoFile />;
+        if (fileType.startsWith('audio/')) return <MdAudioFile />;
+        if (fileType.includes('pdf')) return <MdPictureAsPdf />;
+        if (fileType.includes('word') || fileType.includes('document')) return <MdDescription />;
+        if (fileType.includes('excel') || fileType.includes('spreadsheet')) return <MdTableChart />;
+        if (fileType.includes('powerpoint') || fileType.includes('presentation')) return <MdSlideshow />;
+        if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) return <MdArchive />;
+        return <MdAttachFile />;
     };
 
     const downloadFile = (file) => {
@@ -205,11 +226,10 @@ const FileBlock = ({
                             {isEditing && (
                                 <button
                                     className="remove-btn"
-                                    onClick={() => isNew ? removeNewFile(index) : removeExistingFile(index)}
-                                    disabled={isUploading}
+                                    onClick={() => isNew ? removeNewFile(index) : removeExistingFile(index)} disabled={isUploading}
                                     title="Remove"
                                 >
-                                    ❌
+                                    <MdClose />
                                 </button>
                             )}
                         </div>
@@ -226,10 +246,10 @@ const FileBlock = ({
                 {!isEditing && (
                     <>
                         <button className="control-btn edit" onClick={onStartEdit} title="Edit">
-                            ✏️
+                            <MdEdit />
                         </button>
                         <button className="control-btn duplicate" onClick={onDuplicate} title="Duplicate">
-                            📋
+                            <MdContentCopy />
                         </button>
                         {canMoveUp && (
                             <button className="control-btn move" onClick={onMoveUp} title="Move Up">
@@ -242,7 +262,7 @@ const FileBlock = ({
                             </button>
                         )}
                         <button className="control-btn delete" onClick={onDelete} title="Delete">
-                            🗑️
+                            <MdDelete />
                         </button>
                     </>
                 )}
@@ -253,21 +273,21 @@ const FileBlock = ({
                 {isEditing ? (
                     <div className="file-editor">
                         <div className="editor-header">
-                            <h4>📁 File Downloads</h4>
+                            <h4><MdFolder /> File Downloads</h4>
                             <div className="editor-actions">
                                 <button
                                     className="save-btn"
                                     onClick={handleSave}
                                     disabled={isUploading}
                                 >
-                                    {isUploading ? '⏳ Uploading...' : '✅ Save'}
+                                    {isUploading ? 'Uploading...' : <><MdSave /> Save</>}
                                 </button>
                                 <button
                                     className="cancel-btn"
                                     onClick={handleCancel}
                                     disabled={isUploading}
                                 >
-                                    ❌ Cancel
+                                    <MdCancel /> Cancel
                                 </button>
                             </div>
                         </div>
@@ -293,7 +313,7 @@ const FileBlock = ({
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={isUploading}
                                 >
-                                    📁 Add Files
+                                    <MdCloudUpload /> Add Files
                                 </button>
 
                                 <input
@@ -314,7 +334,7 @@ const FileBlock = ({
                         {/* Existing Files */}
                         {localData.files.length > 0 && (
                             <div className="files-section">
-                                <h5>📋 Current Files:</h5>
+                                <h5><MdFolder /> Current Files:</h5>
                                 {renderFileList(localData.files, false)}
                             </div>
                         )}
@@ -322,7 +342,7 @@ const FileBlock = ({
                         {/* New Files to Upload */}
                         {localData.newFiles.length > 0 && (
                             <div className="files-section">
-                                <h5>📤 Files to Upload:</h5>
+                                <h5><MdCloudUpload /> Files to Upload:</h5>
                                 {renderFileList(localData.newFiles, true)}
                             </div>
                         )}
@@ -338,13 +358,13 @@ const FileBlock = ({
                         {block.data.files && block.data.files.length > 0 ? (
                             <>
                                 <div className="files-header">
-                                    <h4>📁 Download Files ({block.data.files.length})</h4>
+                                    <h4><MdDownload /> Download Files ({block.data.files.length})</h4>
                                 </div>
                                 {renderFileList(block.data.files, false)}
                             </>
                         ) : (
                             <div className="file-placeholder">
-                                <div className="placeholder-icon">📁</div>
+                                <div className="placeholder-icon"><MdFolder /></div>
                                 <p>No files available</p>
                                 <button className="add-files-btn" onClick={onStartEdit}>
                                     Add Files

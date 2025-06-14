@@ -570,7 +570,7 @@
   justify-content: center;
   background: #3b82f6;
   color: white;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: bold;
   text-transform: uppercase;
@@ -1556,7 +1556,6 @@
   }
 }
 
-/* Enhanced embed preview */
 .embed-preview-section {
   margin-top: 20px;
   padding-top: 20px;
@@ -1797,4 +1796,200 @@
 .content-block.scrolling * {
   transition: none !important;
   animation: none !important;
+}
+
+/* Material Design Icons - Professional Sizing */
+.content-block svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Control button icons */
+.control-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Form header icons */
+.form-title svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+/* Button icons */
+button svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Save/Cancel button icons */
+.save-btn svg,
+.cancel-btn svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Placeholder icons (larger for empty states) */
+.placeholder-icon svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.7;
+}
+
+/* File icons */
+.file-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Option indicator icons (quiz) */
+.option-indicator svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Result icons */
+.result-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Block type icons */
+.block-type-icon svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+/* Empty state icons */
+.empty-icon svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.6;
+}
+
+/* Ensure icons align properly with text */
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-title {
+  display: flex;
+  align-items: center;
+}
+
+/* Status icons */
+.session-icon svg,
+.benefit-icon svg,
+.btn-icon svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+}
+
+/* Quiz status icons */
+.quiz-status svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Specific icon context adjustments */
+
+/* Upload button icons */
+.upload-btn svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+/* Retry/refresh button icons */
+.retry-btn svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Quiz option icons */
+.quiz-option svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+}
+
+/* Add option button icons */
+.add-option-btn svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Block title icons */
+.block-title svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+/* Form field icons */
+.form-field svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Alignment button icons */
+.alignment-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Video settings icons */
+.video-settings svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+/* File list icons */
+.file-list-item svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  color: #6b7280;
+}
+
+/* Success/error message icons */
+.message-icon svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Performance mode icons */
+.performance-notice svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+/* Icon color consistency */
+svg {
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+/* Hover states for interactive icons */
+button:hover svg {
+  opacity: 0.8;
+}
+
+.control-btn:hover svg {
+  transform: scale(1.1);
+  transition: transform 0.15s ease;
 }

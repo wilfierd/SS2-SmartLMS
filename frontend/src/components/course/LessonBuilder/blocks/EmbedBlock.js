@@ -1,4 +1,17 @@
 import React, { useState, useRef } from 'react';
+import {
+    MdEdit,
+    MdContentCopy,
+    MdDelete,
+    MdKeyboardArrowUp,
+    MdKeyboardArrowDown,
+    MdSave,
+    MdCancel,
+    MdOndemandVideo,
+    MdCloudUpload,
+    MdLink,
+    MdVideoFile
+} from 'react-icons/md';
 import VideoPlayer from '../../VideoPlayer';
 import uploadService from '../../../../services/uploadService';
 import { useParams } from 'react-router-dom';
@@ -27,7 +40,7 @@ const EmbedBlock = ({
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadedFile, setUploadedFile] = useState(null);
     const fileInputRef = useRef(null);
-    const { courseId } = useParams();const handleSave = () => {
+    const { courseId } = useParams(); const handleSave = () => {
         if (!localData.url.trim()) {
             alert('Please enter a valid URL');
             return;
@@ -35,13 +48,13 @@ const EmbedBlock = ({
 
         // Convert YouTube URLs to embed format to avoid "refused to connect" errors
         const processedUrl = isYouTubeUrl(localData.url) ? convertToEmbedUrl(localData.url) : localData.url;
-        
+
         onUpdate({
             ...localData,
             url: processedUrl
         });
         onStopEdit();
-    };    const handleCancel = () => {
+    }; const handleCancel = () => {
         setLocalData({
             url: block.data.url || '',
             title: block.data.title || '',
@@ -75,7 +88,7 @@ const EmbedBlock = ({
 
             // Upload the video
             const uploadResponse = await uploadService.uploadVideo(file, courseId);
-            
+
             clearInterval(progressInterval);
             setUploadProgress(100);
 
@@ -93,7 +106,7 @@ const EmbedBlock = ({
 
             // Convert relative path to full URL
             const fullVideoUrl = uploadService.getFileUrl(uploadedVideoUrl);
-            
+
             setLocalData(prev => ({
                 ...prev,
                 url: fullVideoUrl
@@ -107,7 +120,7 @@ const EmbedBlock = ({
         } finally {
             setIsUploading(false);
         }
-    };const isValidUrl = (url) => {
+    }; const isValidUrl = (url) => {
         try {
             new URL(url);
             return true;
@@ -136,7 +149,7 @@ const EmbedBlock = ({
             url.toLowerCase().includes(ext)
         );
 
-        const isStreamingUrl = videoStreamingDomains.some(domain => 
+        const isStreamingUrl = videoStreamingDomains.some(domain =>
             url.toLowerCase().includes(domain)
         );
 
@@ -146,25 +159,25 @@ const EmbedBlock = ({
     // Convert YouTube URLs to embed format
     const convertToEmbedUrl = (url) => {
         if (!url) return url;
-        
+
         // If it's already an embed URL, return as is
         if (url.includes('youtube.com/embed/')) {
             return url;
         }
-        
+
         // Extract video ID and convert to embed URL
         const patterns = [
             /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/v\/)([^#&?]*)/,
             /youtube\.com\/watch\?.*v=([^#&?]*)/
         ];
-        
+
         for (const pattern of patterns) {
             const match = url.match(pattern);
             if (match && match[1] && match[1].length === 11) {
                 return `https://www.youtube.com/embed/${match[1]}`;
             }
         }
-        
+
         return url; // Return original URL if not YouTube
     };
 
@@ -172,7 +185,7 @@ const EmbedBlock = ({
         if (!block.data.url || !isValidUrl(block.data.url)) {
             return (
                 <div className="embed-placeholder">
-                    <div className="placeholder-icon">🔗</div>
+                    <div className="placeholder-icon"><MdLink /></div>
                     <p>No valid embed URL provided</p>
                     <button className="add-embed-btn" onClick={onStartEdit}>
                         Add Embed Content
@@ -222,10 +235,10 @@ const EmbedBlock = ({
                 {!isEditing && (
                     <>
                         <button className="control-btn edit" onClick={onStartEdit} title="Edit">
-                            ✏️
+                            <MdEdit />
                         </button>
                         <button className="control-btn duplicate" onClick={onDuplicate} title="Duplicate">
-                            📋
+                            <MdContentCopy />
                         </button>
                         {canMoveUp && (
                             <button className="control-btn move" onClick={onMoveUp} title="Move Up">
@@ -238,7 +251,7 @@ const EmbedBlock = ({
                             </button>
                         )}
                         <button className="control-btn delete" onClick={onDelete} title="Delete">
-                            🗑️
+                            <MdDelete />
                         </button>
                     </>
                 )}
@@ -248,16 +261,16 @@ const EmbedBlock = ({
             <div className="block-content">
                 {isEditing ? (
                     <div className="embed-editor">                        <div className="editor-header">
-                            <h4>🔗 Embed Content / Upload Video</h4>
-                            <div className="editor-actions">
-                                <button className="save-btn" onClick={handleSave}>
-                                    ✅ Save
-                                </button>
-                                <button className="cancel-btn" onClick={handleCancel}>
-                                    ❌ Cancel
-                                </button>
-                            </div>
-                        </div>                        <div className="form-grid">
+                        <h4><MdLink /> Embed Content / Upload Video</h4>
+                        <div className="editor-actions">
+                            <button className="save-btn" onClick={handleSave}>
+                                <MdSave /> Save
+                            </button>
+                            <button className="cancel-btn" onClick={handleCancel}>
+                                <MdCancel /> Cancel
+                            </button>
+                        </div>
+                    </div>                        <div className="form-grid">
                             <div className="form-group">
                                 <label htmlFor="embed-url">Embed URL or Upload Video</label>
                                 <input
@@ -272,7 +285,7 @@ const EmbedBlock = ({
                                 <small className="input-help">
                                     Enter any URL to embed, or upload a video file (Max 10MB)
                                 </small>
-                                
+
                                 <div className="upload-section" style={{ marginTop: '12px' }}>
                                     <input
                                         ref={fileInputRef}
@@ -288,9 +301,9 @@ const EmbedBlock = ({
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={isUploading}
                                     >
-                                        {isUploading ? '⏳ Uploading...' : '🎥 Upload Video (Max 10MB)'}
+                                        {isUploading ? 'Uploading...' : <><MdCloudUpload /> Upload Video (Max 10MB)</>}
                                     </button>
-                                    
+
                                     {isUploading && (
                                         <div className="upload-progress" style={{ marginTop: '8px' }}>
                                             <div className="progress-bar">
@@ -302,10 +315,10 @@ const EmbedBlock = ({
                                             <span className="progress-text">{uploadProgress}%</span>
                                         </div>
                                     )}
-                                    
+
                                     {uploadedFile && (
                                         <div className="upload-success" style={{ marginTop: '8px' }}>
-                                            ✅ {uploadedFile.name} uploaded successfully
+                                            <MdVideoFile /> {uploadedFile.name} uploaded successfully
                                         </div>
                                     )}
                                 </div>
@@ -353,18 +366,18 @@ const EmbedBlock = ({
                             <div className="embed-preview-section">
                                 <h5>Preview:</h5>
                                 <div className="embed-preview">
-                                    {isVideoUrl(localData.url) ? (                                        <div className="video-preview">
-                                            <VideoPlayer
-                                                videoUrl={isYouTubeUrl(localData.url) ? convertToEmbedUrl(localData.url) : localData.url}
-                                                title="Preview"
-                                                containerMode="fixed"
-                                            />
-                                            {isYouTubeUrl(localData.url) && (
-                                                <div className="preview-info">
-                                                    ✅ This YouTube URL will load without CAPTCHA issues!
-                                                </div>
-                                            )}
-                                        </div>
+                                    {isVideoUrl(localData.url) ? (<div className="video-preview">
+                                        <VideoPlayer
+                                            videoUrl={isYouTubeUrl(localData.url) ? convertToEmbedUrl(localData.url) : localData.url}
+                                            title="Preview"
+                                            containerMode="fixed"
+                                        />
+                                        {isYouTubeUrl(localData.url) && (
+                                            <div className="preview-info">
+                                                <MdVideoFile /> This YouTube URL will load without CAPTCHA issues!
+                                            </div>
+                                        )}
+                                    </div>
                                     ) : (
                                         <iframe
                                             src={localData.url}
@@ -387,7 +400,7 @@ const EmbedBlock = ({
                 )}
             </div>            {/* Block Type Indicator */}
             <div className="block-type-indicator">
-                🔗 Embed/Video Block
+                <MdLink /> Embed/Video Block
             </div>
         </div>
     );

@@ -1,4 +1,15 @@
 import React, { useState, useRef } from 'react';
+import {
+    MdEdit,
+    MdContentCopy,
+    MdDelete,
+    MdKeyboardArrowUp,
+    MdKeyboardArrowDown,
+    MdSave,
+    MdCancel,
+    MdLightbulb,
+    MdTextFields
+} from 'react-icons/md';
 import './BlockStyles.css';
 
 const TextBlock = ({
@@ -75,25 +86,24 @@ const TextBlock = ({
             {/* Block Controls */}
             <div className="block-controls">
                 {!isEditing && (
-                    <>
-                        <button className="control-btn edit" onClick={onStartEdit} title="Edit">
-                            ✏️
-                        </button>
+                    <>                        <button className="control-btn edit" onClick={onStartEdit} title="Edit">
+                        <MdEdit />
+                    </button>
                         <button className="control-btn duplicate" onClick={onDuplicate} title="Duplicate">
-                            📋
+                            <MdContentCopy />
                         </button>
                         {canMoveUp && (
                             <button className="control-btn move" onClick={onMoveUp} title="Move Up">
-                                ↑
+                                <MdKeyboardArrowUp />
                             </button>
                         )}
                         {canMoveDown && (
                             <button className="control-btn move" onClick={onMoveDown} title="Move Down">
-                                ↓
+                                <MdKeyboardArrowDown />
                             </button>
                         )}
                         <button className="control-btn delete" onClick={onDelete} title="Delete">
-                            🗑️
+                            <MdDelete />
                         </button>
                     </>
                 )}
@@ -116,12 +126,11 @@ const TextBlock = ({
                                 ))}
                             </select>
 
-                            <div className="editor-actions">
-                                <button className="save-btn" onClick={handleSave}>
-                                    ✅ Save
-                                </button>
+                            <div className="editor-actions">                                <button className="save-btn" onClick={handleSave}>
+                                <MdSave /> Save
+                            </button>
                                 <button className="cancel-btn" onClick={handleCancel}>
-                                    ❌ Cancel
+                                    <MdCancel /> Cancel
                                 </button>
                             </div>
                         </div>
@@ -137,10 +146,8 @@ const TextBlock = ({
                             className={`text-input text-input-${localStyle}`}
                             autoFocus
                             onInput={autoResize}
-                        />
-
-                        <div className="editor-help">
-                            <small>💡 Tip: You can use basic HTML tags for formatting</small>
+                        />                        <div className="editor-help">
+                            <small><MdLightbulb /> Tip: You can use basic HTML tags for formatting</small>
                         </div>
                     </div>
                 ) : (
@@ -158,9 +165,8 @@ const TextBlock = ({
                 )}
             </div>
 
-            {/* Block Type Indicator */}
-            <div className="block-type-indicator">
-                📝 Text Block
+            {/* Block Type Indicator */}            <div className="block-type-indicator">
+                <MdTextFields /> Text Block
             </div>
         </div>
     );

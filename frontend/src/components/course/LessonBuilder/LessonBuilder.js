@@ -1,6 +1,17 @@
 // Dynamic Lesson Builder Component
 import React, { useState, useRef } from 'react';
 import {
+    MdDescription,
+    MdImage,
+    MdFolder,
+    MdQuiz,
+    MdLink,
+    MdClose,
+    MdVisibility,
+    MdSave,
+    MdContentCopy
+} from 'react-icons/md';
+import {
     DndContext,
     closestCenter,
     KeyboardSensor,
@@ -75,7 +86,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
         moduleId: lesson?.module_id || (modules.length > 0 ? modules[0].id : ''),
         durationMinutes: lesson?.duration_minutes || 30,
         isPublished: lesson?.is_published !== undefined ? lesson.is_published : true
-    });    const [contentBlocks, setContentBlocks] = useState([]);
+    }); const [contentBlocks, setContentBlocks] = useState([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showAddMenu, setShowAddMenu] = useState(false);
@@ -118,11 +129,11 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
         })
     );    // Available block types
     const blockTypes = [
-        { type: 'text', icon: '📝', label: 'Text Block', description: 'Add rich text content' },
-        { type: 'image', icon: '🖼️', label: 'Image', description: 'Upload or link images' },
-        { type: 'file', icon: '📁', label: 'Files', description: 'Documents and downloads' },
-        { type: 'quiz', icon: '🧩', label: 'Mini Quiz', description: 'Quick knowledge check' },
-        { type: 'embed', icon: '🔗', label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
+        { type: 'text', icon: <MdDescription />, label: 'Text Block', description: 'Add rich text content' },
+        { type: 'image', icon: <MdImage />, label: 'Image', description: 'Upload or link images' },
+        { type: 'file', icon: <MdFolder />, label: 'Files', description: 'Documents and downloads' },
+        { type: 'quiz', icon: <MdQuiz />, label: 'Mini Quiz', description: 'Quick knowledge check' },
+        { type: 'embed', icon: <MdLink />, label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
     ];
     // Handle drag and drop reordering
     const handleDragEnd = (event) => {
@@ -227,7 +238,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
             onMoveDown: () => moveBlock(block.id, 'down'),
             canMoveUp: index > 0,
             canMoveDown: index < contentBlocks.length - 1
-        };        switch (block.type) {
+        }; switch (block.type) {
             case 'text':
                 return <TextBlock {...blockProps} />;
             case 'image':
@@ -311,7 +322,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
                 <div className="lesson-creation-form">
                     <div className="form-header">
                         <h2>Create New Lesson</h2>
-                        <button className="close-btn" onClick={onClose}>✕</button>
+                        <button className="close-btn" onClick={onClose}><MdClose /></button>
                     </div>
 
                     <div className="form-content">
@@ -400,16 +411,16 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
                                     className="preview-btn"
                                     onClick={() => setEditingBlock(null)}
                                 >
-                                    👁️ Preview
+                                    <MdVisibility /> Preview
                                 </button>
                                 <button
                                     className="save-btn"
                                     onClick={handleSaveContent}
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? '💾 Saving...' : '💾 Save Lesson'}
+                                    {isSubmitting ? <><MdSave /> Saving...</> : <><MdSave /> Save Lesson</>}
                                 </button>
-                                <button className="close-btn" onClick={onClose}>✕</button>
+                                <button className="close-btn" onClick={onClose}><MdClose /></button>
                             </div>
                         </div>
                     </div>
@@ -421,7 +432,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
                                 // Empty state
                                 <div className="empty-canvas">
                                     <div className="empty-state">
-                                        <div className="empty-icon">📋</div>
+                                        <div className="empty-icon"><MdContentCopy /></div>
                                         <h3>Start Building Your Lesson</h3>
                                         <p>Add content blocks to create an engaging lesson experience</p>
                                         <button
@@ -488,7 +499,7 @@ const LessonBuilder = ({ onClose, onSubmit, modules = [], lesson = null, isEdit 
                     <div className="add-block-menu" ref={addMenuRef} onClick={(e) => e.stopPropagation()}>
                         <div className="menu-header">
                             <h3>Add Content Block</h3>
-                            <button onClick={() => setShowAddMenu(false)}>✕</button>
+                            <button onClick={() => setShowAddMenu(false)}><MdClose /></button>
                         </div>
                         <div className="block-types-grid">
                             {blockTypes.map(blockType => (

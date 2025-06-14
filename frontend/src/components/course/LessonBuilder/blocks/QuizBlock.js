@@ -1,4 +1,24 @@
 import React, { useState } from 'react';
+import {
+    MdEdit,
+    MdContentCopy,
+    MdDelete,
+    MdKeyboardArrowUp,
+    MdKeyboardArrowDown,
+    MdSave,
+    MdCancel,
+    MdQuiz,
+    MdAdd,
+    MdClose,
+    MdCheckCircle,
+    MdCancel as MdCancelIcon,
+    MdLightbulb,
+    MdCheck,
+    MdClear,
+    MdCelebration,
+    MdThumbUp,
+    MdRefresh
+} from 'react-icons/md';
 import './BlockStyles.css';
 
 const QuizBlock = ({
@@ -123,14 +143,14 @@ const QuizBlock = ({
                         <button
                             key={index}
                             className={`quiz-option ${showResult
-                                    ? index === block.data.correctAnswer
-                                        ? 'correct'
-                                        : index === selectedAnswer
-                                            ? 'incorrect'
-                                            : ''
-                                    : selectedAnswer === index
-                                        ? 'selected'
+                                ? index === block.data.correctAnswer
+                                    ? 'correct'
+                                    : index === selectedAnswer
+                                        ? 'incorrect'
                                         : ''
+                                : selectedAnswer === index
+                                    ? 'selected'
+                                    : ''
                                 }`}
                             onClick={() => !showResult && handleAnswerSelect(index)}
                             disabled={showResult}
@@ -140,10 +160,10 @@ const QuizBlock = ({
                             </span>
                             <span className="option-text">{option}</span>
                             {showResult && index === block.data.correctAnswer && (
-                                <span className="option-indicator">✅</span>
+                                <span className="option-indicator"><MdCheck /></span>
                             )}
                             {showResult && index === selectedAnswer && index !== block.data.correctAnswer && (
-                                <span className="option-indicator">❌</span>
+                                <span className="option-indicator"><MdClear /></span>
                             )}
                         </button>
                     ))}
@@ -154,12 +174,12 @@ const QuizBlock = ({
                         <div className="result-header">
                             {selectedAnswer === block.data.correctAnswer ? (
                                 <>
-                                    <span className="result-icon">🎉</span>
+                                    <span className="result-icon"><MdCelebration /></span>
                                     <span className="result-text">Correct!</span>
                                 </>
                             ) : (
                                 <>
-                                    <span className="result-icon">💭</span>
+                                    <span className="result-icon"><MdThumbUp /></span>
                                     <span className="result-text">Not quite right</span>
                                 </>
                             )}
@@ -175,7 +195,7 @@ const QuizBlock = ({
 
                 {showResult && (
                     <button className="try-again-btn" onClick={resetQuiz}>
-                        🔄 Try Again
+                        <MdRefresh /> Try Again
                     </button>
                 )}
             </div>
@@ -189,10 +209,10 @@ const QuizBlock = ({
                 {!isEditing && (
                     <>
                         <button className="control-btn edit" onClick={onStartEdit} title="Edit">
-                            ✏️
+                            <MdEdit />
                         </button>
                         <button className="control-btn duplicate" onClick={onDuplicate} title="Duplicate">
-                            📋
+                            <MdContentCopy />
                         </button>
                         {canMoveUp && (
                             <button className="control-btn move" onClick={onMoveUp} title="Move Up">
@@ -205,7 +225,7 @@ const QuizBlock = ({
                             </button>
                         )}
                         <button className="control-btn delete" onClick={onDelete} title="Delete">
-                            🗑️
+                            <MdDelete />
                         </button>
                     </>
                 )}
@@ -219,10 +239,10 @@ const QuizBlock = ({
                             <h4>🧩 Mini Quiz</h4>
                             <div className="editor-actions">
                                 <button className="save-btn" onClick={handleSave}>
-                                    ✅ Save
+                                    <MdSave /> Save
                                 </button>
                                 <button className="cancel-btn" onClick={handleCancel}>
-                                    ❌ Cancel
+                                    <MdCancel /> Cancel
                                 </button>
                             </div>
                         </div>
@@ -274,7 +294,7 @@ const QuizBlock = ({
                                                         onClick={() => removeOption(index)}
                                                         title="Remove option"
                                                     >
-                                                        ❌
+                                                        <MdClose />
                                                     </button>
                                                 )}
                                             </div>
@@ -287,7 +307,7 @@ const QuizBlock = ({
                                             className="add-option-btn"
                                             onClick={addOption}
                                         >
-                                            ➕ Add Option
+                                            <MdAdd /> Add Option
                                         </button>
                                     )}
                                 </div>
