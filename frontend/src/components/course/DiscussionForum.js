@@ -19,6 +19,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  const [lastSelectedDiscussionIdProp, setLastSelectedDiscussionIdProp] = useState(null); // Track prop changes
   const [formData, setFormData] = useState({
     title: '',
     description: ''
@@ -48,9 +49,12 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
 
         const response = await axios.get(`${API_URL}/courses/${validCourseId}/discussions`, {
           headers: { Authorization: `Bearer ${auth.token}` }
-        });
+        }); console.log(`Successfully fetched ${response.data.length} discussions`);
 
-        console.log(`Successfully fetched ${response.data.length} discussions`);
+        // Debug: Log the structure of the first discussion
+        if (response.data.length > 0) {
+          console.log('First discussion structure:', JSON.stringify(response.data[0], null, 2));
+        }
 
         const discussionsData = response.data || []; setDiscussions(discussionsData);
 
@@ -118,18 +122,17 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     if (selectedDiscussion) {
       fetchDiscussionPosts();
     }
-  }, [selectedDiscussion, courseId, auth.token, API_URL]);
-
-  // Handle selectedDiscussionId prop changes
+  }, [selectedDiscussion, courseId, auth.token, API_URL]);  // Handle selectedDiscussionId prop changes
+  // Only respond to actual changes in the prop, not re-renders with the same value
   useEffect(() => {
-    if (selectedDiscussionId && discussions.length > 0) {
+    if (selectedDiscussionId && discussions.length > 0 && selectedDiscussionId !== lastSelectedDiscussionIdProp) {
       const discussionExists = discussions.find(d => d.id === parseInt(selectedDiscussionId));
-      if (discussionExists && selectedDiscussion !== parseInt(selectedDiscussionId)) {
+      if (discussionExists) {
         setSelectedDiscussion(parseInt(selectedDiscussionId));
+        setLastSelectedDiscussionIdProp(selectedDiscussionId); // Update the tracked prop value
       }
     }
-  }, [selectedDiscussionId, discussions, selectedDiscussion]);
-
+  }, [selectedDiscussionId, discussions, lastSelectedDiscussionIdProp]);
   // Create a new discussion
   const handleCreateDiscussion = async (e) => {
     e.preventDefault();
@@ -145,10 +148,11 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
+    setIsLoading(true); try {
       const validCourseId = parseInt(courseId);
+      const now = new Date().toISOString(); // Declare once here
+      const userFullName = `${auth.user.firstName || ''} ${auth.user.lastName || ''}`.trim();
+      const createdByName = userFullName || auth.user.email || 'You';
 
       const response = await axios.post(
         `${API_URL}/courses/${validCourseId}/discussions`,
@@ -157,23 +161,50 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
           description: formData.description.trim() || null
         },
         { headers: { Authorization: `Bearer ${auth.token}` } }
-      );
-
-      // Add the new discussion to the state
+      );      // Add the new discussion to the state using functional update to avoid race conditions
+      // Create the discussion object in the same format as the backend returns      
       const newDiscussion = {
         id: response.data.discussionId,
         title: formData.title,
         description: formData.description,
-        created_by: auth.user.id,
-        created_at: new Date().toISOString(),
-        post_count: 0,
-        first_name: auth.user.firstName || '',
-        last_name: auth.user.lastName || '',
-        createdBy: `${auth.user.firstName || ''} ${auth.user.lastName || ''}`.trim() || auth.user.email
+        createdBy: auth.user.id, // This is the user ID (number)
+        created_by: auth.user.id, // Include both naming conventions
+        created_at: now,
+        createdAt: now, // Include both for compatibility
+        updatedAt: now,
+        posts: [], // Initialize as empty array to match backend structure
+        isLocked: false,
+        isPinned: false,
+        courseId: validCourseId,
+        // Include creator relation to match backend structure
+        creator: {
+          id: auth.user.id,
+          firstName: auth.user.firstName || '',
+          lastName: auth.user.lastName || '',
+          email: auth.user.email
+        }
+      }; setDiscussions(prevDiscussions => {
+        // Check if discussion already exists to prevent duplicates
+        const exists = prevDiscussions.find(d => d.id === newDiscussion.id);
+        if (exists) {
+          return prevDiscussions;
+        }
+        return [newDiscussion, ...prevDiscussions];
+      });      // Set the new discussion as selected and initialize its detail
+      const discussionId = response.data.discussionId;      // Initialize the discussion detail immediately to avoid loading issues
+      // Use the same structure as we created for the discussion list
+      const newDiscussionDetail = {
+        ...newDiscussion, // Use the same structure
+        posts: [] // Ensure posts array is empty for new discussion
       };
 
-      setDiscussions([newDiscussion, ...discussions]);
-      setSelectedDiscussion(response.data.discussionId);
+      console.log('Creating new discussion detail:', newDiscussionDetail); // Debug log
+
+      setSelectedDiscussion(discussionId);
+      setDiscussionDetail(newDiscussionDetail);
+
+      // Initialize posts as empty for the new discussion
+      setPosts([]);
 
       // Reset form and close modal
       setFormData({ title: '', description: '' });
@@ -220,37 +251,57 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
           parentPostId: replyTo ? replyTo.id : null
         },
         { headers: { Authorization: `Bearer ${auth.token}` } }
-      );
-
-      // Update posts state
+      );      // Update posts state using functional updates to avoid race conditions
       if (replyTo) {
         // Find the parent post and add this reply
-        const updatedPosts = posts.map(post => {
-          if (post.id === replyTo.id) {
-            return {
-              ...post,
-              replies: [...(post.replies || []), response.data.post]
-            };
+        const newReply = {
+          ...response.data.post,
+          // Ensure we have user information for display
+          user: response.data.post.user || {
+            id: auth.user.id,
+            firstName: auth.user.firstName || '',
+            lastName: auth.user.lastName || '',
+            email: auth.user.email
           }
-          return post;
+        };
+
+        setPosts(prevPosts => {
+          return prevPosts.map(post => {
+            if (post.id === replyTo.id) {
+              return {
+                ...post,
+                replies: [...(post.replies || []), newReply]
+              };
+            }
+            return post;
+          });
         });
-        setPosts(updatedPosts);
       } else {
         // Add as a new top-level post
-        setPosts([...posts, { ...response.data.post, replies: [] }]);
-      }
-
-      // Update post count in discussions list
-      const updatedDiscussions = discussions.map(discussion => {
-        if (discussion.id === validDiscussionId) {
-          return {
-            ...discussion,
-            post_count: (discussion.post_count || 0) + 1
-          };
-        }
-        return discussion;
+        const newPost = {
+          ...response.data.post,
+          replies: [],
+          // Ensure we have user information for display
+          user: response.data.post.user || {
+            id: auth.user.id,
+            firstName: auth.user.firstName || '',
+            lastName: auth.user.lastName || '',
+            email: auth.user.email
+          }
+        };
+        setPosts(prevPosts => [...prevPosts, newPost]);
+      }// Update post count in discussions list using functional update
+      setDiscussions(prevDiscussions => {
+        return prevDiscussions.map(discussion => {
+          if (discussion.id === validDiscussionId) {
+            return {
+              ...discussion,
+              posts: [...(discussion.posts || []), response.data.post] // Add the new post to the posts array
+            };
+          }
+          return discussion;
+        });
       });
-      setDiscussions(updatedDiscussions);
 
       // Reset form and close modal if needed
       setPostContent('');
@@ -269,16 +320,38 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     } finally {
       setIsPostsLoading(false);
     }
-  };
-
-  // Format date for display
+  };  // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'Just now';
+    if (!dateString) {
+      return 'Just now';
+    }
 
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid date';
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
 
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+      // Show "Just now" for very recent posts (less than 1 minute)
+      if (diffMinutes < 1) {
+        return 'Just now';
+      }
+
+      // Show relative time for recent posts
+      if (diffMinutes < 60) {
+        return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+      }
+
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours < 24) {
+        return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      }
+
+      // Show full date for older posts
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -287,22 +360,82 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         minute: '2-digit'
       });
     } catch (e) {
-      console.error('Date formatting error:', e);
       return 'Unknown date';
     }
+  };// Safely get creator name
+  const getCreatorName = (discussion) => {
+    if (!discussion) {
+      return 'Unknown';
+    }
+
+    // Check if we have the creator relation from backend (for fetched discussions)
+    if (discussion.creator) {
+      const fullName = `${discussion.creator.firstName || ''} ${discussion.creator.lastName || ''}`.trim();
+      if (fullName) {
+        return fullName;
+      }
+      if (discussion.creator.email) {
+        return discussion.creator.email;
+      }
+    }
+
+    // Check for manually set createdBy field only if it's a string name (not an ID)
+    if (discussion.createdBy && typeof discussion.createdBy === 'string' && discussion.createdBy !== 'Unknown') {
+      return discussion.createdBy;
+    }
+
+    // Fallback: check for flat fields (for backwards compatibility)
+    if (discussion.first_name || discussion.last_name) {
+      const fullName = `${discussion.first_name || ''} ${discussion.last_name || ''}`.trim();
+      if (fullName) {
+        return fullName;
+      }
+    }
+
+    // Check if this is the current user
+    if (discussion.created_by === auth.user?.id || discussion.createdBy === auth.user?.id) {
+      const userFullName = `${auth.user.firstName || ''} ${auth.user.lastName || ''}`.trim();
+      if (userFullName) {
+        return userFullName;
+      }
+      return auth.user.email || 'You';
+    }
+
+    return `User ${discussion.created_by || 'Unknown'}`;
   };
 
-  // Safely get creator name
-  const getCreatorName = (discussion) => {
-    if (!discussion) return 'Unknown';
+  // Safely get post author name
+  const getPostAuthorName = (post) => {
+    if (!post) {
+      return 'Unknown';
+    }
 
-    // Check all possible fields in order of preference
-    if (discussion.createdBy) return discussion.createdBy;
-    if (discussion.first_name || discussion.last_name)
-      return `${discussion.first_name || ''} ${discussion.last_name || ''}`.trim();
-    if (discussion.created_by === auth.user?.id) return 'You';
+    // Check if we have the user relation from backend (for fetched posts)
+    if (post.user) {
+      const fullName = `${post.user.firstName || ''} ${post.user.lastName || ''}`.trim();
+      if (fullName) {
+        return fullName;
+      }
+      if (post.user.email) {
+        return post.user.email;
+      }
+    }
 
-    return 'Unknown User';
+    // Check for manually set authorName (for newly created posts)
+    if (post.authorName && post.authorName !== 'Unknown') {
+      return post.authorName;
+    }
+
+    // Check if this is the current user
+    if (post.user_id === auth.user?.id || post.userId === auth.user?.id) {
+      const userFullName = `${auth.user.firstName || ''} ${auth.user.lastName || ''}`.trim();
+      if (userFullName) {
+        return userFullName;
+      }
+      return auth.user.email || 'You';
+    }
+
+    return `User ${post.user_id || post.userId || 'Unknown'}`;
   };
 
   // Handle reply to post
@@ -310,10 +443,9 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
     setReplyTo(post);
     setShowReplyModal(true);
   };
-
   // Render a single post with replies
   const renderPost = (post) => {
-    const isCurrentUser = post.user_id === auth.user?.id;
+    const isCurrentUser = post.user_id === auth.user?.id || post.userId === auth.user?.id;
 
     return (
       <div
@@ -321,8 +453,8 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
         className={`discussion-post ${isCurrentUser ? 'current-user-post' : ''}`}
       >
         <div className="post-header">
-          <div className="post-author">{post.authorName || 'Unknown'}</div>
-          <div className="post-date">{formatDate(post.created_at)}</div>
+          <div className="post-author">{getPostAuthorName(post)}</div>
+          <div className="post-date">{formatDate(post.created_at || post.createdAt)}</div>
         </div>
         <div className="post-content">{post.content}</div>
         <div className="post-actions">
@@ -340,11 +472,11 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
             {post.replies.map(reply => (
               <div
                 key={reply.id}
-                className={`post-reply ${reply.user_id === auth.user?.id ? 'current-user-post' : ''}`}
+                className={`post-reply ${reply.user_id === auth.user?.id || reply.userId === auth.user?.id ? 'current-user-post' : ''}`}
               >
                 <div className="post-header">
-                  <div className="post-author">{reply.authorName || 'Unknown'}</div>
-                  <div className="post-date">{formatDate(reply.created_at)}</div>
+                  <div className="post-author">{getPostAuthorName(reply)}</div>
+                  <div className="post-date">{formatDate(reply.created_at || reply.createdAt)}</div>
                 </div>
                 <div className="post-content">{reply.content}</div>
                 <div className="post-actions">
@@ -396,22 +528,27 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
             <div className="discussions-loading">Loading discussions...</div>
           ) : discussions.length > 0 ? (
             <ul className="discussions">
-              {discussions.map(discussion => (
-                <li
-                  key={discussion.id}
-                  className={`discussion-item ${selectedDiscussion === discussion.id ? 'active' : ''}`}
-                  onClick={() => setSelectedDiscussion(discussion.id)}
-                >
-                  <div className="discussion-item-title">{discussion.title}</div>
-                  <div className="discussion-item-meta">
-                    <span>By {getCreatorName(discussion)}</span>
-                    <span>{formatDate(discussion.created_at)}</span>
-                  </div>
-                  <div className="discussion-item-stats">
-                    <span>{discussion.post_count || 0} posts</span>
-                    {discussion.is_locked && <span className="locked-tag">Locked</span>}
-                  </div>
-                </li>
+              {discussions.map(discussion => (<li
+                key={discussion.id}
+                className={`discussion-item ${selectedDiscussion === discussion.id ? 'active' : ''}`}
+                onClick={() => setSelectedDiscussion(discussion.id)}
+              >
+                <div className="discussion-item-title">{discussion.title}</div>                  <div className="discussion-item-meta">
+                  <span>By {getCreatorName(discussion)}</span>
+                  <span>{formatDate(discussion.created_at || discussion.createdAt)}</span>                    {/* Temporary debug info for testing - can be removed after verification */}
+                  {false && process.env.NODE_ENV === 'development' && (
+                    <div style={{ fontSize: '10px', color: 'red' }}>
+                      DEBUG: ID={discussion.id}, created_by={discussion.created_by},
+                      createdBy={discussion.createdBy},
+                      creator={discussion.creator ? `${discussion.creator.firstName} ${discussion.creator.lastName}` : 'null'},
+                      created_at={discussion.created_at}
+                    </div>
+                  )}
+                </div>                  <div className="discussion-item-stats">
+                  <span>{discussion.posts?.length || 0} posts</span>
+                  {discussion.isLocked && <span className="locked-tag">Locked</span>}
+                </div>
+              </li>
               ))}
             </ul>
           ) : (
@@ -435,7 +572,7 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
               <>
                 <div className="discussion-header">
                   <h3>{discussionDetail.title}</h3>
-                  {discussionDetail.is_locked && (
+                  {discussionDetail.isLocked && (
                     <div className="locked-discussion-badge">
                       This discussion is locked
                     </div>
@@ -446,12 +583,12 @@ const DiscussionForum = ({ courseId, selectedDiscussionId }) => {
                     </div>
                   )}
                   <div className="discussion-meta">
-                    Started by {getCreatorName(discussionDetail)} · {formatDate(discussionDetail.created_at)}
+                    Started by {getCreatorName(discussionDetail)} · {formatDate(discussionDetail.created_at || discussionDetail.createdAt)}
                   </div>
                 </div>
 
                 {/* Post creation form */}
-                {!discussionDetail.is_locked && (
+                {!discussionDetail.isLocked && (
                   <div className="create-post-form">
                     <h4>Add to the discussion</h4>
                     <form onSubmit={handleCreatePost}>
