@@ -51,9 +51,10 @@
     align-items: center;
     justify-content: center;
     flex: 1 1 auto;
-    margin-right: 24px;
+    margin: 0 auto; /* Center the entire search section */
+    padding: 0 24px; /* Add padding instead of margin */
     min-width: 0; /* Allow shrinking */
-    max-width: 720px; /* Ensure consistent max width */
+    max-width: none; /* Remove max-width constraint on the container */
     /* Remove the old search styling since SearchBar has its own */
   }
 
@@ -290,17 +291,17 @@
   .header-profile .profile-section[data-show-dropdown="true"] .dropdown-arrow {
     transform: rotate(180deg);
     color: #202124;
-  }  .profile-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
-    min-width: 240px;
-    z-index: 1002;
+  }  .header-profile  .profile-dropdown {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15) !important;
+    min-width: 240px !important;
+    z-index: 1002 !important;
     animation: dropdownSlideIn 0.2s ease-out;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
     overflow: hidden;
     transform-origin: top right;
     max-height: 400px;
@@ -321,70 +322,70 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-  .dropdown-header {
-    padding: 20px;
-    border-bottom: 1px solid #e8eaed;
+  }  .dropdown-header {
+    padding: 20px !important;
+    border-bottom: 1px solid #e8eaed !important;
+    background: white !important;
   }
 
   .dropdown-user-info {
     text-align: left;
   }
-
   .dropdown-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: #202124;
-    margin-bottom: 4px;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #202124 !important;
+    margin-bottom: 4px !important;
   }
 
   .dropdown-email {
-    font-size: 14px;
-    color: #5f6368;
-    margin-bottom: 12px;
-  }
-  .role-badge {
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: capitalize;
+    font-size: 15px !important;
+    color: #5f6368 !important;
+    margin-bottom: 12px !important;
+  }.role-badge {
+    padding: 4px 12px !important;
+    border-radius: 16px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    text-transform: capitalize !important;
   }
   .role-badge.admin {
-    background: rgba(215, 58, 73, 0.1);
-    color: #d73a49;
+    background: rgba(215, 58, 73, 0.1) !important;
+    color: #d73a49 !important;
   }
 
   .role-badge.instructor {
-    background: rgba(40, 167, 69, 0.1);
-    color: #28a745;
+    background: rgba(40, 167, 69, 0.1) !important;
+    color: #28a745 !important;
   }
 
   .role-badge.student {
-    background: rgba(111, 66, 193, 0.1);
-    color: #6f42c1;
+    background: rgba(111, 66, 193, 0.1) !important;
+    color: #6f42c1 !important;
   }
 
   .dropdown-divider {
-    height: 1px;
-    background: #e8eaed;
-    margin: 8px 0;
+    height: 1px !important;
+    background: #e8eaed !important;
+    margin: 8px 0 !important;
   }
 
   .dropdown-menu {
     padding: 8px 0;
   }  .dropdown-item {
-    width: 100%;
-    padding: 12px 20px;
-    border: none;
-    background: none;
-    text-align: left;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 14px;
-    color: #202124;
+    width: 100% !important;
+    padding: 14px 20px !important;
+    border: none !important;
+    background: none !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #202124 !important;
     transition: background-color 0.2s;
     border-radius: 0;
     /* PREVENT TEXT SELECTION */
@@ -395,7 +396,7 @@
   }
 
   .dropdown-item:hover {
-    background-color: rgba(95, 99, 104, 0.08);
+    background-color: rgba(95, 99, 104, 0.08) !important;
   }
 
   .dropdown-item:first-child {

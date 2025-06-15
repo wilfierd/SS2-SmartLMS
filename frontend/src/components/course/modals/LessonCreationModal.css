@@ -1,0 +1,431 @@
+/* Isolated Lesson Creation Modal Styles */
+.lesson-creation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.lesson-creation-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+  animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.lesson-creation-modal .lesson-form-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 16px 16px 0 0;
+  text-align: center;
+  position: relative;
+}
+
+.lesson-creation-modal .lesson-form-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.lesson-creation-modal .lesson-form-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+.lesson-creation-modal .close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.lesson-creation-modal .close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Basic Info Section */
+.lesson-creation-modal .lesson-basic-info {
+  padding: 30px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.lesson-creation-modal .form-group {
+  margin-bottom: 20px;
+}
+
+.lesson-creation-modal .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.lesson-creation-modal .form-input,
+.lesson-creation-modal .form-select,
+.lesson-creation-modal .form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.lesson-creation-modal .form-input:focus,
+.lesson-creation-modal .form-select:focus,
+.lesson-creation-modal .form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.lesson-creation-modal .form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Content Builder Section */
+.lesson-creation-modal .lesson-content-builder {
+  padding: 30px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.lesson-creation-modal .lesson-content-builder h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.lesson-creation-modal .empty-content-builder {
+  text-align: center;
+  padding: 40px 20px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.lesson-creation-modal .empty-content-builder .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.lesson-creation-modal .empty-content-builder p {
+  margin: 0 0 20px 0;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.lesson-creation-modal .add-first-block-btn,
+.lesson-creation-modal .add-block-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.lesson-creation-modal .add-first-block-btn:hover,
+.lesson-creation-modal .add-block-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.lesson-creation-modal .content-blocks-editor {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fafbfc;
+}
+
+.lesson-creation-modal .content-block-wrapper {
+  margin-bottom: 16px;
+  position: relative;
+  padding-left: 40px;
+}
+
+.lesson-creation-modal .drag-handle {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  cursor: grab;
+  font-size: 16px;
+  user-select: none;
+}
+
+.lesson-creation-modal .drag-handle:active {
+  cursor: grabbing;
+}
+
+.lesson-creation-modal .is-dragging {
+  opacity: 0.8;
+  transform: scale(1.02);
+  z-index: 1000;
+}
+
+.lesson-creation-modal .add-block-btn {
+  width: 100%;
+  margin-top: 16px;
+  background: #f1f5f9;
+  border: 2px dashed #cbd5e1;
+  color: #64748b;
+}
+
+.lesson-creation-modal .add-block-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #475569;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Form Actions */
+.lesson-creation-modal .lesson-form-actions {
+  background: #f8fafc;
+  padding: 24px 30px;
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.lesson-creation-modal .create-lesson-btn,
+.lesson-creation-modal .cancel-lesson-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lesson-creation-modal .create-lesson-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.lesson-creation-modal .create-lesson-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.lesson-creation-modal .create-lesson-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.lesson-creation-modal .cancel-lesson-btn {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+}
+
+.lesson-creation-modal .cancel-lesson-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: translateY(-1px);
+}
+
+/* Add Block Menu within Modal */
+.lesson-creation-modal .add-block-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.lesson-creation-modal .add-block-menu {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.lesson-creation-modal .add-block-menu .menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.lesson-creation-modal .add-block-menu .menu-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.lesson-creation-modal .add-block-menu .menu-header button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.lesson-creation-modal .add-block-menu .menu-header button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.lesson-creation-modal .block-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.lesson-creation-modal .block-type-card {
+  padding: 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: white;
+}
+
+.lesson-creation-modal .block-type-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  background: #f8faff;
+}
+
+.lesson-creation-modal .block-type-card .block-icon {
+  font-size: 1.8rem;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.lesson-creation-modal .block-type-card .block-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.lesson-creation-modal .block-type-card .block-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .lesson-creation-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+    margin: 10px;
+  }
+
+  .lesson-creation-modal .lesson-form-header,
+  .lesson-creation-modal .lesson-basic-info,
+  .lesson-creation-modal .lesson-content-builder {
+    padding: 20px;
+  }
+
+  .lesson-creation-modal .lesson-form-actions {
+    padding: 20px;
+    flex-direction: column;
+  }
+
+  .lesson-creation-modal .create-lesson-btn,
+  .lesson-creation-modal .cancel-lesson-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lesson-creation-modal .block-types-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .lesson-creation-modal .lesson-form-header {
+    padding: 20px 15px;
+  }
+
+  .lesson-creation-modal .lesson-form-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .lesson-creation-modal .close-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}

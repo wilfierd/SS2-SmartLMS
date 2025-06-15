@@ -12,8 +12,6 @@ import {
     MdSave,
     MdCancel,
     MdContentCopy,
-    MdRefresh,
-    MdAutoAwesome,
     MdAdd,
     MdAttachFile
 } from 'react-icons/md';
@@ -88,25 +86,13 @@ const LessonContent = ({
     lesson,
     selectedModule,
     isInstructor,
-    onLessonUpdate,
-    isCreatingLesson,
-    onLessonCreated,
-    onCancelCreate,
-    modules
+    onLessonUpdate
 }) => {
-    const { courseId } = useParams();
-    const [isEditing, setIsEditing] = useState(false);
+    const { courseId } = useParams(); const [isEditing, setIsEditing] = useState(false);
     const [contentBlocks, setContentBlocks] = useState([]);
     const [editingBlock, setEditingBlock] = useState(null);
     const [showAddMenu, setShowAddMenu] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Lesson creation form state
-    const [lessonForm, setLessonForm] = useState({
-        title: '',
-        description: '',
-        moduleId: selectedModule || ''
-    });
 
     // Drag and drop sensors
     const sensors = useSensors(
@@ -115,18 +101,18 @@ const LessonContent = ({
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );    // Available block types
-    const blockTypes = [        { type: 'text', icon: <MdDescription />, label: 'Text Block', description: 'Add rich text content' },
-        { type: 'image', icon: <MdImage />, label: 'Image', description: 'Upload or link images' },
-        { type: 'file', icon: <MdFolder />, label: 'Files', description: 'Documents and downloads' },
-        { type: 'quiz', icon: <MdQuiz />, label: 'Mini Quiz', description: 'Quick knowledge check' },
-        { type: 'embed', icon: <MdLink />, label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
+    const blockTypes = [{ type: 'text', icon: <MdDescription />, label: 'Text Block', description: 'Add rich text content' },
+    { type: 'image', icon: <MdImage />, label: 'Image', description: 'Upload or link images' },
+    { type: 'file', icon: <MdFolder />, label: 'Files', description: 'Documents and downloads' },
+    { type: 'quiz', icon: <MdQuiz />, label: 'Mini Quiz', description: 'Quick knowledge check' },
+    { type: 'embed', icon: <MdLink />, label: 'Embed/Video', description: 'YouTube, video uploads (max 10MB), or any URL' }
     ];// Initialize content blocks from lesson
     useEffect(() => {
         if (lesson?.content) {
             try {
                 // Try to parse as JSON (new format)
                 const blocks = JSON.parse(lesson.content);
-                
+
                 // Migrate video blocks to embed blocks
                 const migratedBlocks = Array.isArray(blocks) ? blocks.map(block => {
                     if (block.type === 'video') {
@@ -142,7 +128,7 @@ const LessonContent = ({
                     }
                     return block;
                 }) : [];
-                
+
                 setContentBlocks(migratedBlocks);
             } catch (error) {
                 // If parsing fails, it's old format (plain text/HTML) - convert it
@@ -178,7 +164,8 @@ const LessonContent = ({
     };
 
     // Get default data for block type
-    const getDefaultBlockData = (type) => {        switch (type) {
+    const getDefaultBlockData = (type) => {
+        switch (type) {
             case 'text':
                 return { content: '', style: 'paragraph' };
             case 'image':
@@ -289,53 +276,8 @@ const LessonContent = ({
             }
         } else {
             setContentBlocks([]);
-        } setIsEditing(false);
-        setEditingBlock(null);
+        } setIsEditing(false); setEditingBlock(null);
         setShowAddMenu(false);
-    };
-
-    // Create new lesson
-    const handleCreateLesson = async () => {
-        if (!lessonForm.title.trim()) {
-            notification.error('Please enter a lesson title');
-            return;
-        }
-
-        if (!lessonForm.moduleId) {
-            notification.error('Please select a module');
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        try {
-            const submitData = {
-                title: lessonForm.title,
-                description: lessonForm.description,
-                moduleId: parseInt(lessonForm.moduleId),
-                durationMinutes: 0,
-                isPublished: true,
-                contentType: 'rich_content',
-                content: JSON.stringify(contentBlocks.map((block, index) => ({ ...block, order: index })))
-            };
-
-            await courseService.createLesson(courseId, submitData);
-            notification.success('Lesson created successfully');
-            onLessonCreated();
-
-            // Reset form
-            setLessonForm({
-                title: '',
-                description: '',
-                moduleId: selectedModule || ''
-            });
-            setContentBlocks([]);
-        } catch (error) {
-            console.error('Error creating lesson:', error);
-            notification.error('Failed to create lesson');
-        } finally {
-            setIsSubmitting(false);
-        }
     };
 
     // Render content block
@@ -388,7 +330,7 @@ const LessonContent = ({
                     <div className={`text-content text-${block.data.style}`}>
                         <div dangerouslySetInnerHTML={{ __html: block.data.content }} />
                     </div>
-                );            case 'image':
+                ); case 'image':
                 return (
                     <div className={`image-content align-${block.data.alignment}`}>
                         <img src={block.data.url} alt={block.data.alt} />
@@ -421,7 +363,7 @@ const LessonContent = ({
                             ))}
                         </div>
                     </div>
-                );            case 'embed':
+                ); case 'embed':
                 return (
                     <div className="embed-content">
                         {block.data.title && <h4>{block.data.title}</h4>}
@@ -461,7 +403,7 @@ const LessonContent = ({
                 url.toLowerCase().includes(ext)
             );
 
-            const isStreamingUrl = videoStreamingDomains.some(domain => 
+            const isStreamingUrl = videoStreamingDomains.some(domain =>
                 url.toLowerCase().includes(domain)
             );
 
@@ -476,25 +418,25 @@ const LessonContent = ({
         // Convert YouTube URLs to embed format
         const convertToEmbedUrl = (url) => {
             if (!url) return url;
-            
+
             // If it's already an embed URL, return as is
             if (url.includes('youtube.com/embed/')) {
                 return url;
             }
-            
+
             // Extract video ID and convert to embed URL
             const patterns = [
                 /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/v\/)([^#&?]*)/,
                 /youtube\.com\/watch\?.*v=([^#&?]*)/
             ];
-            
+
             for (const pattern of patterns) {
                 const match = url.match(pattern);
                 if (match && match[1] && match[1].length === 11) {
                     return `https://www.youtube.com/embed/${match[1]}`;
                 }
             }
-            
+
             return url; // Return original URL if not YouTube
         };
 
@@ -525,267 +467,152 @@ const LessonContent = ({
                 />
             </div>
         );
-    };
-
-    return (
+    }; return (
         <div className="lesson-content-container">
-            {/* If creating a new lesson, show the creation form */}
-            {isCreatingLesson ? (
-                <div className="lesson-creation-form">
-                    <div className="lesson-form-header">
-                        <h2>Create New Lesson</h2>
-                        <p>Build your lesson with a simple form and dynamic content blocks</p>
+            {/* Regular lesson view/edit mode */}
+            <div className="lesson-content-header">
+                <div className="lesson-info">
+                    <h2>{lesson.title}</h2>
+                    <div className="lesson-meta">
+                        <span className="duration">Duration: {lesson.durationMinutes || 0} minutes</span>
+                        {lesson.description && (
+                            <p className="lesson-description">{lesson.description}</p>
+                        )}
                     </div>
+                </div>
 
-                    <div className="lesson-basic-info">
-                        <div className="form-group">
-                            <label>Lesson Title *</label>
-                            <input
-                                type="text"
-                                value={lessonForm.title}
-                                onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })}
-                                placeholder="Enter lesson title..."
-                                className="form-input"
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label>Module *</label>
-                            <select
-                                value={lessonForm.moduleId}
-                                onChange={(e) => setLessonForm({ ...lessonForm, moduleId: e.target.value })}
-                                className="form-select"
+                {/* Edit Controls for Instructors */}
+                {isInstructor && (
+                    <div className="lesson-controls">
+                        {!isEditing ? (
+                            <button
+                                className="edit-lesson-btn"
+                                onClick={() => setIsEditing(true)}
                             >
-                                <option value="">Select a module</option>
-                                {modules.map(module => (
-                                    <option key={module.id} value={module.id}>
-                                        {module.title}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Description</label>
-                            <textarea
-                                value={lessonForm.description}
-                                onChange={(e) => setLessonForm({ ...lessonForm, description: e.target.value })}
-                                placeholder="Brief description of the lesson..."
-                                className="form-textarea"
-                                rows="3"
-                            />
-                        </div>
+                                <MdEdit /> Edit Lesson
+                            </button>
+                        ) : (
+                            <div className="edit-controls">
+                                <button
+                                    className="save-btn"
+                                    onClick={handleSaveContent}
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? <><MdSave /> Saving...</> : <><MdSave /> Save</>}
+                                </button>
+                                <button
+                                    className="cancel-btn"
+                                    onClick={handleCancelEdit}
+                                >
+                                    <MdCancel /> Cancel
+                                </button>
+                            </div>
+                        )}
                     </div>
+                )}
+            </div>
 
-                    {/* Content Blocks for New Lesson */}
-                    <div className="lesson-content-builder">
-                        <h3>Lesson Content</h3>                        {contentBlocks.length === 0 ? (
-                            <div className="empty-content-builder">
+            {/* Content Area */}
+            <div className="lesson-content-body">
+                {contentBlocks.length === 0 ? (
+                    // Empty state
+                    <div className="empty-lesson-content">
+                        {isEditing ? (
+                            <div className="empty-edit-state">
                                 <div className="empty-icon"><MdContentCopy /></div>
-                                <p>Add content blocks to make your lesson engaging</p>
+                                <h3>Start Building Your Lesson</h3>
+                                <p>Add content blocks to create an engaging lesson experience</p>
                                 <button
                                     className="add-first-block-btn"
                                     onClick={() => setShowAddMenu(true)}
                                 >
-                                    + Add Your First Content Block
+                                    + Add Your First Block
                                 </button>
                             </div>
                         ) : (
-                            <div className="content-blocks-editor">
-                                <DndContext
-                                    sensors={sensors}
-                                    collisionDetection={closestCenter}
-                                    onDragEnd={handleDragEnd}
-                                >
-                                    <SortableContext
-                                        items={contentBlocks.map(block => block.id)}
-                                        strategy={verticalListSortingStrategy}
+                            <div className="empty-view-state">
+                                <p>This lesson doesn't have any content yet.</p>
+                                {isInstructor && (
+                                    <button
+                                        className="edit-lesson-btn"
+                                        onClick={() => setIsEditing(true)}
                                     >
+                                        <MdAdd /> Add Content
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    // Content blocks
+                    <div className="lesson-content-blocks">
+                        {isEditing ? (
+                            // Edit mode with drag and drop
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={contentBlocks.map(block => block.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <div className="content-blocks-container">
                                         {contentBlocks.map((block, index) => (
                                             <SortableItem key={block.id} id={block.id}>
                                                 {renderBlock(block, index, true)}
                                             </SortableItem>
                                         ))}
-                                    </SortableContext>
-                                </DndContext>
+                                    </div>
+                                </SortableContext>
+                            </DndContext>
+                        ) : (
+                            // View mode
+                            <div className="content-blocks-readonly">
+                                {contentBlocks.map((block, index) =>
+                                    renderBlock(block, index, false)
+                                )}
+                            </div>
+                        )}
 
+                        {/* Add Block Button in Edit Mode */}
+                        {isEditing && (
+                            <div className="add-block-section">
                                 <button
                                     className="add-block-btn"
                                     onClick={() => setShowAddMenu(true)}
                                 >
-                                    + Add Another Block
+                                    + Add Content Block
                                 </button>
                             </div>
                         )}
                     </div>
-
-                    {/* Form Actions */}
-                    <div className="lesson-form-actions">
-                        <button
-                            className="create-lesson-btn"
-                            onClick={handleCreateLesson}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? <><MdRefresh /> Creating...</> : <><MdAutoAwesome /> Create Lesson</>}
-                        </button>
-                        <button
-                            className="cancel-lesson-btn"
-                            onClick={onCancelCreate}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                // Regular lesson view/edit mode
-                <>
-                    {/* Lesson Header */}
-                    <div className="lesson-content-header">
-                        <div className="lesson-info">
-                            <h2>{lesson.title}</h2>
-                            <div className="lesson-meta">
-                                <span className="duration">Duration: {lesson.durationMinutes || 0} minutes</span>
-                                {lesson.description && (
-                                    <p className="lesson-description">{lesson.description}</p>
-                                )}
-                            </div>
+                )}
+            </div>            {/* Add Block Menu */}
+            {isEditing && showAddMenu && (
+                <div className="add-block-menu-overlay" onClick={() => setShowAddMenu(false)}>
+                    <div className="add-block-menu" onClick={(e) => e.stopPropagation()}>
+                        <div className="menu-header">
+                            <h3>Add Content Block</h3>
+                            <button onClick={() => setShowAddMenu(false)}><MdClose /></button>
                         </div>
-
-                        {/* Edit Controls for Instructors */}
-                        {isInstructor && (
-                            <div className="lesson-controls">
-                                {!isEditing ? (
-                                    <button
-                                        className="edit-lesson-btn"
-                                        onClick={() => setIsEditing(true)}
-                                    >
-                                        <MdEdit /> Edit Lesson
-                                    </button>
-                                ) : (
-                                    <div className="edit-controls">
-                                        <button
-                                            className="save-btn"
-                                            onClick={handleSaveContent}
-                                            disabled={isSubmitting}
-                                        >
-                                            {isSubmitting ? <><MdSave /> Saving...</> : <><MdSave /> Save</>}
-                                        </button>
-                                        <button
-                                            className="cancel-btn"
-                                            onClick={handleCancelEdit}
-                                        >
-                                            <MdCancel /> Cancel
-                                        </button>
+                        <div className="block-types-grid">
+                            {blockTypes.map(blockType => (
+                                <div
+                                    key={blockType.type}
+                                    className="block-type-card"
+                                    onClick={() => addBlock(blockType.type)}
+                                >
+                                    <div className="block-icon">{blockType.icon}</div>
+                                    <div className="block-info">
+                                        <h4>{blockType.label}</h4>
+                                        <p>{blockType.description}</p>
                                     </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Content Area */}
-                    <div className="lesson-content-body">
-                        {contentBlocks.length === 0 ? (
-                            // Empty state
-                            <div className="empty-lesson-content">
-                                {isEditing ? (                                    <div className="empty-edit-state">
-                                        <div className="empty-icon"><MdContentCopy /></div>
-                                        <h3>Start Building Your Lesson</h3>
-                                        <p>Add content blocks to create an engaging lesson experience</p>
-                                        <button
-                                            className="add-first-block-btn"
-                                            onClick={() => setShowAddMenu(true)}
-                                        >
-                                            + Add Your First Block
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="empty-view-state">
-                                        <p>This lesson doesn't have any content yet.</p>
-                                        {isInstructor && (
-                                            <button
-                                                className="edit-lesson-btn"
-                                                onClick={() => setIsEditing(true)}
-                                            >
-                                                <MdAdd /> Add Content
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            // Content blocks
-                            <div className="lesson-content-blocks">
-                                {isEditing ? (
-                                    // Edit mode with drag and drop
-                                    <DndContext
-                                        sensors={sensors}
-                                        collisionDetection={closestCenter}
-                                        onDragEnd={handleDragEnd}
-                                    >
-                                        <SortableContext
-                                            items={contentBlocks.map(block => block.id)}
-                                            strategy={verticalListSortingStrategy}
-                                        >
-                                            <div className="content-blocks-container">
-                                                {contentBlocks.map((block, index) => (
-                                                    <SortableItem key={block.id} id={block.id}>
-                                                        {renderBlock(block, index, true)}
-                                                    </SortableItem>
-                                                ))}
-                                            </div>
-                                        </SortableContext>
-                                    </DndContext>
-                                ) : (
-                                    // View mode
-                                    <div className="content-blocks-readonly">
-                                        {contentBlocks.map((block, index) =>
-                                            renderBlock(block, index, false)
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Add Block Button in Edit Mode */}
-                                {isEditing && (
-                                    <div className="add-block-section">
-                                        <button
-                                            className="add-block-btn"
-                                            onClick={() => setShowAddMenu(true)}
-                                        >
-                                            + Add Content Block
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}            </div>
-
-                    {/* Add Block Menu */}
-                    {(isEditing || isCreatingLesson) && showAddMenu && (
-                        <div className="add-block-menu-overlay" onClick={() => setShowAddMenu(false)}>
-                            <div className="add-block-menu" onClick={(e) => e.stopPropagation()}>
-                                <div className="menu-header">
-                                    <h3>Add Content Block</h3>
-                                    <button onClick={() => setShowAddMenu(false)}><MdClose /></button>
                                 </div>
-                                <div className="block-types-grid">
-                                    {blockTypes.map(blockType => (
-                                        <div
-                                            key={blockType.type}
-                                            className="block-type-card"
-                                            onClick={() => addBlock(blockType.type)}
-                                        >
-                                            <div className="block-icon">{blockType.icon}</div>
-                                            <div className="block-info">
-                                                <h4>{blockType.label}</h4>
-                                                <p>{blockType.description}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            ))}
                         </div>
-                    )}
-                </>
-            )}
+                    </div>
+                </div>)}
         </div>
     );
 };

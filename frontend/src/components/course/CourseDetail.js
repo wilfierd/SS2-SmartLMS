@@ -9,6 +9,7 @@ import CourseStatistics from './CourseStatistics';
 import DiscussionForum from './DiscussionForum';
 import ModuleForm from './forms/ModuleForm';
 import LessonContent from './LessonContent/LessonContent';
+import LessonCreationModal from './modals/LessonCreationModal';
 import AssignmentForm from './forms/AssignmentForm';
 import QuizForm from './forms/QuizForm';
 import EnrollmentModal from './modals/EnrollmentModal';
@@ -45,9 +46,7 @@ const CourseDetail = () => {
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
-
-  // Editing states
-  const [isCreatingLesson, setIsCreatingLesson] = useState(false);
+  const [showLessonCreationModal, setShowLessonCreationModal] = useState(false);
 
   // Handle URL parameters for tab and discussion navigation
   const discussionId = searchParams.get('discussionId');
@@ -176,7 +175,7 @@ const CourseDetail = () => {
                         notification.warning('Create a module first');
                         return;
                       }
-                      setIsCreatingLesson(true);
+                      setShowLessonCreationModal(true);
                     }}
                   >
                     <span className="btn-icon">📄</span> Add Lesson
@@ -383,7 +382,7 @@ const CourseDetail = () => {
                         <p>Select a lesson to view content</p>                        {permissions.canEdit && modules.modules.length > 0 && (
                           <button
                             className="add-btn"
-                            onClick={() => setIsCreatingLesson(true)}
+                            onClick={() => setShowLessonCreationModal(true)}
                           >
                             Add First Lesson
                           </button>
@@ -391,20 +390,12 @@ const CourseDetail = () => {
                       </div>
                     );
                   } return (
-                    <div className="session-content">
-                      <LessonContent
-                        lesson={currentLesson}
-                        selectedModule={selectedModule}
-                        isInstructor={permissions.canEdit}
-                        onLessonUpdate={modules.refetch}
-                        isCreatingLesson={isCreatingLesson}
-                        onLessonCreated={() => {
-                          setIsCreatingLesson(false);
-                          modules.refetch();
-                        }}
-                        onCancelCreate={() => setIsCreatingLesson(false)}
-                        modules={modules.modules}
-                      />
+                    <div className="session-content">                      <LessonContent
+                      lesson={currentLesson}
+                      selectedModule={selectedModule}
+                      isInstructor={permissions.canEdit}
+                      onLessonUpdate={modules.refetch}
+                    />
                     </div>
                   );
                 })()}
@@ -447,12 +438,23 @@ const CourseDetail = () => {
           onClose={() => setShowQuizModal(false)}
           onSubmit={quizzes.createQuiz}
         />
-      )}
-
-      {showEnrollModal && (
+      )}      {showEnrollModal && (
         <EnrollmentModal
           onClose={() => setShowEnrollModal(false)}
           onEnroll={enrollment.enrollInCourse}
+        />
+      )}
+
+      {showLessonCreationModal && (
+        <LessonCreationModal
+          isOpen={showLessonCreationModal}
+          onClose={() => setShowLessonCreationModal(false)}
+          onLessonCreated={() => {
+            setShowLessonCreationModal(false);
+            modules.refetch();
+          }}
+          modules={modules.modules}
+          selectedModule={selectedModule}
         />
       )}
     </div>
