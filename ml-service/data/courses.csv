@@ -1,0 +1,17 @@
+id,title,description,instructor_id,department_id,status,is_featured,created_at,department_name,instructor_name
+1,Introduction to Programming,"Learn the fundamentals of programming with JavaScript. This course covers variables, control structures, functions, and basic DOM manipulation.",3,1,published,1,2025-06-14 15:30:39,Computer Science,John Smith
+2,Web Development Basics,"Introduction to HTML, CSS, and modern web development. Build responsive websites from scratch and learn about web standards.",3,6,published,1,2025-06-14 15:30:39,Web Development,John Smith
+3,Database Design,"Learn how to design and implement relational databases. Topics include ER diagrams, normalization, SQL, and database optimization.",4,1,published,0,2025-06-14 15:30:39,Computer Science,Sarah Johnson
+4,Advanced JavaScript,"Deep dive into JavaScript frameworks and modern practices. Learn about closures, async programming, and front-end frameworks.",4,6,published,1,2025-06-14 15:30:39,Web Development,Sarah Johnson
+5,Mobile App Development,Introduction to building mobile applications with React Native. Create cross-platform mobile apps with JavaScript.,5,7,published,0,2025-06-14 15:30:39,Mobile Development,Michael Brown
+6,Artificial Intelligence Fundamentals,"Understand the core concepts of AI including machine learning, neural networks, and natural language processing.",6,5,published,1,2025-06-14 15:30:39,Data Science,Lisa Wong
+8,Python Programming Fundamentals,"Learn Python programming from basics to advanced concepts. Cover data structures, file handling, and object-oriented programming.",6,1,published,1,2025-06-14 15:30:39,Computer Science,Lisa Wong
+9,Data Structures and Algorithms,"Master fundamental data structures and algorithms. Learn about arrays, linked lists, trees, graphs, sorting, and searching algorithms.",4,1,published,1,2025-06-14 15:30:39,Computer Science,Sarah Johnson
+10,Machine Learning Basics,"Introduction to machine learning concepts, supervised and unsupervised learning, and popular ML algorithms.",6,5,published,1,2025-06-14 15:30:39,Data Science,Lisa Wong
+11,React.js Development,"Build modern web applications with React.js. Learn components, state management, hooks, and best practices.",7,6,published,1,2025-06-14 15:30:39,Web Development,David Clark
+12,User Experience Design,"Learn the principles of UX design, user research, wireframing, prototyping, and usability testing.",8,4,published,0,2025-06-14 15:30:39,Arts & Design,Anna Lee
+13,Graphic Design Fundamentals,"Master the basics of graphic design including typography, color theory, composition, and design software.",8,4,published,1,2025-06-14 15:30:39,Arts & Design,Anna Lee
+14,Cybersecurity Fundamentals,"Learn essential cybersecurity concepts, threat assessment, network security, and ethical hacking basics.",5,1,published,0,2025-06-14 15:30:39,Computer Science,Michael Brown
+15,Statistics for Data Science,"Essential statistics concepts for data analysis, probability, hypothesis testing, and statistical inference.",6,2,published,1,2025-06-14 15:30:39,Mathematics,Lisa Wong
+16,Cloud Computing Essentials,"Introduction to cloud computing platforms, services, and deployment models. Focus on AWS, Azure, and GCP.",5,1,published,0,2025-06-14 15:30:39,Computer Science,Michael Brown
+17,Digital Marketing Fundamentals,"Learn digital marketing strategies, social media marketing, SEO, content marketing, and analytics.",7,3,published,1,2025-06-14 15:30:39,Business,David Clark

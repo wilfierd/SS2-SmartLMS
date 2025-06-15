@@ -23,7 +23,7 @@ const CourseStatistics = ({ courseId, auth }) => {
       } catch (error) {
         console.error('Error fetching course statistics:', error);
         setError(error.message || "Failed to load course statistics");
-        notification.error('Failed to load course statistics');
+        // notification.error('Failed to load course statistics');
       } finally {
         setIsLoading(false);
       }

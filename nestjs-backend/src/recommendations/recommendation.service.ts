@@ -47,7 +47,7 @@ export class RecommendationService {
     private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
-    this.mlServiceUrl = this.configService.get<string>('mlService.url', 'http://ml-service:8000');
+    this.mlServiceUrl = this.configService.get<string>('mlService.url', 'http://localhost:8000');
   }
 
   async getRecommendations(request: RecommendationRequest): Promise<RecommendationResponse> {

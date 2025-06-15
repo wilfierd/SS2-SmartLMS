@@ -1,4 +1,4 @@
-// src/components/course/EnrolledStudentList.js
+// src/components/course/EnrolledStudentList.js - Fixed version with proper permission check
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import config from '../../config';
@@ -19,9 +19,18 @@ const EnrolledStudentList = ({ courseId, auth }) => {
 
   const API_URL = config.apiUrl;
 
-  // Fetch enrolled students
+  // Check if user has permission to view students
+  const hasPermission = auth.user.role === 'admin' || auth.user.role === 'instructor';
+
+  // Fetch enrolled students - ONLY if user has permission
   useEffect(() => {
     const fetchEnrolledStudents = async () => {
+      // Early return if no permission - don't even start loading
+      if (!hasPermission) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
         const response = await axios.get(`${API_URL}/courses/${courseId}/students`, {
@@ -30,16 +39,27 @@ const EnrolledStudentList = ({ courseId, auth }) => {
         setStudents(response.data);
       } catch (error) {
         console.error('Error fetching enrolled students:', error);
-        notification.error('Failed to load student list');
+        
+        // Only show error notification for legitimate errors, not permission issues
+        if (error.response?.status === 403 || error.response?.status === 401) {
+          // Don't show notification for permission errors - user shouldn't see this anyway
+          console.warn('Permission denied for student list');
+        } else {
+          notification.error('Failed to load student list');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (courseId && auth.token) {
+    // Only fetch if we have courseId, auth token, and permission
+    if (courseId && auth.token && hasPermission) {
       fetchEnrolledStudents();
+    } else if (!hasPermission) {
+      // If no permission, just set loading to false without API call
+      setIsLoading(false);
     }
-  }, [courseId, auth.token, API_URL]);
+  }, [courseId, auth.token, API_URL, hasPermission]);
 
   // Handle feedback submission
   const handleSubmitFeedback = async (e) => {
@@ -69,7 +89,11 @@ const EnrolledStudentList = ({ courseId, auth }) => {
       setSelectedStudentId(null);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      notification.error('Failed to submit feedback');
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        notification.error('You do not have permission to submit feedback');
+      } else {
+        notification.error('Failed to submit feedback');
+      }
     }
   };
 
@@ -130,6 +154,18 @@ const EnrolledStudentList = ({ courseId, auth }) => {
       day: 'numeric'
     });
   };
+
+  // Early return for no permission - prevents any rendering or API calls
+  if (!hasPermission) {
+    return (
+      <div className="enrolled-students-container">
+        <div className="permission-denied">
+          <h2>Access Denied</h2>
+          <p>You do not have permission to view the student list for this course.</p>
+        </div>
+      </div>
+    );
+  }
 
   const filteredStudents = getFilteredStudents();
 

@@ -349,7 +349,7 @@ export const useCourseStudents = (courseId) => {
       setStudents(studentsData);
     } catch (err) {
       setError(err.message);
-      notification.error('Failed to load students');
+    //   notification.error('Failed to load students');
     } finally {
       setIsLoading(false);
     }
@@ -398,7 +398,7 @@ export const useCourseStatistics = (courseId) => {
       setStatistics(statsData);
     } catch (err) {
       setError(err.message);
-      notification.error('Failed to load course statistics');
+    //   notification.error('Failed to load course statistics');
     } finally {
       setIsLoading(false);
     }

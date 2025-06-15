@@ -9,6 +9,8 @@ import {
   ParseIntPipe,
   HttpStatus,
   Logger,
+  Req,
+  HttpException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -127,4 +129,33 @@ export class RecommendationController {
       timestamp: new Date().toISOString(),
     };
   }
+
+  // Thêm vào RecommendationController
+@Get()
+@ApiOperation({ summary: 'Get course recommendations for current user' })
+@ApiResponse({
+  status: HttpStatus.OK,
+  description: 'Successfully retrieved recommendations',
+})
+async getCurrentUserRecommendations(
+  @Query() query: GetRecommendationsDto,
+  @Req() request: any, // Assumes JWT auth middleware adds user to request
+) {
+  // Get student ID from JWT token/auth context
+  const studentId = request.user?.id;
+  
+  if (!studentId) {
+    throw new HttpException('Student ID not found in auth context', HttpStatus.UNAUTHORIZED);
+  }
+
+  this.logger.log(`Getting recommendations for current user ${studentId}`);
+
+  const recommendationRequest: RecommendationRequest = {
+    studentId,
+    limit: query.limit || 3,
+    refresh: query.refresh || false,
+  };
+
+  return await this.recommendationService.getRecommendations(recommendationRequest);
+}
 }
