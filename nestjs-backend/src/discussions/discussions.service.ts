@@ -10,6 +10,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { CoursesService } from '../courses/courses.service';
 import { SearchService } from '../search/search.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
@@ -23,6 +24,8 @@ export class DiscussionsService {
     private coursesService: CoursesService,
     @Inject(forwardRef(() => SearchService))
     private searchService: SearchService,
+    @Inject(forwardRef(() => NotificationsService))
+    private notificationsService: NotificationsService,
   ) { }
   async createDiscussion(
     courseId: number,
@@ -153,9 +156,7 @@ export class DiscussionsService {
     } catch (error) {
       console.error('Failed to remove discussion from search index:', error);
     }
-  }
-
-  async createPost(
+  } async createPost(
     courseId: number,
     discussionId: number,
     createPostDto: CreatePostDto,
@@ -164,6 +165,7 @@ export class DiscussionsService {
     // Verify discussion exists and belongs to course
     const discussion = await this.discussionsRepository.findOne({
       where: { id: discussionId, courseId },
+      relations: ['creator'],
     });
 
     if (!discussion) {
@@ -174,16 +176,20 @@ export class DiscussionsService {
       throw new ForbiddenException('This discussion is locked');
     }
 
+    let parentPost: DiscussionPost | null = null;
     // If replying to a post, verify parent exists
     if (createPostDto.parentPostId) {
-      const parentPost = await this.postsRepository.findOne({
+      parentPost = await this.postsRepository.findOne({
         where: { id: createPostDto.parentPostId, discussionId },
+        relations: ['user'],
       });
 
       if (!parentPost) {
         throw new NotFoundException('Parent post not found');
       }
-    } const post = this.postsRepository.create({
+    }
+
+    const post = this.postsRepository.create({
       discussionId,
       userId,
       content: createPostDto.content,
@@ -191,6 +197,46 @@ export class DiscussionsService {
     });
 
     const savedPost = await this.postsRepository.save(post);
+
+    // Load the saved post with user information for notifications
+    const postWithUser = await this.postsRepository.findOne({
+      where: { id: savedPost.id },
+      relations: ['user'],
+    });
+
+    // Send notifications for replies
+    try {
+      if (parentPost && parentPost.userId !== userId) {
+        // Someone replied to a post - notify the original poster
+        const replierName = postWithUser?.user
+          ? `${postWithUser.user.firstName || ''} ${postWithUser.user.lastName || ''}`.trim() || postWithUser.user.email
+          : 'Someone';
+
+        await this.notificationsService.createDiscussionReplyNotification(
+          parentPost.userId,
+          replierName,
+          discussion.title,
+          courseId,
+          discussionId,
+        );
+      } else if (!createPostDto.parentPostId && discussion.createdBy !== userId) {
+        // Someone posted in a discussion they didn't create - notify the discussion creator
+        const replierName = postWithUser?.user
+          ? `${postWithUser.user.firstName || ''} ${postWithUser.user.lastName || ''}`.trim() || postWithUser.user.email
+          : 'Someone';
+
+        await this.notificationsService.createDiscussionReplyNotification(
+          discussion.createdBy,
+          replierName,
+          discussion.title,
+          courseId,
+          discussionId,
+        );
+      }
+    } catch (error) {
+      console.error('Failed to send notification for discussion reply:', error);
+      // Don't fail the post creation if notification fails
+    }
 
     // Update parent discussion in search index
     try {

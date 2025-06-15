@@ -16,6 +16,7 @@ export enum NotificationType {
     COURSE_UPDATE = 'course_update',
     GRADE_POSTED = 'grade_posted',
     ANNOUNCEMENT = 'announcement',
+    DISCUSSION_REPLY = 'discussion_reply',
 }
 
 export enum NotificationPriority {

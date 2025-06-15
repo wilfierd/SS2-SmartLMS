@@ -209,4 +209,22 @@ export class NotificationsService {
             actionUrl: `/courses/${courseId}`,
         });
     }
+
+    async createDiscussionReplyNotification(
+        userId: number,
+        replierName: string,
+        discussionTitle: string,
+        courseId: number,
+        discussionId: number,
+    ): Promise<Notification> {
+        return await this.create({
+            userId,
+            title: 'New Discussion Reply',
+            message: `${replierName} replied to your discussion "${discussionTitle}"`,
+            type: NotificationType.DISCUSSION_REPLY,
+            priority: NotificationPriority.MEDIUM,
+            metadata: { courseId, discussionId, replierName },
+            actionUrl: `/courses/${courseId}/discussions/${discussionId}`,
+        });
+    }
 }

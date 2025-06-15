@@ -2312,14 +2312,14 @@ CREATE TABLE IF NOT EXISTS session_participants (
 CREATE TABLE IF NOT EXISTS notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
-  message TEXT NOT NULL,
-  type ENUM(
+  message TEXT NOT NULL,  type ENUM(
     'assignment_due',
     'test_due',
     'message_received',
     'course_update',
     'grade_posted',
-    'announcement'
+    'announcement',
+    'discussion_reply'
   ) NOT NULL,
   priority ENUM('low', 'medium', 'high', 'urgent') NOT NULL DEFAULT 'medium',
   isRead BOOLEAN NOT NULL DEFAULT FALSE,

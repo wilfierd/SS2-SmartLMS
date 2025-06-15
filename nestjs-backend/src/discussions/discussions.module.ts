@@ -7,12 +7,14 @@ import { DiscussionsService } from './discussions.service';
 import { DiscussionsController } from './discussions.controller';
 import { CoursesModule } from '../courses/courses.module';
 import { SearchModule } from '../search/search.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Discussion, DiscussionPost]),
     forwardRef(() => CoursesModule),
     forwardRef(() => SearchModule),
+    forwardRef(() => NotificationsModule),
   ],
   controllers: [DiscussionsController],
   providers: [DiscussionsService],
