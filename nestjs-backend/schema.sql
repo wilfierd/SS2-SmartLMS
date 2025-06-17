@@ -274,19 +274,6 @@ CREATE TABLE IF NOT EXISTS discussions (
   FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
 );
--- Discussion posts
-CREATE TABLE IF NOT EXISTS discussion_posts (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  discussion_id INT NOT NULL,
-  user_id INT NOT NULL,
-  parent_post_id INT,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (discussion_id) REFERENCES discussions(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (parent_post_id) REFERENCES discussion_posts(id) ON DELETE CASCADE
-);
 -- System settings
 CREATE TABLE IF NOT EXISTS system_settings (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1277,7 +1264,12 @@ VALUES -- Assignments for Introduction to Programming
     (
       SELECT id
       FROM course_modules
-      WHERE title = 'Programming Fundamentals' AND course_id = (SELECT id FROM courses WHERE code = 'CS101')
+      WHERE title = 'Programming Fundamentals'
+        AND course_id = (
+          SELECT id
+          FROM courses
+          WHERE code = 'CS101'
+        )
     ),
     'Hello World Program',
     'Create a JavaScript program that displays "Hello, World!" in the console.',
@@ -1295,7 +1287,12 @@ VALUES -- Assignments for Introduction to Programming
     (
       SELECT id
       FROM course_modules
-      WHERE title = 'Programming Fundamentals' AND course_id = (SELECT id FROM courses WHERE code = 'CS101')
+      WHERE title = 'Programming Fundamentals'
+        AND course_id = (
+          SELECT id
+          FROM courses
+          WHERE code = 'CS101'
+        )
     ),
     'Variable Manipulation',
     'Create a program that demonstrates the use of different variable types.',
@@ -1303,7 +1300,8 @@ VALUES -- Assignments for Introduction to Programming
     20,
     '2023-02-15 23:59:59',
     FALSE
-  ),  -- Assignments for Web Development Basics
+  ),
+  -- Assignments for Web Development Basics
   (
     (
       SELECT id
@@ -1313,7 +1311,12 @@ VALUES -- Assignments for Introduction to Programming
     (
       SELECT id
       FROM course_modules
-      WHERE title = 'HTML Fundamentals' AND course_id = (SELECT id FROM courses WHERE code = 'WD101')
+      WHERE title = 'HTML Fundamentals'
+        AND course_id = (
+          SELECT id
+          FROM courses
+          WHERE code = 'WD101'
+        )
     ),
     'Personal Bio Page',
     'Create a simple personal biography page using HTML elements.',
@@ -1687,28 +1690,6 @@ VALUES -- Discussions for Introduction to Programming
     ),
     FALSE
   );
--- Insert Discussion Posts
-INSERT INTO discussion_posts (discussion_id, user_id, parent_post_id, content)
-VALUES -- Posts in Student Introductions
-  (
-    (
-      SELECT id
-      FROM discussions
-      WHERE title = 'Student Introductions'
-        AND course_id = (
-          SELECT id
-          FROM courses
-          WHERE code = 'CS101'
-        )
-    ),
-    (
-      SELECT id
-      FROM users
-      WHERE email = 'john.smith@lms.com'
-    ),
-    NULL,
-    'Welcome everyone! Please introduce yourself and share a bit about your background and what you hope to learn from this course.'
-  );
 -- Insert System Settings
 INSERT INTO system_settings (
     setting_key,
@@ -1829,21 +1810,6 @@ CREATE TABLE session_activities (
   FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
--- In-session chat messages
-CREATE TABLE session_chats (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  session_id INT NOT NULL,
-  user_id INT NOT NULL,
-  message TEXT NOT NULL,
-  is_private BOOLEAN DEFAULT FALSE,
-  recipient_id INT,
-  -- If private message, who it's to
-  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE
-  SET NULL
-);
 -- Breakout rooms
 CREATE TABLE breakout_rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1911,97 +1877,6 @@ CREATE TABLE session_recordings (
   transcript TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE
-);
--- Recording access permissions
-CREATE TABLE recording_permissions (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  recording_id INT NOT NULL,
-  user_id INT,
-  -- NULL means course-wide permission
-  course_id INT,
-  -- NULL means specific user permission
-  can_view BOOLEAN DEFAULT TRUE,
-  can_download BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  created_by INT NOT NULL,
-  FOREIGN KEY (recording_id) REFERENCES session_recordings(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
--- Session feedback
-CREATE TABLE session_feedback (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  session_id INT NOT NULL,
-  user_id INT NOT NULL,
-  rating INT NOT NULL,
-  -- 1-5 scale
-  comments TEXT,
-  audio_quality_rating INT,
-  -- 1-5 scale
-  video_quality_rating INT,
-  -- 1-5 scale
-  content_rating INT,
-  -- 1-5 scale
-  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_feedback (session_id, user_id)
-);
--- Calendar integration 
-CREATE TABLE session_calendar_events (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  session_id INT NOT NULL,
-  calendar_provider ENUM('google', 'microsoft', 'apple') NOT NULL,
-  external_event_id VARCHAR(255) NOT NULL,
-  organizer_id INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE,
-  FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE CASCADE
-);
--- Session settings
-CREATE TABLE session_settings (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  session_id INT NOT NULL,
-  waiting_room_enabled BOOLEAN DEFAULT FALSE,
-  auto_recording BOOLEAN DEFAULT TRUE,
-  participants_can_share BOOLEAN DEFAULT TRUE,
-  chat_enabled BOOLEAN DEFAULT TRUE,
-  private_chat_enabled BOOLEAN DEFAULT TRUE,
-  participants_can_unmute BOOLEAN DEFAULT TRUE,
-  participants_video_on_join BOOLEAN DEFAULT FALSE,
-  participants_audio_on_join BOOLEAN DEFAULT FALSE,
-  allow_anonymous_users BOOLEAN DEFAULT FALSE,
-  only_authenticated_users BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (session_id) REFERENCES virtual_sessions(id) ON DELETE CASCADE
-);
--- User preferences for virtual sessions
-CREATE TABLE user_session_preferences (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
-  default_video_on BOOLEAN DEFAULT TRUE,
-  default_audio_on BOOLEAN DEFAULT TRUE,
-  preferred_view ENUM('grid', 'speaker', 'sidebar') DEFAULT 'grid',
-  bandwidth_preference ENUM('low', 'medium', 'high') DEFAULT 'high',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
--- Room templates for quick setup
-CREATE TABLE room_templates (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  creator_id INT NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  settings JSON NOT NULL,
-  -- Stores all configurable session settings
-  is_public BOOLEAN DEFAULT FALSE,
-  -- If true, available to all instructors
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
 );
 -- Stored procedures for automatic processes
 -- Procedure to update session statuses
@@ -2312,7 +2187,8 @@ CREATE TABLE IF NOT EXISTS session_participants (
 CREATE TABLE IF NOT EXISTS notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
-  message TEXT NOT NULL,  type ENUM(
+  message TEXT NOT NULL,
+  type ENUM(
     'assignment_due',
     'test_due',
     'message_received',
@@ -2340,19 +2216,6 @@ CREATE TABLE IF NOT EXISTS notifications (
   INDEX idx_notifications_user_type (userId, type, deletedAt),
   INDEX idx_notifications_due_date (dueDate)
 );
--- Course analytics table (for tracking course metrics)
-CREATE TABLE IF NOT EXISTS course_analytics (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  course_id INT NOT NULL,
-  metric_name VARCHAR(100) NOT NULL,
-  metric_value DECIMAL(10, 2) NOT NULL,
-  metric_date DATE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_course_metric_date (course_id, metric_name, metric_date),
-  INDEX idx_course_analytics_course (course_id),
-  INDEX idx_course_analytics_date (metric_date)
-);
 -- User activity log table (for tracking user engagement)
 CREATE TABLE IF NOT EXISTS user_activity_log (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -2379,7 +2242,6 @@ CREATE TABLE IF NOT EXISTS user_activity_log (
     INDEX idx_activity_log_type (activity_type),
     INDEX idx_activity_log_created (created_at)
 );
-
 CREATE TABLE IF NOT EXISTS messages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   sender_id INT NOT NULL,
