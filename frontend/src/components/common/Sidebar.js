@@ -97,14 +97,11 @@ const Sidebar = ({ activeItem }) => {
   };  // Role-specific menu items
   const getMenuItems = () => {
     switch (auth.user.role) {
-      case 'admin': return [
-        { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
-        { id: 'users', icon: 'users', label: 'Users Management', path: '/users' },
-        { id: 'courses', icon: 'courses', label: 'Courses Management', path: '/courses' },
-        { id: 'report', icon: 'analytics', label: 'Reports & Analytics', path: '/reports' },
-        { id: 'notifications', icon: 'notifications', label: 'Notifications', path: '/notifications' },
-        { id: 'settings', icon: 'settings', label: 'Settings', path: '/settings' },
-        { id: 'messages', icon: 'messages', label: 'Messages', path: '/messages' },
+      case 'admin': return [{ id: 'dashboard', icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+      { id: 'users', icon: 'users', label: 'Users Management', path: '/users' },
+      { id: 'courses', icon: 'courses', label: 'Courses Management', path: '/courses' },
+      { id: 'notifications', icon: 'notifications', label: 'Notifications', path: '/notifications' },
+      { id: 'messages', icon: 'messages', label: 'Messages', path: '/messages' },
       ]; case 'instructor': return [
         { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
         { id: 'courses', icon: 'courses', label: 'Courses', path: '/courses' },
