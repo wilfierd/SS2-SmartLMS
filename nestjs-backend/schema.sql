@@ -274,6 +274,20 @@ CREATE TABLE IF NOT EXISTS discussions (
   FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Discussion posts
+CREATE TABLE IF NOT EXISTS discussion_posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  discussion_id INT NOT NULL,
+  user_id INT NOT NULL,
+  parent_post_id INT,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (discussion_id) REFERENCES discussions(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_post_id) REFERENCES discussion_posts(id) ON DELETE CASCADE
+);
 -- System settings
 CREATE TABLE IF NOT EXISTS system_settings (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -2215,6 +2229,19 @@ CREATE TABLE IF NOT EXISTS notifications (
   INDEX idx_notifications_user_unread (userId, isRead, deletedAt),
   INDEX idx_notifications_user_type (userId, type, deletedAt),
   INDEX idx_notifications_due_date (dueDate)
+);
+-- Course analytics table (for tracking course metrics)
+CREATE TABLE IF NOT EXISTS course_analytics (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  metric_name VARCHAR(100) NOT NULL,
+  metric_value DECIMAL(10, 2) NOT NULL,
+  metric_date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_course_metric_date (course_id, metric_name, metric_date),
+  INDEX idx_course_analytics_course (course_id),
+  INDEX idx_course_analytics_date (metric_date)
 );
 -- User activity log table (for tracking user engagement)
 CREATE TABLE IF NOT EXISTS user_activity_log (

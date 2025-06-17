@@ -403,8 +403,7 @@ export class CoursesController {
   // NEW: Consolidated from course-statistics-api.controller.ts
   @Get(':id/statistics')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
-  async getCourseStatistics(
+  @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)  async getCourseStatistics(
     @Param('id', ParseIntPipe) courseId: number,
     @Request() req
   ): Promise<any> {
@@ -421,63 +420,113 @@ export class CoursesController {
         }
       }
 
-      // Get enrollment stats
-      const enrollmentStats = await this.dataSource.query(`
-        SELECT 
-          COUNT(*) as total_students,
-          SUM(CASE WHEN completion_status = 'completed' THEN 1 ELSE 0 END) as completed_count,
-          SUM(CASE WHEN completion_status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_count,
-          SUM(CASE WHEN completion_status = 'not_started' THEN 1 ELSE 0 END) as not_started_count
-        FROM enrollments
-        WHERE course_id = ?
-      `, [courseId]);
+      // Initialize default stats
+      let enrollmentStats = [{
+        total_students: 0,
+        completed_count: 0,
+        in_progress_count: 0,
+        not_started_count: 0
+      }];
+      
+      let assignmentStats = [{
+        total_assignments: 0,
+        total_submissions: 0,
+        average_grade: 0,
+        graded_count: 0
+      }];
+      
+      let quizStats = [{
+        total_quizzes: 0,
+        total_attempts: 0,
+        average_score: 0,
+        passing_count: 0
+      }];
+      
+      let discussionStats = [{
+        total_discussions: 0,
+        total_posts: 0,
+        participating_students: 0
+      }];
+      
+      let completionTrend = [];
 
-      // Get assignment stats
-      const assignmentStats = await this.dataSource.query(`
-        SELECT
-          COUNT(DISTINCT a.id) as total_assignments,
-          COUNT(DISTINCT s.id) as total_submissions,
-          AVG(s.grade) as average_grade,
-          SUM(CASE WHEN s.is_graded = 1 THEN 1 ELSE 0 END) as graded_count
-        FROM assignments a
-        LEFT JOIN submissions s ON a.id = s.assignment_id
-        WHERE a.course_id = ?
-      `, [courseId]);
+      // Get enrollment stats - wrapped in try-catch
+      try {
+        enrollmentStats = await this.dataSource.query(`
+          SELECT 
+            COUNT(*) as total_students,
+            SUM(CASE WHEN completion_status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+            SUM(CASE WHEN completion_status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_count,
+            SUM(CASE WHEN completion_status = 'not_started' THEN 1 ELSE 0 END) as not_started_count
+          FROM enrollments
+          WHERE course_id = ?
+        `, [courseId]);
+      } catch (error) {
+        console.log('Error getting enrollment stats:', error.message);
+      }
 
-      // Get quiz stats
-      const quizStats = await this.dataSource.query(`
-        SELECT
-          COUNT(DISTINCT q.id) as total_quizzes,
-          COUNT(DISTINCT qa.id) as total_attempts,
-          AVG(qa.score) as average_score,
-          SUM(CASE WHEN qa.is_passing = 1 THEN 1 ELSE 0 END) as passing_count
-        FROM quizzes q
-        LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
-        WHERE q.course_id = ?
-      `, [courseId]);
+      // Get assignment stats - wrapped in try-catch
+      try {
+        assignmentStats = await this.dataSource.query(`
+          SELECT
+            COUNT(DISTINCT a.id) as total_assignments,
+            COUNT(DISTINCT s.id) as total_submissions,
+            AVG(s.grade) as average_grade,
+            SUM(CASE WHEN s.is_graded = 1 THEN 1 ELSE 0 END) as graded_count
+          FROM assignments a
+          LEFT JOIN submissions s ON a.id = s.assignment_id
+          WHERE a.course_id = ?
+        `, [courseId]);
+      } catch (error) {
+        console.log('Error getting assignment stats:', error.message);
+      }
 
-      // Get discussion stats
-      const discussionStats = await this.dataSource.query(`
-        SELECT
-          COUNT(DISTINCT d.id) as total_discussions,
-          COUNT(DISTINCT dp.id) as total_posts,
-          COUNT(DISTINCT dp.user_id) as participating_students
-        FROM discussions d
-        LEFT JOIN discussion_posts dp ON d.id = dp.discussion_id
-        WHERE d.course_id = ?
-      `, [courseId]);
+      // Get quiz stats - wrapped in try-catch
+      try {
+        quizStats = await this.dataSource.query(`
+          SELECT
+            COUNT(DISTINCT q.id) as total_quizzes,
+            COUNT(DISTINCT qa.id) as total_attempts,
+            AVG(qa.score) as average_score,
+            SUM(CASE WHEN qa.is_passing = 1 THEN 1 ELSE 0 END) as passing_count
+          FROM quizzes q
+          LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
+          WHERE q.course_id = ?
+        `, [courseId]);
+      } catch (error) {
+        console.log('Error getting quiz stats:', error.message);
+      }
 
-      // Get completion trend over time (last 6 months)
-      const completionTrend = await this.dataSource.query(`
-        SELECT 
-          DATE_FORMAT(e.enrollment_date, '%Y-%m') as month,
-          COUNT(*) as enrollments,
-          SUM(CASE WHEN e.completion_status = 'completed' THEN 1 ELSE 0 END) as completions
-        FROM enrollments e
-        WHERE e.course_id = ? AND e.enrollment_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-        GROUP BY DATE_FORMAT(e.enrollment_date, '%Y-%m')
-        ORDER BY month
-      `, [courseId]);
+      // Get discussion stats - wrapped in try-catch
+      try {
+        discussionStats = await this.dataSource.query(`
+          SELECT
+            COUNT(DISTINCT d.id) as total_discussions,
+            COUNT(DISTINCT dp.id) as total_posts,
+            COUNT(DISTINCT dp.user_id) as participating_students
+          FROM discussions d
+          LEFT JOIN discussion_posts dp ON d.id = dp.discussion_id
+          WHERE d.course_id = ?
+        `, [courseId]);
+      } catch (error) {
+        console.log('Error getting discussion stats:', error.message);
+      }
+
+      // Get completion trend over time (last 6 months) - wrapped in try-catch
+      try {
+        completionTrend = await this.dataSource.query(`
+          SELECT 
+            DATE_FORMAT(e.enrollment_date, '%Y-%m') as month,
+            COUNT(*) as enrollments,
+            SUM(CASE WHEN e.completion_status = 'completed' THEN 1 ELSE 0 END) as completions
+          FROM enrollments e
+          WHERE e.course_id = ? AND e.enrollment_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+          GROUP BY DATE_FORMAT(e.enrollment_date, '%Y-%m')
+          ORDER BY month
+        `, [courseId]);
+      } catch (error) {
+        console.log('Error getting completion trend:', error.message);
+      }
 
       return {
         enrollmentStats: enrollmentStats[0],
@@ -491,7 +540,7 @@ export class CoursesController {
         throw error;
       }
       console.error('Error fetching course statistics:', error);
-      throw new Error('Server error');
+      throw new InternalServerErrorException('Failed to fetch course statistics');
     }
   }
 

@@ -105,12 +105,10 @@ const Sidebar = ({ activeItem }) => {
         { id: 'notifications', icon: 'notifications', label: 'Notifications', path: '/notifications' },
         { id: 'settings', icon: 'settings', label: 'Settings', path: '/settings' },
         { id: 'messages', icon: 'messages', label: 'Messages', path: '/messages' },
-      ];
-      case 'instructor': return [
+      ]; case 'instructor': return [
         { id: 'dashboard', icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
         { id: 'courses', icon: 'courses', label: 'Courses', path: '/courses' },
         { id: 'classroom', icon: 'classroom', label: 'Virtual Classroom', path: '/classroom' },
-        { id: 'assessment', icon: 'assessment', label: 'Assessment', path: '/assessment' },
         { id: 'notifications', icon: 'notifications', label: 'Notifications', path: '/notifications' },
         { id: 'messages', icon: 'messages', label: 'Messages', path: '/messages' },
       ];
