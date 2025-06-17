@@ -1,0 +1,1924 @@
+2025-06-17 11:09:43,878 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:43,881 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:43,890 | INFO | Performing incremental update...
+2025-06-17 11:09:43,891 | INFO | Starting model training...
+2025-06-17 11:09:43,893 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:43,893 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:43,895 | INFO | GET /recommendations/9 - 200 - 0.074s
+2025-06-17 11:09:43,898 | INFO | 127.0.0.1 - - [17/Jun/2025 11:09:43] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:09:44,187 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,189 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,198 | INFO | Performing incremental update...
+2025-06-17 11:09:44,199 | INFO | Starting model training...
+2025-06-17 11:09:44,204 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,205 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,208 | INFO | GET /recommendations/9 - 200 - 0.029s
+2025-06-17 11:09:44,219 | INFO | 127.0.0.1 - - [17/Jun/2025 11:09:44] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:09:44,390 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,390 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,399 | INFO | Performing incremental update...
+2025-06-17 11:09:44,399 | INFO | Starting model training...
+2025-06-17 11:09:44,403 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,405 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,406 | INFO | GET /recommendations/9 - 200 - 0.025s
+2025-06-17 11:09:44,407 | INFO | 127.0.0.1 - - [17/Jun/2025 11:09:44] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:09:44,508 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,509 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,513 | INFO | Performing incremental update...
+2025-06-17 11:09:44,513 | INFO | Starting model training...
+2025-06-17 11:09:44,520 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,521 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:09:44,521 | INFO | GET /recommendations/9 - 200 - 0.065s
+2025-06-17 11:09:44,523 | INFO | 127.0.0.1 - - [17/Jun/2025 11:09:44] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:10:24,603 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,603 | ERROR | Error in content-based recommendations for user 115: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,604 | INFO | Performing incremental update...
+2025-06-17 11:10:24,604 | INFO | Starting model training...
+2025-06-17 11:10:24,607 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,608 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,609 | INFO | GET /recommendations/115 - 200 - 0.013s
+2025-06-17 11:10:24,609 | INFO | 127.0.0.1 - - [17/Jun/2025 11:10:24] "GET /recommendations/115?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:10:24,710 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,711 | ERROR | Error in content-based recommendations for user 115: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,711 | INFO | Performing incremental update...
+2025-06-17 11:10:24,711 | INFO | Starting model training...
+2025-06-17 11:10:24,712 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,713 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,713 | INFO | GET /recommendations/115 - 200 - 0.006s
+2025-06-17 11:10:24,713 | INFO | 127.0.0.1 - - [17/Jun/2025 11:10:24] "GET /recommendations/115?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:10:24,989 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,990 | ERROR | Error in content-based recommendations for user 115: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:24,990 | INFO | Performing incremental update...
+2025-06-17 11:10:24,990 | INFO | Starting model training...
+2025-06-17 11:10:25,000 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:25,000 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:25,001 | INFO | GET /recommendations/115 - 200 - 0.014s
+2025-06-17 11:10:25,001 | INFO | 127.0.0.1 - - [17/Jun/2025 11:10:25] "GET /recommendations/115?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:10:25,019 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:25,019 | ERROR | Error in content-based recommendations for user 115: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:25,020 | INFO | Performing incremental update...
+2025-06-17 11:10:25,020 | INFO | Starting model training...
+2025-06-17 11:10:25,022 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:25,022 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:10:25,023 | INFO | GET /recommendations/115 - 200 - 0.006s
+2025-06-17 11:10:25,024 | INFO | 127.0.0.1 - - [17/Jun/2025 11:10:25] "GET /recommendations/115?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:37,850 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,851 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,855 | INFO | Performing incremental update...
+2025-06-17 11:14:37,855 | INFO | Starting model training...
+2025-06-17 11:14:37,857 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,859 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,860 | INFO | GET /recommendations/9 - 200 - 0.019s
+2025-06-17 11:14:37,861 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:37] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:37,879 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,880 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,882 | INFO | Performing incremental update...
+2025-06-17 11:14:37,883 | INFO | Starting model training...
+2025-06-17 11:14:37,885 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,885 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:37,885 | INFO | GET /recommendations/9 - 200 - 0.012s
+2025-06-17 11:14:37,885 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:37] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:38,288 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,288 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,289 | INFO | Performing incremental update...
+2025-06-17 11:14:38,289 | INFO | Starting model training...
+2025-06-17 11:14:38,290 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,290 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,290 | INFO | GET /recommendations/9 - 200 - 0.008s
+2025-06-17 11:14:38,290 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:38] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:38,313 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,314 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,318 | INFO | Performing incremental update...
+2025-06-17 11:14:38,318 | INFO | Starting model training...
+2025-06-17 11:14:38,322 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,323 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:38,323 | INFO | GET /recommendations/9 - 200 - 0.018s
+2025-06-17 11:14:38,323 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:38] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:40,264 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,265 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,270 | INFO | Performing incremental update...
+2025-06-17 11:14:40,270 | INFO | Starting model training...
+2025-06-17 11:14:40,272 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,272 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,273 | INFO | GET /recommendations/9 - 200 - 0.018s
+2025-06-17 11:14:40,273 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:40] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:40,296 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,296 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,298 | INFO | Performing incremental update...
+2025-06-17 11:14:40,298 | INFO | Starting model training...
+2025-06-17 11:14:40,299 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,299 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,300 | INFO | GET /recommendations/9 - 200 - 0.010s
+2025-06-17 11:14:40,300 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:40] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:40,785 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,785 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,786 | INFO | Performing incremental update...
+2025-06-17 11:14:40,786 | INFO | Starting model training...
+2025-06-17 11:14:40,790 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,790 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,790 | INFO | GET /recommendations/9 - 200 - 0.010s
+2025-06-17 11:14:40,791 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:40] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:14:40,819 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,819 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,820 | INFO | Performing incremental update...
+2025-06-17 11:14:40,821 | INFO | Starting model training...
+2025-06-17 11:14:40,823 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,824 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:14:40,824 | INFO | GET /recommendations/9 - 200 - 0.019s
+2025-06-17 11:14:40,832 | INFO | 127.0.0.1 - - [17/Jun/2025 11:14:40] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:01,471 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,471 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,473 | INFO | Performing incremental update...
+2025-06-17 11:15:01,473 | INFO | Starting model training...
+2025-06-17 11:15:01,478 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,479 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,480 | INFO | GET /recommendations/9 - 200 - 0.019s
+2025-06-17 11:15:01,480 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:01] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:01,497 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,497 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,499 | INFO | Performing incremental update...
+2025-06-17 11:15:01,499 | INFO | Starting model training...
+2025-06-17 11:15:01,500 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,500 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,500 | INFO | GET /recommendations/9 - 200 - 0.010s
+2025-06-17 11:15:01,501 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:01] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:01,955 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,955 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,963 | INFO | Performing incremental update...
+2025-06-17 11:15:01,963 | INFO | Starting model training...
+2025-06-17 11:15:01,965 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,966 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:01,966 | INFO | GET /recommendations/9 - 200 - 0.015s
+2025-06-17 11:15:01,967 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:01] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:02,000 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:02,000 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:02,003 | INFO | Performing incremental update...
+2025-06-17 11:15:02,003 | INFO | Starting model training...
+2025-06-17 11:15:02,005 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:02,005 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:02,005 | INFO | GET /recommendations/9 - 200 - 0.019s
+2025-06-17 11:15:02,006 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:02] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:29,697 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,697 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,698 | INFO | Performing incremental update...
+2025-06-17 11:15:29,698 | INFO | Starting model training...
+2025-06-17 11:15:29,699 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,699 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,700 | INFO | GET /recommendations/9 - 200 - 0.009s
+2025-06-17 11:15:29,700 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:29] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:29,720 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,720 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,721 | INFO | Performing incremental update...
+2025-06-17 11:15:29,722 | INFO | Starting model training...
+2025-06-17 11:15:29,723 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,723 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:29,723 | INFO | GET /recommendations/9 - 200 - 0.008s
+2025-06-17 11:15:29,723 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:29] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:30,186 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,186 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,197 | INFO | Performing incremental update...
+2025-06-17 11:15:30,197 | INFO | Starting model training...
+2025-06-17 11:15:30,198 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,198 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,199 | INFO | GET /recommendations/9 - 200 - 0.016s
+2025-06-17 11:15:30,199 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:30] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:15:30,240 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,240 | ERROR | Error in content-based recommendations for user 9: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,246 | INFO | Performing incremental update...
+2025-06-17 11:15:30,246 | INFO | Starting model training...
+2025-06-17 11:15:30,248 | ERROR | Query execution failed: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,249 | ERROR | Error in incremental update: Execution failed on sql '
+        SELECT 
+            e.student_id,
+            e.course_id,
+            e.completion_status,
+            e.enrollment_date,
+            e.completion_date,
+            e.progress,
+            c.title as course_title,
+            c.description as course_description,
+            c.instructor_id,
+            c.department_id,
+            c.status as course_status,
+            d.name as department_name
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN departments d ON c.department_id = d.id
+        WHERE c.status = 'published'
+        ': (1054, "Unknown column 'e.progress' in 'field list'")
+2025-06-17 11:15:30,249 | INFO | GET /recommendations/9 - 200 - 0.015s
+2025-06-17 11:15:30,249 | INFO | 127.0.0.1 - - [17/Jun/2025 11:15:30] "GET /recommendations/9?limit=3&refresh=true HTTP/1.1" 200 -
+2025-06-17 11:16:04,496 | INFO | Shutting down recommendation system...
+2025-06-17 11:16:04,502 | INFO | Database connection closed
+2025-06-17 11:16:04,502 | INFO | System shutdown complete
+2025-06-17 11:16:04,519 | INFO | Shutting down recommendation system...

@@ -1,0 +1,3919 @@
+- Nếu cho vào schema.sql rồi chạy thì xác định sửa đến sáng mai nên thiết kế nhanh nhất
+đó chính là mở sql và chạy lệnh sau để insert nhiều dữ liệu vào database
+- Đi theo đường dẫn ml-services/ml rồi chạy: python app.py
+- Kiểm tra logs/app.log để xem chi tiết về port và lỗi gặp phải
+- Đã có file .pkl nên không cần phải chạy lại bất kì thứ gì nếu không cần thiết
+
+-- ===============================================
+-- DỮ LIỆU MẪU CHO MACHINE LEARNING
+-- Tập trung vào Quiz, Kết quả và Tiến độ học tập
+-- ===============================================
+
+-- Thêm dữ liệu người dùng (học sinh và giảng viên)
+INSERT INTO users (email, password, first_name, last_name, role, is_password_changed) VALUES
+('student1@lms.com', '$2b$10$hash4', 'Lê', 'Văn C', 'student', TRUE),
+('student2@lms.com', '$2b$10$hash5', 'Phạm', 'Thị D', 'student', TRUE),
+('student3@lms.com', '$2b$10$hash6', 'Hoàng', 'Văn E', 'student', TRUE),
+('student4@lms.com', '$2b$10$hash7', 'Vũ', 'Thị F', 'student', TRUE),
+('student5@lms.com', '$2b$10$hash8', 'Đặng', 'Văn G', 'student', TRUE),
+('student6@lms.com', '$2b$10$hash9', 'Bùi', 'Thị H', 'student', TRUE),
+('student7@lms.com', '$2b$10$hash10', 'Dương', 'Văn I', 'student', TRUE),
+('student8@lms.com', '$2b$10$hash11', 'Lý', 'Thị K', 'student', TRUE),
+('student9@lms.com', '$2b$10$hash12', 'Ngô', 'Văn L', 'student', TRUE),
+('student10@lms.com', '$2b$10$hash13', 'Đinh', 'Thị M', 'student', TRUE);
+
+INSERT INTO users (email, password, first_name, last_name, role, is_password_changed) VALUES
+('student11@lms.com', '$2b$10$hash11', 'Student', '#11', 'student', TRUE),
+('student12@lms.com', '$2b$10$hash12', 'Student', '#12', 'student', TRUE),
+('student13@lms.com', '$2b$10$hash13', 'Student', '#13', 'student', TRUE),
+('student14@lms.com', '$2b$10$hash14', 'Student', '#14', 'student', TRUE),
+('student15@lms.com', '$2b$10$hash15', 'Student', '#15', 'student', TRUE),
+('student16@lms.com', '$2b$10$hash16', 'Student', '#16', 'student', TRUE),
+('student17@lms.com', '$2b$10$hash17', 'Student', '#17', 'student', TRUE),
+('student18@lms.com', '$2b$10$hash18', 'Student', '#18', 'student', TRUE),
+('student19@lms.com', '$2b$10$hash19', 'Student', '#19', 'student', TRUE),
+('student20@lms.com', '$2b$10$hash20', 'Student', '#20', 'student', TRUE),
+('student21@lms.com', '$2b$10$hash21', 'Student', '#21', 'student', TRUE),
+('student22@lms.com', '$2b$10$hash22', 'Student', '#22', 'student', TRUE),
+('student23@lms.com', '$2b$10$hash23', 'Student', '#23', 'student', TRUE),
+('student24@lms.com', '$2b$10$hash24', 'Student', '#24', 'student', TRUE),
+('student25@lms.com', '$2b$10$hash25', 'Student', '#25', 'student', TRUE),
+('student26@lms.com', '$2b$10$hash26', 'Student', '#26', 'student', TRUE),
+('student27@lms.com', '$2b$10$hash27', 'Student', '#27', 'student', TRUE),
+('student28@lms.com', '$2b$10$hash28', 'Student', '#28', 'student', TRUE),
+('student29@lms.com', '$2b$10$hash29', 'Student', '#29', 'student', TRUE),
+('student30@lms.com', '$2b$10$hash30', 'Student', '#30', 'student', TRUE),
+('student31@lms.com', '$2b$10$hash31', 'Student', '#31', 'student', TRUE),
+('student32@lms.com', '$2b$10$hash32', 'Student', '#32', 'student', TRUE),
+('student33@lms.com', '$2b$10$hash33', 'Student', '#33', 'student', TRUE),
+('student34@lms.com', '$2b$10$hash34', 'Student', '#34', 'student', TRUE),
+('student35@lms.com', '$2b$10$hash35', 'Student', '#35', 'student', TRUE),
+('student36@lms.com', '$2b$10$hash36', 'Student', '#36', 'student', TRUE),
+('student37@lms.com', '$2b$10$hash37', 'Student', '#37', 'student', TRUE),
+('student38@lms.com', '$2b$10$hash38', 'Student', '#38', 'student', TRUE),
+('student39@lms.com', '$2b$10$hash39', 'Student', '#39', 'student', TRUE),
+('student40@lms.com', '$2b$10$hash40', 'Student', '#40', 'student', TRUE),
+('student41@lms.com', '$2b$10$hash41', 'Student', '#41', 'student', TRUE),
+('student42@lms.com', '$2b$10$hash42', 'Student', '#42', 'student', TRUE),
+('student43@lms.com', '$2b$10$hash43', 'Student', '#43', 'student', TRUE),
+('student44@lms.com', '$2b$10$hash44', 'Student', '#44', 'student', TRUE),
+('student45@lms.com', '$2b$10$hash45', 'Student', '#45', 'student', TRUE),
+('student46@lms.com', '$2b$10$hash46', 'Student', '#46', 'student', TRUE),
+('student47@lms.com', '$2b$10$hash47', 'Student', '#47', 'student', TRUE),
+('student48@lms.com', '$2b$10$hash48', 'Student', '#48', 'student', TRUE),
+('student49@lms.com', '$2b$10$hash49', 'Student', '#49', 'student', TRUE),
+('student50@lms.com', '$2b$10$hash50', 'Student', '#50', 'student', TRUE),
+('student51@lms.com', '$2b$10$hash51', 'Student', '#51', 'student', TRUE),
+('student52@lms.com', '$2b$10$hash52', 'Student', '#52', 'student', TRUE),
+('student53@lms.com', '$2b$10$hash53', 'Student', '#53', 'student', TRUE),
+('student54@lms.com', '$2b$10$hash54', 'Student', '#54', 'student', TRUE),
+('student55@lms.com', '$2b$10$hash55', 'Student', '#55', 'student', TRUE),
+('student56@lms.com', '$2b$10$hash56', 'Student', '#56', 'student', TRUE),
+('student57@lms.com', '$2b$10$hash57', 'Student', '#57', 'student', TRUE),
+('student58@lms.com', '$2b$10$hash58', 'Student', '#58', 'student', TRUE),
+('student59@lms.com', '$2b$10$hash59', 'Student', '#59', 'student', TRUE),
+('student60@lms.com', '$2b$10$hash60', 'Student', '#60', 'student', TRUE),
+('student61@lms.com', '$2b$10$hash61', 'Student', '#61', 'student', TRUE),
+('student62@lms.com', '$2b$10$hash62', 'Student', '#62', 'student', TRUE),
+('student63@lms.com', '$2b$10$hash63', 'Student', '#63', 'student', TRUE),
+('student64@lms.com', '$2b$10$hash64', 'Student', '#64', 'student', TRUE),
+('student65@lms.com', '$2b$10$hash65', 'Student', '#65', 'student', TRUE),
+('student66@lms.com', '$2b$10$hash66', 'Student', '#66', 'student', TRUE),
+('student67@lms.com', '$2b$10$hash67', 'Student', '#67', 'student', TRUE),
+('student68@lms.com', '$2b$10$hash68', 'Student', '#68', 'student', TRUE),
+('student69@lms.com', '$2b$10$hash69', 'Student', '#69', 'student', TRUE),
+('student70@lms.com', '$2b$10$hash70', 'Student', '#70', 'student', TRUE),
+('student71@lms.com', '$2b$10$hash71', 'Student', '#71', 'student', TRUE),
+('student72@lms.com', '$2b$10$hash72', 'Student', '#72', 'student', TRUE),
+('student73@lms.com', '$2b$10$hash73', 'Student', '#73', 'student', TRUE),
+('student74@lms.com', '$2b$10$hash74', 'Student', '#74', 'student', TRUE),
+('student75@lms.com', '$2b$10$hash75', 'Student', '#75', 'student', TRUE),
+('student76@lms.com', '$2b$10$hash76', 'Student', '#76', 'student', TRUE),
+('student77@lms.com', '$2b$10$hash77', 'Student', '#77', 'student', TRUE),
+('student78@lms.com', '$2b$10$hash78', 'Student', '#78', 'student', TRUE),
+('student79@lms.com', '$2b$10$hash79', 'Student', '#79', 'student', TRUE),
+('student80@lms.com', '$2b$10$hash80', 'Student', '#80', 'student', TRUE),
+('student81@lms.com', '$2b$10$hash81', 'Student', '#81', 'student', TRUE),
+('student82@lms.com', '$2b$10$hash82', 'Student', '#82', 'student', TRUE),
+('student83@lms.com', '$2b$10$hash83', 'Student', '#83', 'student', TRUE),
+('student84@lms.com', '$2b$10$hash84', 'Student', '#84', 'student', TRUE),
+('student85@lms.com', '$2b$10$hash85', 'Student', '#85', 'student', TRUE),
+('student86@lms.com', '$2b$10$hash86', 'Student', '#86', 'student', TRUE),
+('student87@lms.com', '$2b$10$hash87', 'Student', '#87', 'student', TRUE),
+('student88@lms.com', '$2b$10$hash88', 'Student', '#88', 'student', TRUE),
+('student89@lms.com', '$2b$10$hash89', 'Student', '#89', 'student', TRUE),
+('student90@lms.com', '$2b$10$hash90', 'Student', '#90', 'student', TRUE),
+('student91@lms.com', '$2b$10$hash91', 'Student', '#91', 'student', TRUE),
+('student92@lms.com', '$2b$10$hash92', 'Student', '#92', 'student', TRUE),
+('student93@lms.com', '$2b$10$hash93', 'Student', '#93', 'student', TRUE),
+('student94@lms.com', '$2b$10$hash94', 'Student', '#94', 'student', TRUE),
+('student95@lms.com', '$2b$10$hash95', 'Student', '#95', 'student', TRUE),
+('student96@lms.com', '$2b$10$hash96', 'Student', '#96', 'student', TRUE),
+('student97@lms.com', '$2b$10$hash97', 'Student', '#97', 'student', TRUE),
+('student98@lms.com', '$2b$10$hash98', 'Student', '#98', 'student', TRUE),
+('student99@lms.com', '$2b$10$hash99', 'Student', '#99', 'student', TRUE),
+('student100@lms.com', '$2b$10$hash100', 'Student', '#100', 'student', TRUE);
+
+-- Thêm departments
+INSERT INTO departments (name, description) VALUES
+('Khoa học máy tính', 'Khoa học máy tính và công nghệ thông tin'),
+('Toán học', 'Toán học ứng dụng và thống kê'),
+('Vật lý', 'Vật lý học và kỹ thuật');
+
+-- Thêm courses
+INSERT INTO courses (code, title, description, instructor_id, department_id, status, start_date, end_date) VALUES
+('CS101T', 'Lập trình cơ bản', 'Khóa học lập trình cơ bản với Python', 2, 1, 'published', '2024-01-15', '2024-05-15'),
+('MATH201T', 'Thống kê ứng dụng', 'Khóa học thống kê và phân tích dữ liệu', 3, 2, 'published', '2024-02-01', '2024-06-01'),
+('CS201T', 'Cấu trúc dữ liệu', 'Khóa học cấu trúc dữ liệu và giải thuật', 2, 1, 'published', '2024-03-01', '2024-07-01'),
+('ML301T', 'Machine Learning', 'Khóa học máy học cơ bản', 2, 1, 'published', '2024-01-10', '2024-05-10');
+
+INSERT INTO courses (
+    code, enrollment_key, title, description, instructor_id, department_id, status, start_date, end_date, is_featured
+) VALUES
+(
+    'COURSE018',
+    'enrollment_key_18',
+    'Introduction to Algorithms',
+    'Introduction to Algorithms course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'lisa.wong@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Business'),
+    'published',
+    '2023-08-01',
+    '2023-10-30',
+    TRUE
+    ),
+(
+    'COURSE019',
+    'enrollment_key_19',
+    'Fullstack Web Development',
+    'Fullstack Web Development course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Mobile Development'),
+    'published',
+    '2023-08-31',
+    '2023-11-29',
+    FALSE
+    ),
+(
+    'COURSE020',
+    'enrollment_key_20',
+    'iOS App Development',
+    'iOS App Development course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Data Science'),
+    'published',
+    '2023-09-30',
+    '2023-12-29',
+    TRUE
+    ),
+(
+    'COURSE021',
+    'enrollment_key_21',
+    'Statistical Modeling',
+    'Statistical Modeling course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'anna.lee@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Arts & Design'),
+    'published',
+    '2023-10-30',
+    '2024-01-28',
+    FALSE
+    ),
+(
+    'COURSE022',
+    'enrollment_key_22',
+    'Entrepreneurship 101',
+    'Entrepreneurship 101 course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'anna.lee@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Business'),
+    'published',
+    '2023-11-29',
+    '2024-02-27',
+    TRUE
+    ),
+(
+    'COURSE023',
+    'enrollment_key_23',
+    'Creative Illustration',
+    'Creative Illustration course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'michael.brown@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Computer Science'),
+    'published',
+    '2023-12-29',
+    '2024-03-28',
+    FALSE
+    ),
+(
+    'COURSE024',
+    'enrollment_key_24',
+    'Machine Learning with Python',
+    'Machine Learning with Python course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'anna.lee@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Web Development'),
+    'published',
+    '2024-01-28',
+    '2024-04-27',
+    TRUE
+    ),
+(
+    'COURSE025',
+    'enrollment_key_25',
+    'DevSecOps Foundations',
+    'DevSecOps Foundations course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'michael.brown@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Arts & Design'),
+    'published',
+    '2024-02-27',
+    '2024-05-27',
+    FALSE
+    ),
+(
+    'COURSE026',
+    'enrollment_key_26',
+    'Cloud-native Applications',
+    'Cloud-native Applications course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'anna.lee@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Computer Science'),
+    'published',
+    '2024-03-28',
+    '2024-06-26',
+    TRUE
+    ),
+(
+    'COURSE027',
+    'enrollment_key_27',
+    'Product Management Basics',
+    'Product Management Basics course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'sarah.johnson@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Arts & Design'),
+    'published',
+    '2024-04-27',
+    '2024-07-26',
+    FALSE
+    ),
+(
+    'COURSE028',
+    'enrollment_key_28',
+    'Advanced SQL Techniques',
+    'Advanced SQL Techniques course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'david.clark@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Web Development'),
+    'published',
+    '2024-05-27',
+    '2024-08-25',
+    TRUE
+    ),
+(
+    'COURSE029',
+    'enrollment_key_29',
+    'Android Development Essentials',
+    'Android Development Essentials course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'michael.brown@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Data Science'),
+    'published',
+    '2024-06-26',
+    '2024-09-24',
+    FALSE
+    ),
+(
+    'COURSE030',
+    'enrollment_key_30',
+    'NoSQL Databases',
+    'NoSQL Databases course content and practical projects.',
+    (SELECT id FROM users WHERE email = 'lisa.wong@lms.com'),
+    (SELECT id FROM departments WHERE name = 'Mathematics'),
+    'published',
+    '2024-07-26',
+    '2024-10-24',
+    TRUE
+    );
+
+
+
+
+
+
+-- Thêm enrollments (đăng ký khóa học)
+INSERT INTO enrollments (student_id, course_id, enrollment_date, completion_status) VALUES
+-- Course CS101
+(4, 1, '2024-01-16', 'completed'),
+(5, 1, '2024-01-17', 'in_progress'),
+(6, 1, '2024-01-18', 'completed'),
+(7, 1, '2024-01-19', 'in_progress'),
+(8, 1, '2024-01-20', 'completed'),
+(10, 1, '2024-01-22', 'in_progress'),
+-- Course MATH201
+(4, 2, '2024-02-02', 'in_progress'),
+(5, 2, '2024-02-03', 'completed'),
+(6, 2, '2024-02-04', 'in_progress'),
+(12, 2, '2024-02-06', 'not_started'),
+-- Course CS201
+(7, 3, '2024-03-02', 'in_progress'),
+(8, 3, '2024-03-03', 'completed'),
+(9, 3, '2024-03-04', 'in_progress'),
+(13, 3, '2024-03-05', 'not_started'),
+-- Course ML301
+(4, 4, '2024-01-11', 'in_progress'),
+(5, 4, '2024-01-12', 'completed'),
+(6, 4, '2024-01-13', 'in_progress'),
+(8, 4, '2024-01-14', 'completed');
+
+INSERT INTO enrollments (
+    student_id, course_id, enrollment_date, completion_status
+) VALUES
+(
+    (SELECT id FROM users WHERE email = 'student11@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-10',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student11@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-10-09',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student11@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-09-25',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student12@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-09-03',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student12@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-09-19',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student12@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-09-22',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student13@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-10-04',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student13@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-09-30',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student13@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-09-17',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student14@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-10-17',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student14@lms.com'),
+    (SELECT id FROM courses WHERE code = 'WD101'),
+    '2023-10-09',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student14@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-09-29',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student15@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-10-21',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student15@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-10-05',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student15@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-09-20',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student16@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-10-19',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student16@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-10-14',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student16@lms.com'),
+    (SELECT id FROM courses WHERE code = 'WD101'),
+    '2023-09-30',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student17@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-10-13',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student17@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-10-31',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student17@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-10-25',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student18@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-10-10',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student18@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-30',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student18@lms.com'),
+    (SELECT id FROM courses WHERE code = 'WD101'),
+    '2023-10-29',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student19@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-10-05',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student19@lms.com'),
+    (SELECT id FROM courses WHERE code = 'WD101'),
+    '2023-10-25',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student19@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-09-13',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student20@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-09-11',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student20@lms.com'),
+    (SELECT id FROM courses WHERE code = 'WD101'),
+    '2023-09-22',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student20@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-10-16',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student21@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-16',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student21@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-10-13',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student21@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-10-31',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student22@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-09-19',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student22@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-10-10',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student22@lms.com'),
+    (SELECT id FROM courses WHERE code = 'WD101'),
+    '2023-09-26',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student23@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-10-05',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student23@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-29',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student23@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-10-22',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student24@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-20',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student24@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-09-29',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student24@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-09-02',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student25@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-10-20',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student25@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-10-08',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student25@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-10-11',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student26@lms.com'),
+    (SELECT id FROM courses WHERE code = 'REACT101'),
+    '2023-10-04',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student26@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-10-19',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student26@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-10-13',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student27@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-09-28',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student27@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-09-18',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student27@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-25',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student28@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-09',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student28@lms.com'),
+    (SELECT id FROM courses WHERE code = 'CS101'),
+    '2023-10-12',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student28@lms.com'),
+    (SELECT id FROM courses WHERE code = 'WD101'),
+    '2023-10-04',
+    'completed'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student29@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-10-13',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student29@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-10-26',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student29@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-10-15',
+    'in_progress'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student30@lms.com'),
+    (SELECT id FROM courses WHERE code = 'AI101'),
+    '2023-09-11',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student30@lms.com'),
+    (SELECT id FROM courses WHERE code = 'PY101'),
+    '2023-09-27',
+    'not_started'
+  ),
+(
+    (SELECT id FROM users WHERE email = 'student30@lms.com'),
+    (SELECT id FROM courses WHERE code = 'MD101'),
+    '2023-10-03',
+    'not_started'
+  );
+
+-- Thêm course modules
+INSERT INTO course_modules (course_id, title, description, order_index, is_published) VALUES
+-- CS101 modules
+(1, 'Giới thiệu Python', 'Cú pháp cơ bản và biến', 1, TRUE),
+(1, 'Cấu trúc điều khiển', 'If-else, loops', 2, TRUE),
+(1, 'Hàm và module', 'Định nghĩa và sử dụng hàm', 3, TRUE),
+-- MATH201 modules
+(2, 'Thống kê mô tả', 'Mean, median, mode, std', 1, TRUE),
+(2, 'Phân phối xác suất', 'Normal, binomial distribution', 2, TRUE),
+(2, 'Kiểm định giả thuyết', 'T-test, chi-square test', 3, TRUE),
+-- CS201 modules
+(3, 'Array và List', 'Cấu trúc dữ liệu tuyến tính', 1, TRUE),
+(3, 'Stack và Queue', 'LIFO và FIFO', 2, TRUE),
+(3, 'Tree và Graph', 'Cấu trúc dữ liệu phi tuyến', 3, TRUE),
+-- ML301 modules
+(4, 'Giới thiệu ML', 'Supervised vs Unsupervised', 1, TRUE),
+(4, 'Linear Regression', 'Hồi quy tuyến tính', 2, TRUE),
+(4, 'Classification', 'Decision Tree, SVM', 3, TRUE);
+
+-- Thêm lessons
+INSERT INTO lessons (module_id, title, description, content_type, order_index, is_published) VALUES
+-- CS101 lessons
+(1, 'Cài đặt Python', 'Hướng dẫn cài đặt Python', 'rich_content', 1, TRUE),
+(1, 'Biến và kiểu dữ liệu', 'Làm việc với biến', 'rich_content', 2, TRUE),
+(2, 'Câu lệnh if-else', 'Cấu trúc điều khiển', 'rich_content', 1, TRUE),
+(2, 'Vòng lặp for và while', 'Các loại vòng lặp', 'rich_content', 2, TRUE),
+-- MATH201 lessons
+(4, 'Tính mean và median', 'Thống kê mô tả cơ bản', 'rich_content', 1, TRUE),
+(4, 'Độ lệch chuẩn', 'Đo độ phân tán', 'rich_content', 2, TRUE),
+-- ML301 lessons
+(10, 'Khái niệm ML', 'Machine Learning là gì?', 'rich_content', 1, TRUE),
+(11, 'Linear Regression Theory', 'Lý thuyết hồi quy tuyến tính', 'rich_content', 1, TRUE);
+
+INSERT INTO course_modules (course_id, title, description, order_index, is_published) VALUES
+(1, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(1, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(1, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(1, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(2, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(2, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(2, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(2, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(3, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(3, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(3, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(3, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(4, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(4, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(4, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(4, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(5, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(5, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(5, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(5, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(6, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(6, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(6, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(6, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(7, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(7, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(7, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(7, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(8, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(8, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(8, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(8, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(9, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(9, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(9, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(9, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(10, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(10, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(10, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(10, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(11, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(11, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(11, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(11, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(12, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(12, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(12, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(12, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(13, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(13, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(13, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(13, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(14, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(14, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(14, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(14, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(15, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(15, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(15, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(15, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(16, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(16, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(16, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(16, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(17, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(17, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(17, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(17, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(18, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(18, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(18, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(18, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(19, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(19, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(19, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(19, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE),
+(20, 'Module 1: Giới thiệu', 'Giới thiệu tổng quan khóa học', 1, TRUE),
+(20, 'Module 2: Chủ đề chính 1', 'Nội dung chính phần 1', 2, TRUE),
+(20, 'Module 3: Chủ đề chính 2', 'Nội dung chính phần 2', 3, TRUE),
+(20, 'Module 4: Tổng kết', 'Ôn tập và kết luận', 4, TRUE);
+
+-- ===============================================
+-- THÊM DỮ LIỆU QUIZ VÀ CÂU HỎI
+-- ===============================================
+
+-- Thêm quizzes
+INSERT INTO quizzes (course_id, lesson_id, title, description, time_limit_minutes, passing_score, max_attempts, is_randomized) VALUES
+-- CS101 quizzes
+(1, 1, 'Quiz Python Cơ bản', 'Kiểm tra kiến thức Python cơ bản', 30, 70, 3, FALSE),
+(1, 3, 'Quiz Cấu trúc điều khiển', 'Kiểm tra if-else và loops', 25, 75, 2, TRUE),
+(1, NULL, 'Quiz Tổng kết CS101', 'Kiểm tra tổng hợp kiến thức', 45, 80, 1, TRUE),
+-- MATH201 quizzes
+(2, 5, 'Quiz Thống kê mô tả', 'Kiểm tra mean, median, mode', 20, 70, 3, FALSE),
+(2, NULL, 'Quiz Phân phối xác suất', 'Kiểm tra phân phối normal', 35, 75, 2, TRUE),
+-- ML301 quizzes
+(4, 10, 'Quiz Giới thiệu ML', 'Kiểm tra khái niệm cơ bản', 20, 80, 2, FALSE),
+(4, 11, 'Quiz Linear Regression', 'Kiểm tra hồi quy tuyến tính', 30, 75, 2, TRUE),
+(4, NULL, 'Quiz Tổng kết ML', 'Kiểm tra tổng hợp ML', 60, 85, 1, TRUE);
+
+INSERT INTO quizzes (course_id, lesson_id, title, description, time_limit_minutes, passing_score, max_attempts, is_randomized) VALUES
+-- CS101
+(1, 1, 'Quiz Chủ đề 1', 'Kiểm tra nội dung chính phần 1', 30, 70, 3, FALSE),
+(1, 2, 'Quiz Chủ đề 2', 'Kiểm tra nội dung chính phần 2', 25, 75, 2, TRUE),
+(1, NULL, 'Quiz Tổng kết', 'Kiểm tra tổng hợp kiến thức khóa học', 45, 80, 1, TRUE),
+
+-- MATH201
+(2, 5, 'Quiz Chủ đề 1', 'Kiểm tra nội dung chính phần 1', 30, 70, 3, FALSE),
+(2, 6, 'Quiz Chủ đề 2', 'Kiểm tra nội dung chính phần 2', 25, 75, 2, TRUE),
+(2, NULL, 'Quiz Tổng kết', 'Kiểm tra tổng hợp kiến thức khóa học', 45, 80, 1, TRUE),
+
+-- DB101
+(3, 9, 'Quiz Chủ đề 1', 'Kiểm tra nội dung chính phần 1', 30, 70, 3, FALSE),
+(3, 10, 'Quiz Chủ đề 2', 'Kiểm tra nội dung chính phần 2', 25, 75, 2, TRUE),
+(3, NULL, 'Quiz Tổng kết', 'Kiểm tra tổng hợp kiến thức khóa học', 45, 80, 1, TRUE),
+
+-- ML301
+(4, 13, 'Quiz Chủ đề 1', 'Kiểm tra nội dung chính phần 1', 30, 70, 3, FALSE),
+(4, 14, 'Quiz Chủ đề 2', 'Kiểm tra nội dung chính phần 2', 25, 75, 2, TRUE),
+(4, NULL, 'Quiz Tổng kết', 'Kiểm tra tổng hợp kiến thức khóa học', 45, 80, 1, TRUE),
+
+-- STAT101
+(5, 15, 'Quiz Chủ đề 1', 'Kiểm tra nội dung chính phần 1', 30, 70, 3, FALSE),
+(5, 16, 'Quiz Chủ đề 2', 'Kiểm tra nội dung chính phần 2', 25, 75, 2, TRUE),
+(5, NULL, 'Quiz Tổng kết', 'Kiểm tra tổng hợp kiến thức khóa học', 45, 80, 1, TRUE),
+
+-- AI101
+(6, 17, 'Quiz Chủ đề 1', 'Kiểm tra nội dung chính phần 1', 30, 70, 3, FALSE),
+(6, NULL, 'Quiz Tổng kết', 'Kiểm tra tổng hợp kiến thức khóa học', 45, 80, 1, TRUE);
+
+-- Thêm quiz questions
+INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index) VALUES
+-- Quiz 1: Python Cơ bản
+(1, 'Python là ngôn ngữ lập trình gì?', 'multiple_choice', 2, 1),
+(1, 'Để in ra màn hình trong Python, ta dùng hàm ____', 'short_answer', 2, 2),
+(1, 'Biến trong Python có cần khai báo kiểu dữ liệu không?', 'multiple_choice', 1, 3),
+(1, 'Comment trong Python bắt đầu bằng ký tự ____', 'short_answer', 1, 4),
+
+-- Quiz 2: Cấu trúc điều khiển
+(2, 'Câu lệnh nào dùng để kiểm tra điều kiện trong Python?', 'multiple_choice', 2, 1),
+(2, 'Vòng lặp ____ dùng để lặp qua các phần tử trong list', 'short_answer', 2, 2),
+(2, 'Từ khóa nào dùng để thoát khỏi vòng lặp?', 'multiple_choice', 1, 3),
+
+-- Quiz 3: Thống kê mô tả
+(4, 'Mean của dãy số [1,2,3,4,5] là bao nhiêu?', 'multiple_choice', 2, 1),
+(4, 'Median là gì?', 'multiple_choice', 2, 2),
+(4, 'Độ lệch chuẩn đo lường ____', 'short_answer', 1, 3),
+
+-- Quiz 4: Giới thiệu ML
+(6, 'Machine Learning thuộc lĩnh vực nào?', 'multiple_choice', 1, 1),
+(6, 'Supervised Learning cần có ____', 'short_answer', 2, 2),
+(6, 'Unsupervised Learning không cần gì?', 'multiple_choice', 1, 3),
+
+-- Quiz 5: Linear Regression
+(7, 'Linear Regression dùng để dự đoán gì?', 'multiple_choice', 2, 1),
+(7, 'Công thức Linear Regression: y = ax + ____', 'short_answer', 1, 2);
+
+INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index) VALUES
+-- Quiz 9 (lesson_id 1)
+(9, 'Python là ngôn ngữ lập trình gì?', 'multiple_choice', 2, 1),
+(9, 'Hàm nào dùng để in ra màn hình trong Python?', 'short_answer', 1, 2),
+(9, 'Python có cần khai báo kiểu dữ liệu không?', 'multiple_choice', 1, 3),
+
+-- Quiz 10 (lesson_id 2)
+(10, 'IDE nào phổ biến để viết Python?', 'multiple_choice', 2, 1),
+(10, 'Lệnh cài đặt thư viện trong Python là gì?', 'short_answer', 2, 2),
+(10, 'Tại sao cần thiết lập môi trường lập trình?', 'short_answer', 2, 3),
+
+-- Quiz 12 (lesson_id 5)
+(12, 'Các kiểu dữ liệu cơ bản trong Python là gì?', 'multiple_choice', 2, 1),
+(12, 'Làm sao để khai báo biến kiểu chuỗi?', 'short_answer', 1, 2),
+(12, 'Python có hỗ trợ kiểu dữ liệu boolean không?', 'multiple_choice', 1, 3),
+
+-- Quiz 13 (lesson_id 6)
+(13, 'Toán tử nào dùng để cộng hai số?', 'short_answer', 1, 1),
+(13, 'Toán tử so sánh "==" dùng để làm gì?', 'multiple_choice', 2, 2),
+(13, 'Toán tử logic nào kiểm tra cả hai điều kiện đều đúng?', 'multiple_choice', 2, 3),
+
+-- Quiz 15 (lesson_id 9)
+(15, 'Hàm input() dùng để làm gì?', 'short_answer', 2, 1),
+(15, 'Làm sao để in nội dung ra màn hình cùng biến?', 'short_answer', 2, 2),
+(15, 'Làm sao để ép kiểu dữ liệu nhập vào?', 'multiple_choice', 2, 3),
+
+-- Quiz 16 (lesson_id 10)
+(16, 'Thẻ HTML nào để tạo liên kết?', 'multiple_choice', 2, 1),
+(16, 'Cú pháp để tạo đường dẫn trong thẻ <a> là gì?', 'short_answer', 1, 2),
+(16, 'HTML viết tắt của gì?', 'multiple_choice', 1, 3),
+
+-- Quiz 18 (lesson_id 13)
+(18, 'Thẻ <head> có tác dụng gì?', 'multiple_choice', 2, 1),
+(18, 'Thẻ <body> chứa nội dung gì?', 'multiple_choice', 2, 2),
+(18, 'Tài liệu HTML bắt đầu bằng thẻ nào?', 'short_answer', 1, 3),
+
+-- Quiz 19 (lesson_id 14)
+(19, 'Thẻ nào dùng để tạo tiêu đề văn bản?', 'multiple_choice', 2, 1),
+(19, 'Thẻ nào tạo liên kết trong HTML?', 'multiple_choice', 2, 2),
+(19, 'Làm sao để tạo đoạn văn trong HTML?', 'short_answer', 1, 3),
+
+-- Quiz 21 (lesson_id 15)
+(21, 'Cần công cụ nào để chạy mã Python?', 'multiple_choice', 1, 1),
+(21, 'Lệnh cài Python bằng terminal là gì?', 'short_answer', 2, 2),
+(21, 'Cài đặt Python yêu cầu hệ điều hành nào?', 'multiple_choice', 1, 3),
+
+-- Quiz 22 (lesson_id 16)
+(22, 'Cách khai báo biến trong Python là?', 'short_answer', 2, 1),
+(22, 'Kiểu dữ liệu "float" dùng để làm gì?', 'multiple_choice', 2, 2),
+(22, 'Kiểu dữ liệu list trong Python dùng để?', 'multiple_choice', 1, 3),
+
+-- Quiz 24 (lesson_id 17)
+(24, 'Câu lệnh if có cú pháp như thế nào?', 'short_answer', 2, 1),
+(24, 'Từ khóa elif trong Python dùng để làm gì?', 'short_answer', 2, 2),
+(24, 'Câu lệnh if có thể lồng nhau không?', 'multiple_choice', 1, 3);
+
+
+-- Thêm quiz options (multiple choice answers)
+INSERT INTO question_options (question_id, option_text, is_correct, order_index) VALUES
+-- Q1: Python là ngôn ngữ gì? (id = 16)
+(16, 'Ngôn ngữ thông dịch', TRUE, 1),
+(16, 'Ngôn ngữ biên dịch', FALSE, 2),
+(16, 'Ngôn ngữ máy', FALSE, 3),
+(16, 'Ngôn ngữ assembly', FALSE, 4),
+
+-- Q2: Biến cần khai báo kiểu không? (id = 18)
+(18, 'Có, luôn cần khai báo', FALSE, 1),
+(18, 'Không, Python tự động nhận dạng', TRUE, 2),
+(18, 'Chỉ với số nguyên', FALSE, 3),
+(18, 'Chỉ với chuỗi', FALSE, 4),
+
+-- Q3: Câu lệnh kiểm tra điều kiện (id = 20)
+(20, 'if', TRUE, 1),
+(20, 'for', FALSE, 2),
+(20, 'while', FALSE, 3),
+(20, 'def', FALSE, 4),
+
+-- Q4: Từ khóa thoát vòng lặp (id = 22)
+(22, 'break', TRUE, 1),
+(22, 'continue', FALSE, 2),
+(22, 'pass', FALSE, 3),
+(22, 'return', FALSE, 4),
+
+-- Q5: Mean của [1,2,3,4,5] (id = 23)
+(23, '2.5', FALSE, 1),
+(23, '3', TRUE, 2),
+(23, '3.5', FALSE, 3),
+(23, '15', FALSE, 4),
+
+-- Q6: Median là gì? (id = 24)
+(24, 'Giá trị trung bình', FALSE, 1),
+(24, 'Giá trị ở giữa khi sắp xếp', TRUE, 2),
+(24, 'Giá trị xuất hiện nhiều nhất', FALSE, 3),
+(24, 'Giá trị lớn nhất', FALSE, 4),
+
+-- Q7: ML thuộc lĩnh vực nào? (id = 26)
+(26, 'Trí tuệ nhân tạo', TRUE, 1),
+(26, 'Cơ học', FALSE, 2),
+(26, 'Sinh học', FALSE, 3),
+(26, 'Hóa học', FALSE, 4),
+
+-- Q8: Unsupervised Learning không cần gì? (id = 28)
+(28, 'Dữ liệu', FALSE, 1),
+(28, 'Nhãn/Label', TRUE, 2),
+(28, 'Thuật toán', FALSE, 3),
+(28, 'Máy tính', FALSE, 4),
+
+-- Q9: Linear Regression dự đoán gì? (id = 29)
+(29, 'Giá trị liên tục', TRUE, 1),
+(29, 'Giá trị rời rạc', FALSE, 2),
+(29, 'Phân loại', FALSE, 3),
+(29, 'Clustering', FALSE, 4);
+
+INSERT INTO question_options (question_id, option_text, is_correct, order_index) VALUES
+-- Q16: Python là ngôn ngữ lập trình gì?
+(16, 'Ngôn ngữ thông dịch', TRUE, 1),
+(16, 'Ngôn ngữ biên dịch', FALSE, 2),
+(16, 'Ngôn ngữ máy', FALSE, 3),
+(16, 'Ngôn ngữ assembly', FALSE, 4),
+
+-- Q17: Hàm nào dùng để in ra màn hình trong Python?
+(17, 'print()', TRUE, 1),
+(17, 'echo()', FALSE, 2),
+(17, 'printf()', FALSE, 3),
+(17, 'cout <<', FALSE, 4),
+
+-- Q18: Python có cần khai báo kiểu dữ liệu không?
+(18, 'Không cần khai báo', TRUE, 1),
+(18, 'Phải khai báo kiểu dữ liệu', FALSE, 2),
+(18, 'Tùy thuộc ngữ cảnh', FALSE, 3),
+(18, 'Python không có biến', FALSE, 4),
+
+-- Q19: IDE nào phổ biến để viết Python?
+(19, 'PyCharm', TRUE, 1),
+(19, 'Word', FALSE, 2),
+(19, 'Excel', FALSE, 3),
+(19, 'Chrome', FALSE, 4),
+
+-- Q20: Lệnh cài đặt thư viện trong Python là gì?
+(20, 'pip install <tên_thư_viện>', TRUE, 1),
+(20, 'python install', FALSE, 2),
+(20, 'npm install', FALSE, 3),
+(20, 'install package', FALSE, 4);
+
+INSERT INTO fill_in_answers (question_id, answer_text) VALUES
+-- Q1: Để in ra màn hình (id = 17)
+(17, 'print'),
+
+-- Q2: Comment bắt đầu bằng (id = 19)
+(19, '#'),
+
+-- Q3: Vòng lặp dùng để duyệt list (id = 21)
+(21, 'for'),
+
+-- Q4: Độ lệch chuẩn đo lường... (id = 25)
+(25, 'độ phân tán'),
+(25, 'sự phân tán'),
+
+-- Q5: Supervised Learning cần có... (id = 27)
+(27, 'dữ liệu có nhãn'),
+(27, 'labeled data'),
+
+-- Q6: Công thức Linear Regression (id = 30)
+(30, 'b');
+
+-- ===============================================
+-- THÊM DỮ LIỆU QUIZ ATTEMPTS VÀ ANSWERS
+-- ===============================================
+
+-- Thêm quiz attempts (học sinh làm bài)
+INSERT INTO quiz_attempts (quiz_id, student_id, start_time, end_time, score, is_passing) VALUES
+-- Student 1 (ID=4) attempts
+(1, 4, '2024-01-20 09:00:00', '2024-01-20 09:25:00', 85.50, TRUE),
+(2, 4, '2024-02-01 10:00:00', '2024-02-01 10:20:00', 92.00, TRUE),
+(4, 4, '2024-02-10 14:00:00', '2024-02-10 14:15:00', 88.00, TRUE),
+(6, 4, '2024-01-25 11:00:00', '2024-01-25 11:18:00', 75.00, FALSE),
+(6, 4, '2024-01-26 09:00:00', '2024-01-26 09:15:00', 85.00, TRUE),
+
+-- Student 2 (ID=5) attempts
+(1, 5, '2024-01-21 14:00:00', '2024-01-21 14:30:00', 75.00, TRUE),
+(2, 5, '2024-02-02 09:30:00', '2024-02-02 09:45:00', 68.00, FALSE),
+(2, 5, '2024-02-03 10:00:00', '2024-02-03 10:22:00', 78.00, TRUE),
+(4, 5, '2024-02-11 15:00:00', '2024-02-11 15:12:00', 95.00, TRUE),
+(6, 5, '2024-01-27 13:00:00', '2024-01-27 13:20:00', 90.00, TRUE),
+(7, 5, '2024-02-15 10:00:00', '2024-02-15 10:25:00', 82.00, TRUE),
+
+-- Student 3 (ID=6) attempts
+(1, 6, '2024-01-22 16:00:00', '2024-01-22 16:28:00', 95.00, TRUE),
+(2, 6, '2024-02-04 11:00:00', '2024-02-04 11:20:00', 85.00, TRUE),
+(4, 6, '2024-02-12 16:30:00', '2024-02-12 16:50:00', 72.00, TRUE),
+(6, 6, '2024-01-28 14:00:00', '2024-01-28 14:12:00', 88.00, TRUE),
+
+-- Student 4 (ID=7) attempts
+(1, 7, '2024-01-23 08:00:00', '2024-01-23 08:35:00', 65.00, FALSE),
+(1, 7, '2024-01-24 09:00:00', '2024-01-24 09:22:00', 78.00, TRUE),
+(2, 7, '2024-02-05 13:00:00', '2024-02-05 13:25:00', 88.00, TRUE),
+
+-- Student 5 (ID=8) attempts
+(1, 8, '2024-01-25 10:00:00', '2024-01-25 10:20:00', 92.00, TRUE),
+(2, 8, '2024-02-06 14:00:00', '2024-02-06 14:18:00', 95.00, TRUE),
+(3, 8, '2024-02-20 15:00:00', '2024-02-20 15:40:00', 88.00, TRUE),
+(6, 8, '2024-01-30 11:00:00', '2024-01-30 11:16:00', 92.00, TRUE),
+(7, 8, '2024-02-18 09:00:00', '2024-02-18 09:28:00', 85.00, TRUE),
+
+-- More attempts for other students
+(1, 9, '2024-01-26 15:00:00', '2024-01-26 15:35:00', 55.00, FALSE),
+(4, 11, '2024-02-13 10:00:00', '2024-02-13 10:18:00', 78.00, TRUE),
+(4, 12, '2024-02-14 11:30:00', '2024-02-14 11:45:00', 85.00, TRUE),
+(6, 10, '2024-02-01 16:00:00', '2024-02-01 16:20:00', 75.00, FALSE);
+
+INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES
+(16, 'Ngôn ngữ thông dịch', TRUE),
+(16, 'Ngôn ngữ biên dịch', FALSE),
+(16, 'Ngôn ngữ máy', FALSE),
+(16, 'Ngôn ngữ assembly', FALSE),
+
+(18, 'Có, luôn cần khai báo', FALSE),
+(18, 'Không, Python tự động nhận dạng', TRUE),
+(18, 'Chỉ với số nguyên', FALSE),
+(18, 'Chỉ với chuỗi', FALSE),
+
+(20, 'if', TRUE),
+(20, 'for', FALSE),
+(20, 'while', FALSE),
+(20, 'def', FALSE),
+
+(22, 'break', TRUE),
+(22, 'continue', FALSE),
+(22, 'pass', FALSE),
+(22, 'return', FALSE),
+
+(23, '2.5', FALSE),
+(23, '3', TRUE),
+(23, '3.5', FALSE),
+(23, '15', FALSE),
+
+(24, 'Giá trị trung bình', FALSE),
+(24, 'Giá trị ở giữa khi sắp xếp', TRUE),
+(24, 'Giá trị xuất hiện nhiều nhất', FALSE),
+(24, 'Giá trị lớn nhất', FALSE),
+
+(26, 'Trí tuệ nhân tạo', TRUE),
+(26, 'Cơ học', FALSE),
+(26, 'Sinh học', FALSE),
+(26, 'Hóa học', FALSE),
+
+(28, 'Dữ liệu', FALSE),
+(28, 'Nhãn/Label', TRUE),
+(28, 'Thuật toán', FALSE),
+(28, 'Máy tính', FALSE),
+
+(29, 'Giá trị liên tục', TRUE),
+(29, 'Giá trị rời rạc', FALSE),
+(29, 'Phân loại', FALSE),
+(29, 'Clustering', FALSE);
+
+
+INSERT INTO quiz_answer_records (attempt_id, question_id, selected_option_id, text_answer, is_correct) VALUES
+-- Attempt 1: Student 4, Quiz 1 (score: 85.5)
+(1, 16, 1, NULL, TRUE),      -- Ngôn ngữ thông dịch
+(1, 17, NULL, 'print', TRUE),  -- Fill-in: print
+(1, 18, 6, NULL, TRUE),      -- Không cần khai báo
+(1, 19, NULL, '#', TRUE),    -- Fill-in: #
+
+-- Attempt 2: Student 4, Quiz 2 (score: 92.0)
+(2, 20, 9, NULL, TRUE),      -- if
+(2, 21, NULL, 'for', TRUE),  -- Fill-in: for
+(2, 22, 13, NULL, TRUE),     -- break
+
+-- Attempt 5: Student 4, Quiz 6 attempt 2 (score: 85.0)
+(5, 26, 25, NULL, TRUE),     -- Trí tuệ nhân tạo
+(5, 27, NULL, 'dữ liệu có nhãn', TRUE), -- Fill-in
+(5, 28, 30, NULL, TRUE),     -- Nhãn/Label
+
+-- Attempt 6: Student 5, Quiz 1 (score: 75.0)
+(6, 16, 1, NULL, TRUE),      -- Ngôn ngữ thông dịch
+(6, 17, NULL, 'print', TRUE),-- Fill-in
+(6, 18, 5, NULL, FALSE),     -- Chọn sai: Có, luôn cần khai báo
+(6, 19, NULL, '#', TRUE),    -- Fill-in
+
+-- Attempt 11: Student 6, Quiz 1 (score: 95.0)
+(11, 16, 1, NULL, TRUE),
+(11, 17, NULL, 'print', TRUE),
+(11, 18, 6, NULL, TRUE),
+(11, 19, NULL, '#', TRUE),
+
+-- Attempt 13: Student 6, Quiz 3 (score: ???)
+(13, 23, 18, NULL, TRUE),    -- 3
+(13, 24, 22, NULL, TRUE),    -- Giá trị giữa
+(13, 25, NULL, 'độ phân tán', TRUE),  -- Fill-in
+
+-- Attempt 16: Student 7, Quiz 5 (score: ???)
+(16, 29, 33, NULL, TRUE),    -- Giá trị liên tục
+(16, 30, NULL, 'b', TRUE);   -- Fill-in
+
+
+-- ===============================================
+-- THÊM DỮ LIỆU USER ACTIVITIES
+-- ===============================================
+
+INSERT INTO user_activities (user_id, type, description, metadata, ip_address, created_at) VALUES
+-- Student learning activities
+(4, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 45}', '192.168.1.100', '2024-01-20 08:30:00'),
+(4, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 35}', '192.168.1.100', '2024-01-20 09:30:00'),
+(4, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 85.5, "attempts": 1}', '192.168.1.100', '2024-01-20 09:25:00'),
+
+(5, 'course_access', 'Truy cập khóa học MATH201', '{"course_id": 2, "duration_minutes": 60}', '192.168.1.101', '2024-02-11 14:00:00'),
+(5, 'quiz_complete', 'Hoàn thành Quiz Thống kê mô tả', '{"quiz_id": 4, "score": 95.0, "attempts": 1}', '192.168.1.101', '2024-02-11 15:12:00'),
+
+(6, 'login', 'Đăng nhập hệ thống', '{"login_method": "email"}', '192.168.1.102', '2024-01-22 15:45:00'),
+(6, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 50}', '192.168.1.102', '2024-01-22 16:00:00'),
+(6, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 95.0, "attempts": 1}', '192.168.1.102', '2024-01-22 16:28:00'),
+
+(8, 'course_access', 'Truy cập khóa học ML301', '{"course_id": 4, "duration_minutes": 75}', '192.168.1.104', '2024-01-30 10:00:00'),
+(8, 'quiz_complete', 'Hoàn thành Quiz Giới thiệu ML', '{"quiz_id": 6, "score": 92.0, "attempts": 1}', '192.168.1.104', '2024-01-30 11:16:00'),
+(8, 'module_complete', 'Hoàn thành module Machine Learning cơ bản', '{"course_id": 4, "module_id": 10, "completion_time": 65}', '192.168.1.104', '2024-01-30 11:30:00');
+
+INSERT INTO user_activities (user_id, type, description, metadata, ip_address, created_at) VALUES
+(11, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 54}', '192.168.1.200', '2024-01-20 08:09:00'),
+(11, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 26}', '192.168.1.200', '2024-01-20 09:09:00'),
+(11, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 88.4, "attempts": 1}', '192.168.1.200', '2024-01-20 09:39:00'),
+(12, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 56}', '192.168.1.136', '2024-01-20 08:51:00'),
+(12, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 23}', '192.168.1.136', '2024-01-20 09:51:00'),
+(12, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 89.1, "attempts": 1}', '192.168.1.136', '2024-01-20 10:21:00'),
+(13, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 53}', '192.168.1.214', '2024-01-20 09:14:00'),
+(13, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 38}', '192.168.1.214', '2024-01-20 10:14:00'),
+(13, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 77.1, "attempts": 1}', '192.168.1.214', '2024-01-20 10:44:00'),
+(14, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 60}', '192.168.1.202', '2024-01-20 08:04:00'),
+(14, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 31}', '192.168.1.202', '2024-01-20 09:04:00'),
+(14, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 75.8, "attempts": 1}', '192.168.1.202', '2024-01-20 09:34:00'),
+(15, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 57}', '192.168.1.201', '2024-01-20 09:42:00'),
+(15, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.201', '2024-01-20 10:42:00'),
+(15, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 82.7, "attempts": 1}', '192.168.1.201', '2024-01-20 11:12:00'),
+(16, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 51}', '192.168.1.194', '2024-01-20 09:58:00'),
+(16, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.194', '2024-01-20 10:58:00'),
+(16, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 73.3, "attempts": 1}', '192.168.1.194', '2024-01-20 11:28:00'),
+(17, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 51}', '192.168.1.94', '2024-01-20 08:31:00'),
+(17, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.94', '2024-01-20 09:31:00'),
+(17, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 84.3, "attempts": 1}', '192.168.1.94', '2024-01-20 10:01:00'),
+(18, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 60}', '192.168.1.108', '2024-01-20 08:52:00'),
+(18, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 38}', '192.168.1.108', '2024-01-20 09:52:00'),
+(18, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 87.6, "attempts": 1}', '192.168.1.108', '2024-01-20 10:22:00'),
+(19, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 42}', '192.168.1.10', '2024-01-20 09:53:00'),
+(19, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 26}', '192.168.1.10', '2024-01-20 10:53:00'),
+(19, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 83.9, "attempts": 1}', '192.168.1.10', '2024-01-20 11:23:00'),
+(20, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 57}', '192.168.1.82', '2024-01-20 09:24:00'),
+(20, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 27}', '192.168.1.82', '2024-01-20 10:24:00'),
+(20, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 84.3, "attempts": 1}', '192.168.1.82', '2024-01-20 10:54:00'),
+(21, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 57}', '192.168.1.213', '2024-01-20 08:29:00'),
+(21, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 28}', '192.168.1.213', '2024-01-20 09:29:00'),
+(21, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 86.4, "attempts": 1}', '192.168.1.213', '2024-01-20 09:59:00'),
+(22, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 33}', '192.168.1.187', '2024-01-20 08:55:00'),
+(22, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 36}', '192.168.1.187', '2024-01-20 09:55:00'),
+(22, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 85.1, "attempts": 1}', '192.168.1.187', '2024-01-20 10:25:00'),
+(23, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 46}', '192.168.1.159', '2024-01-20 08:32:00'),
+(23, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.159', '2024-01-20 09:32:00'),
+(23, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 72.8, "attempts": 1}', '192.168.1.159', '2024-01-20 10:02:00'),
+(24, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 43}', '192.168.1.38', '2024-01-20 08:47:00'),
+(24, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 35}', '192.168.1.38', '2024-01-20 09:47:00'),
+(24, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 77.2, "attempts": 1}', '192.168.1.38', '2024-01-20 10:17:00'),
+(25, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 39}', '192.168.1.166', '2024-01-20 09:02:00'),
+(25, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.166', '2024-01-20 10:02:00'),
+(25, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 84.4, "attempts": 1}', '192.168.1.166', '2024-01-20 10:32:00'),
+(26, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 58}', '192.168.1.148', '2024-01-20 09:16:00'),
+(26, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 23}', '192.168.1.148', '2024-01-20 10:16:00'),
+(26, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.6, "attempts": 1}', '192.168.1.148', '2024-01-20 10:46:00'),
+(27, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 55}', '192.168.1.117', '2024-01-20 09:47:00'),
+(27, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 31}', '192.168.1.117', '2024-01-20 10:47:00'),
+(27, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 86.1, "attempts": 1}', '192.168.1.117', '2024-01-20 11:17:00'),
+(28, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 31}', '192.168.1.75', '2024-01-20 08:39:00'),
+(28, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 40}', '192.168.1.75', '2024-01-20 09:39:00'),
+(28, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 73.6, "attempts": 1}', '192.168.1.75', '2024-01-20 10:09:00'),
+(29, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 51}', '192.168.1.43', '2024-01-20 08:50:00'),
+(29, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 23}', '192.168.1.43', '2024-01-20 09:50:00'),
+(29, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 92.9, "attempts": 1}', '192.168.1.43', '2024-01-20 10:20:00'),
+(30, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 31}', '192.168.1.139', '2024-01-20 09:51:00'),
+(30, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 40}', '192.168.1.139', '2024-01-20 10:51:00'),
+(30, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 90.0, "attempts": 1}', '192.168.1.139', '2024-01-20 11:21:00'),
+(31, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 52}', '192.168.1.133', '2024-01-20 09:48:00'),
+(31, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 36}', '192.168.1.133', '2024-01-20 10:48:00'),
+(31, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 82.9, "attempts": 1}', '192.168.1.133', '2024-01-20 11:18:00'),
+(32, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 46}', '192.168.1.47', '2024-01-20 08:29:00'),
+(32, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 30}', '192.168.1.47', '2024-01-20 09:29:00'),
+(32, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 74.8, "attempts": 1}', '192.168.1.47', '2024-01-20 09:59:00'),
+(33, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 54}', '192.168.1.71', '2024-01-20 08:29:00'),
+(33, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 25}', '192.168.1.71', '2024-01-20 09:29:00'),
+(33, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 92.5, "attempts": 1}', '192.168.1.71', '2024-01-20 09:59:00'),
+(34, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 33}', '192.168.1.23', '2024-01-20 08:54:00'),
+(34, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 25}', '192.168.1.23', '2024-01-20 09:54:00'),
+(34, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 94.0, "attempts": 1}', '192.168.1.23', '2024-01-20 10:24:00'),
+(35, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 53}', '192.168.1.195', '2024-01-20 09:59:00'),
+(35, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 20}', '192.168.1.195', '2024-01-20 10:59:00'),
+(35, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.1, "attempts": 1}', '192.168.1.195', '2024-01-20 11:29:00'),
+(36, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 38}', '192.168.1.222', '2024-01-20 09:38:00'),
+(36, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 35}', '192.168.1.222', '2024-01-20 10:38:00'),
+(36, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 70.1, "attempts": 1}', '192.168.1.222', '2024-01-20 11:08:00'),
+(37, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 58}', '192.168.1.158', '2024-01-20 08:21:00'),
+(37, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 32}', '192.168.1.158', '2024-01-20 09:21:00'),
+(37, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 87.2, "attempts": 1}', '192.168.1.158', '2024-01-20 09:51:00'),
+(38, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 32}', '192.168.1.168', '2024-01-20 08:42:00'),
+(38, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 40}', '192.168.1.168', '2024-01-20 09:42:00'),
+(38, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 71.6, "attempts": 1}', '192.168.1.168', '2024-01-20 10:12:00'),
+(39, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 34}', '192.168.1.10', '2024-01-20 08:32:00'),
+(39, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 27}', '192.168.1.10', '2024-01-20 09:32:00'),
+(39, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 82.2, "attempts": 1}', '192.168.1.10', '2024-01-20 10:02:00'),
+(40, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 30}', '192.168.1.62', '2024-01-20 08:11:00'),
+(40, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.62', '2024-01-20 09:11:00'),
+(40, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 90.4, "attempts": 1}', '192.168.1.62', '2024-01-20 09:41:00'),
+(41, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 38}', '192.168.1.191', '2024-01-20 08:36:00'),
+(41, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 27}', '192.168.1.191', '2024-01-20 09:36:00'),
+(41, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 84.0, "attempts": 1}', '192.168.1.191', '2024-01-20 10:06:00'),
+(42, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 44}', '192.168.1.176', '2024-01-20 09:41:00'),
+(42, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 31}', '192.168.1.176', '2024-01-20 10:41:00'),
+(42, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.7, "attempts": 1}', '192.168.1.176', '2024-01-20 11:11:00'),
+(43, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 54}', '192.168.1.76', '2024-01-20 08:35:00'),
+(43, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 40}', '192.168.1.76', '2024-01-20 09:35:00'),
+(43, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 75.1, "attempts": 1}', '192.168.1.76', '2024-01-20 10:05:00'),
+(44, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 55}', '192.168.1.47', '2024-01-20 08:28:00'),
+(44, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 23}', '192.168.1.47', '2024-01-20 09:28:00'),
+(44, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 77.3, "attempts": 1}', '192.168.1.47', '2024-01-20 09:58:00'),
+(45, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 44}', '192.168.1.152', '2024-01-20 08:18:00'),
+(45, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 31}', '192.168.1.152', '2024-01-20 09:18:00'),
+(45, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 86.2, "attempts": 1}', '192.168.1.152', '2024-01-20 09:48:00'),
+(46, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 49}', '192.168.1.171', '2024-01-20 09:14:00'),
+(46, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 39}', '192.168.1.171', '2024-01-20 10:14:00'),
+(46, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 76.8, "attempts": 1}', '192.168.1.171', '2024-01-20 10:44:00'),
+(47, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 51}', '192.168.1.241', '2024-01-20 08:55:00'),
+(47, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.241', '2024-01-20 09:55:00'),
+(47, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 74.3, "attempts": 1}', '192.168.1.241', '2024-01-20 10:25:00'),
+(48, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 44}', '192.168.1.245', '2024-01-20 09:46:00'),
+(48, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 28}', '192.168.1.245', '2024-01-20 10:46:00'),
+(48, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.1, "attempts": 1}', '192.168.1.245', '2024-01-20 11:16:00'),
+(49, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 52}', '192.168.1.66', '2024-01-20 09:56:00'),
+(49, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.66', '2024-01-20 10:56:00'),
+(49, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 88.0, "attempts": 1}', '192.168.1.66', '2024-01-20 11:26:00'),
+(50, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 58}', '192.168.1.25', '2024-01-20 09:35:00'),
+(50, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 31}', '192.168.1.25', '2024-01-20 10:35:00'),
+(50, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 80.0, "attempts": 1}', '192.168.1.25', '2024-01-20 11:05:00'),
+(51, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 35}', '192.168.1.62', '2024-01-20 09:37:00'),
+(51, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 38}', '192.168.1.62', '2024-01-20 10:37:00'),
+(51, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 90.5, "attempts": 1}', '192.168.1.62', '2024-01-20 11:07:00'),
+(52, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 35}', '192.168.1.223', '2024-01-20 09:43:00'),
+(52, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 23}', '192.168.1.223', '2024-01-20 10:43:00'),
+(52, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.9, "attempts": 1}', '192.168.1.223', '2024-01-20 11:13:00'),
+(53, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 44}', '192.168.1.171', '2024-01-20 08:29:00'),
+(53, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.171', '2024-01-20 09:29:00'),
+(53, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.0, "attempts": 1}', '192.168.1.171', '2024-01-20 09:59:00'),
+(54, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 41}', '192.168.1.132', '2024-01-20 09:08:00'),
+(54, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 28}', '192.168.1.132', '2024-01-20 10:08:00'),
+(54, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 86.3, "attempts": 1}', '192.168.1.132', '2024-01-20 10:38:00'),
+(55, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 44}', '192.168.1.100', '2024-01-20 09:11:00'),
+(55, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 34}', '192.168.1.100', '2024-01-20 10:11:00'),
+(55, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 86.1, "attempts": 1}', '192.168.1.100', '2024-01-20 10:41:00'),
+(56, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 40}', '192.168.1.168', '2024-01-20 08:59:00'),
+(56, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 39}', '192.168.1.168', '2024-01-20 09:59:00'),
+(56, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 93.7, "attempts": 1}', '192.168.1.168', '2024-01-20 10:29:00'),
+(57, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 53}', '192.168.1.172', '2024-01-20 09:04:00'),
+(57, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 40}', '192.168.1.172', '2024-01-20 10:04:00'),
+(57, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 71.4, "attempts": 1}', '192.168.1.172', '2024-01-20 10:34:00'),
+(58, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 57}', '192.168.1.75', '2024-01-20 09:25:00'),
+(58, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 29}', '192.168.1.75', '2024-01-20 10:25:00'),
+(58, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 84.8, "attempts": 1}', '192.168.1.75', '2024-01-20 10:55:00'),
+(59, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 33}', '192.168.1.63', '2024-01-20 08:27:00'),
+(59, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 29}', '192.168.1.63', '2024-01-20 09:27:00'),
+(59, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 70.0, "attempts": 1}', '192.168.1.63', '2024-01-20 09:57:00'),
+(60, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 48}', '192.168.1.33', '2024-01-20 09:45:00'),
+(60, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 40}', '192.168.1.33', '2024-01-20 10:45:00'),
+(60, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 77.9, "attempts": 1}', '192.168.1.33', '2024-01-20 11:15:00'),
+(61, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 45}', '192.168.1.81', '2024-01-20 09:07:00'),
+(61, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 40}', '192.168.1.81', '2024-01-20 10:07:00'),
+(61, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 72.3, "attempts": 1}', '192.168.1.81', '2024-01-20 10:37:00'),
+(62, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 54}', '192.168.1.166', '2024-01-20 09:54:00'),
+(62, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 34}', '192.168.1.166', '2024-01-20 10:54:00'),
+(62, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.4, "attempts": 1}', '192.168.1.166', '2024-01-20 11:24:00'),
+(63, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 40}', '192.168.1.39', '2024-01-20 09:44:00'),
+(63, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 28}', '192.168.1.39', '2024-01-20 10:44:00'),
+(63, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 74.0, "attempts": 1}', '192.168.1.39', '2024-01-20 11:14:00'),
+(64, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 59}', '192.168.1.30', '2024-01-20 08:50:00'),
+(64, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 38}', '192.168.1.30', '2024-01-20 09:50:00'),
+(64, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 71.5, "attempts": 1}', '192.168.1.30', '2024-01-20 10:20:00'),
+(65, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 55}', '192.168.1.156', '2024-01-20 08:12:00'),
+(65, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 31}', '192.168.1.156', '2024-01-20 09:12:00'),
+(65, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 79.4, "attempts": 1}', '192.168.1.156', '2024-01-20 09:42:00'),
+(66, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 52}', '192.168.1.173', '2024-01-20 08:01:00'),
+(66, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 22}', '192.168.1.173', '2024-01-20 09:01:00'),
+(66, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 72.4, "attempts": 1}', '192.168.1.173', '2024-01-20 09:31:00'),
+(67, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 41}', '192.168.1.129', '2024-01-20 09:34:00'),
+(67, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.129', '2024-01-20 10:34:00'),
+(67, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 91.7, "attempts": 1}', '192.168.1.129', '2024-01-20 11:04:00'),
+(68, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 37}', '192.168.1.199', '2024-01-20 08:56:00'),
+(68, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 37}', '192.168.1.199', '2024-01-20 09:56:00'),
+(68, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 95.0, "attempts": 1}', '192.168.1.199', '2024-01-20 10:26:00'),
+(69, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 48}', '192.168.1.21', '2024-01-20 09:48:00'),
+(69, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.21', '2024-01-20 10:48:00'),
+(69, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 73.8, "attempts": 1}', '192.168.1.21', '2024-01-20 11:18:00'),
+(70, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 48}', '192.168.1.71', '2024-01-20 08:31:00'),
+(70, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 20}', '192.168.1.71', '2024-01-20 09:31:00'),
+(70, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.1, "attempts": 1}', '192.168.1.71', '2024-01-20 10:01:00'),
+(71, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 59}', '192.168.1.33', '2024-01-20 08:10:00'),
+(71, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.33', '2024-01-20 09:10:00'),
+(71, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.6, "attempts": 1}', '192.168.1.33', '2024-01-20 09:40:00'),
+(72, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 48}', '192.168.1.39', '2024-01-20 09:57:00'),
+(72, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 32}', '192.168.1.39', '2024-01-20 10:57:00'),
+(72, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 77.3, "attempts": 1}', '192.168.1.39', '2024-01-20 11:27:00'),
+(73, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 47}', '192.168.1.163', '2024-01-20 08:24:00'),
+(73, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.163', '2024-01-20 09:24:00'),
+(73, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 71.2, "attempts": 1}', '192.168.1.163', '2024-01-20 09:54:00'),
+(74, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 41}', '192.168.1.50', '2024-01-20 08:40:00'),
+(74, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.50', '2024-01-20 09:40:00'),
+(74, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 80.9, "attempts": 1}', '192.168.1.50', '2024-01-20 10:10:00'),
+(75, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 43}', '192.168.1.90', '2024-01-20 08:53:00'),
+(75, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.90', '2024-01-20 09:53:00'),
+(75, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 75.2, "attempts": 1}', '192.168.1.90', '2024-01-20 10:23:00'),
+(76, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 49}', '192.168.1.158', '2024-01-20 08:02:00'),
+(76, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 32}', '192.168.1.158', '2024-01-20 09:02:00'),
+(76, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 94.8, "attempts": 1}', '192.168.1.158', '2024-01-20 09:32:00'),
+(77, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 39}', '192.168.1.71', '2024-01-20 08:59:00'),
+(77, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 27}', '192.168.1.71', '2024-01-20 09:59:00'),
+(77, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.9, "attempts": 1}', '192.168.1.71', '2024-01-20 10:29:00'),
+(78, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 32}', '192.168.1.23', '2024-01-20 08:17:00'),
+(78, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.23', '2024-01-20 09:17:00'),
+(78, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 70.1, "attempts": 1}', '192.168.1.23', '2024-01-20 09:47:00'),
+(79, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 31}', '192.168.1.210', '2024-01-20 08:13:00'),
+(79, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.210', '2024-01-20 09:13:00'),
+(79, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 94.2, "attempts": 1}', '192.168.1.210', '2024-01-20 09:43:00'),
+(80, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 34}', '192.168.1.197', '2024-01-20 08:52:00'),
+(80, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.197', '2024-01-20 09:52:00'),
+(80, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 75.1, "attempts": 1}', '192.168.1.197', '2024-01-20 10:22:00'),
+(81, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 33}', '192.168.1.253', '2024-01-20 08:44:00'),
+(81, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.253', '2024-01-20 09:44:00'),
+(81, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 80.2, "attempts": 1}', '192.168.1.253', '2024-01-20 10:14:00'),
+(82, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 33}', '192.168.1.91', '2024-01-20 09:21:00'),
+(82, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 35}', '192.168.1.91', '2024-01-20 10:21:00'),
+(82, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 73.1, "attempts": 1}', '192.168.1.91', '2024-01-20 10:51:00'),
+(83, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 44}', '192.168.1.15', '2024-01-20 09:07:00'),
+(83, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 26}', '192.168.1.15', '2024-01-20 10:07:00'),
+(83, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 86.9, "attempts": 1}', '192.168.1.15', '2024-01-20 10:37:00'),
+(84, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 58}', '192.168.1.217', '2024-01-20 08:20:00'),
+(84, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 23}', '192.168.1.217', '2024-01-20 09:20:00'),
+(84, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 77.3, "attempts": 1}', '192.168.1.217', '2024-01-20 09:50:00'),
+(85, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 37}', '192.168.1.142', '2024-01-20 08:30:00'),
+(85, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 26}', '192.168.1.142', '2024-01-20 09:30:00'),
+(85, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 91.8, "attempts": 1}', '192.168.1.142', '2024-01-20 10:00:00'),
+(86, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 47}', '192.168.1.252', '2024-01-20 09:47:00'),
+(86, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 28}', '192.168.1.252', '2024-01-20 10:47:00'),
+(86, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 87.3, "attempts": 1}', '192.168.1.252', '2024-01-20 11:17:00'),
+(87, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 49}', '192.168.1.122', '2024-01-20 08:09:00'),
+(87, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.122', '2024-01-20 09:09:00'),
+(87, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 71.4, "attempts": 1}', '192.168.1.122', '2024-01-20 09:39:00'),
+(88, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 45}', '192.168.1.35', '2024-01-20 09:42:00'),
+(88, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.35', '2024-01-20 10:42:00'),
+(88, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 75.4, "attempts": 1}', '192.168.1.35', '2024-01-20 11:12:00'),
+(89, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 31}', '192.168.1.208', '2024-01-20 09:27:00'),
+(89, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 30}', '192.168.1.208', '2024-01-20 10:27:00'),
+(89, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.8, "attempts": 1}', '192.168.1.208', '2024-01-20 10:57:00'),
+(90, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 37}', '192.168.1.240', '2024-01-20 08:47:00'),
+(90, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 21}', '192.168.1.240', '2024-01-20 09:47:00'),
+(90, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 78.6, "attempts": 1}', '192.168.1.240', '2024-01-20 10:17:00'),
+(91, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 37}', '192.168.1.221', '2024-01-20 09:16:00'),
+(91, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 30}', '192.168.1.221', '2024-01-20 10:16:00'),
+(91, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 80.6, "attempts": 1}', '192.168.1.221', '2024-01-20 10:46:00'),
+(92, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 47}', '192.168.1.106', '2024-01-20 08:23:00'),
+(92, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 26}', '192.168.1.106', '2024-01-20 09:23:00'),
+(92, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 85.0, "attempts": 1}', '192.168.1.106', '2024-01-20 09:53:00'),
+(93, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 30}', '192.168.1.178', '2024-01-20 09:02:00'),
+(93, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 24}', '192.168.1.178', '2024-01-20 10:02:00'),
+(93, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 86.1, "attempts": 1}', '192.168.1.178', '2024-01-20 10:32:00'),
+(94, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 53}', '192.168.1.18', '2024-01-20 08:23:00'),
+(94, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 27}', '192.168.1.18', '2024-01-20 09:23:00'),
+(94, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 88.1, "attempts": 1}', '192.168.1.18', '2024-01-20 09:53:00'),
+(95, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 60}', '192.168.1.127', '2024-01-20 08:26:00'),
+(95, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 38}', '192.168.1.127', '2024-01-20 09:26:00'),
+(95, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 87.3, "attempts": 1}', '192.168.1.127', '2024-01-20 09:56:00'),
+(96, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 44}', '192.168.1.199', '2024-01-20 09:35:00'),
+(96, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 20}', '192.168.1.199', '2024-01-20 10:35:00'),
+(96, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 75.7, "attempts": 1}', '192.168.1.199', '2024-01-20 11:05:00'),
+(97, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 42}', '192.168.1.113', '2024-01-20 09:37:00'),
+(97, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 27}', '192.168.1.113', '2024-01-20 10:37:00'),
+(97, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 70.8, "attempts": 1}', '192.168.1.113', '2024-01-20 11:07:00'),
+(98, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 43}', '192.168.1.88', '2024-01-20 08:10:00'),
+(98, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.88', '2024-01-20 09:10:00'),
+(98, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 87.1, "attempts": 1}', '192.168.1.88', '2024-01-20 09:40:00'),
+(99, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 39}', '192.168.1.211', '2024-01-20 09:54:00'),
+(99, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 33}', '192.168.1.211', '2024-01-20 10:54:00'),
+(99, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 82.1, "attempts": 1}', '192.168.1.211', '2024-01-20 11:24:00'),
+(100, 'course_access', 'Truy cập khóa học CS101', '{"course_id": 1, "duration_minutes": 43}', '192.168.1.83', '2024-01-20 08:31:00'),
+(100, 'module_complete', 'Hoàn thành module Python cơ bản', '{"course_id": 1, "module_id": 1, "completion_time": 32}', '192.168.1.83', '2024-01-20 09:31:00'),
+(100, 'quiz_complete', 'Hoàn thành Quiz Python cơ bản', '{"quiz_id": 1, "score": 92.5, "attempts": 1}', '192.168.1.83', '2024-01-20 10:01:00');
+
+
+INSERT INTO user_activities (user_id, type, description, metadata, ip_address, created_at) VALUES
+(
+    (SELECT id FROM users WHERE email = 'student11@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.11',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student11@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.11',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student11@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.11',
+    '2024-01-20 09:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student12@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.12',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student12@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.12',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student12@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.12',
+    '2024-01-20 09:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student13@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.13',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student13@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.13',
+    '2024-01-20 08:36:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student13@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.13',
+    '2024-01-20 09:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student14@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.14',
+    '2024-01-20 08:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student14@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.14',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student14@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.14',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student15@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.15',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student15@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.15',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student15@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.15',
+    '2024-01-20 09:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student16@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.16',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student16@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.16',
+    '2024-01-20 08:32:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student16@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.16',
+    '2024-01-20 09:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student17@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.17',
+    '2024-01-20 08:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student17@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.17',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student17@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.17',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student18@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.18',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student18@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.18',
+    '2024-01-20 08:31:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student18@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.18',
+    '2024-01-20 09:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student19@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.19',
+    '2024-01-20 08:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student19@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.19',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student19@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.19',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student20@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.20',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student20@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.20',
+    '2024-01-20 08:34:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student20@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.20',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student21@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.21',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student21@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.21',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student21@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.21',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student22@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.22',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student22@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.22',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student22@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.22',
+    '2024-01-20 09:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student23@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.23',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student23@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.23',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student23@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.23',
+    '2024-01-20 09:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student24@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.24',
+    '2024-01-20 08:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student24@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.24',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student24@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.24',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student25@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.25',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student25@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.25',
+    '2024-01-20 08:33:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student25@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.25',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student26@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.26',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student26@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.26',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student26@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.26',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student27@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.27',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student27@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.27',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student27@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.27',
+    '2024-01-20 09:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student28@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.28',
+    '2024-01-20 08:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student28@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.28',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student28@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.28',
+    '2024-01-20 09:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student29@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.29',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student29@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.29',
+    '2024-01-20 08:32:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student29@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.29',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student30@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.30',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student30@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.30',
+    '2024-01-20 08:34:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student30@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.30',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student31@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.31',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student31@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.31',
+    '2024-01-20 08:33:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student31@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.31',
+    '2024-01-20 09:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student32@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.32',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student32@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.32',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student32@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.32',
+    '2024-01-20 09:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student33@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.33',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student33@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.33',
+    '2024-01-20 08:32:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student33@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.33',
+    '2024-01-20 09:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student34@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.34',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student34@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.34',
+    '2024-01-20 08:35:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student34@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.34',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student35@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.35',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student35@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.35',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student35@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.35',
+    '2024-01-20 09:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student36@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.36',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student36@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.36',
+    '2024-01-20 08:31:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student36@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.36',
+    '2024-01-20 09:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student37@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.37',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student37@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.37',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student37@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.37',
+    '2024-01-20 09:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student38@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.38',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student38@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.38',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student38@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.38',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student39@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.39',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student39@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.39',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student39@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.39',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student40@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.40',
+    '2024-01-20 08:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student40@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.40',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student40@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.40',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student41@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.41',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student41@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.41',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student41@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.41',
+    '2024-01-20 09:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student42@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.42',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student42@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.42',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student42@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.42',
+    '2024-01-20 09:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student43@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.43',
+    '2024-01-20 08:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student43@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.43',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student43@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.43',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student44@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.44',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student44@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.44',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student44@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.44',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student45@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.45',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student45@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.45',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student45@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.45',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student46@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.46',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student46@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.46',
+    '2024-01-20 08:35:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student46@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.46',
+    '2024-01-20 09:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student47@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.47',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student47@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.47',
+    '2024-01-20 08:33:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student47@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.47',
+    '2024-01-20 09:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student48@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.48',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student48@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.48',
+    '2024-01-20 08:34:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student48@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.48',
+    '2024-01-20 09:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student49@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.49',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student49@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.49',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student49@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.49',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student50@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.50',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student50@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.50',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student50@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.50',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student51@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.51',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student51@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.51',
+    '2024-01-20 08:35:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student51@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.51',
+    '2024-01-20 09:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student52@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.52',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student52@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.52',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student52@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.52',
+    '2024-01-20 09:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student53@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.53',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student53@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.53',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student53@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.53',
+    '2024-01-20 09:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student54@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.54',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student54@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.54',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student54@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.54',
+    '2024-01-20 09:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student55@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.55',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student55@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.55',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student55@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.55',
+    '2024-01-20 09:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student56@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.56',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student56@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.56',
+    '2024-01-20 08:36:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student56@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.56',
+    '2024-01-20 09:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student57@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.57',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student57@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.57',
+    '2024-01-20 08:31:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student57@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.57',
+    '2024-01-20 09:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student58@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.58',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student58@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.58',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student58@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.58',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student59@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.59',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student59@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.59',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student59@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.59',
+    '2024-01-20 09:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student60@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.60',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student60@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.60',
+    '2024-01-20 08:31:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student60@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.60',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student61@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.61',
+    '2024-01-20 08:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student61@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.61',
+    '2024-01-20 08:36:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student61@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.61',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student62@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.62',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student62@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.62',
+    '2024-01-20 08:36:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student62@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.62',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student63@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.63',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student63@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.63',
+    '2024-01-20 08:32:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student63@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.63',
+    '2024-01-20 09:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student64@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.64',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student64@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.64',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student64@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.64',
+    '2024-01-20 09:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student65@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.65',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student65@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.65',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student65@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.65',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student66@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.66',
+    '2024-01-20 08:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student66@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.66',
+    '2024-01-20 08:34:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student66@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.66',
+    '2024-01-20 09:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student67@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.67',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student67@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.67',
+    '2024-01-20 08:31:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student67@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.67',
+    '2024-01-20 09:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student68@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.68',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student68@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.68',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student68@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.68',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student69@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.69',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student69@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.69',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student69@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.69',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student70@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.70',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student70@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.70',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student70@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.70',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student71@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.71',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student71@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.71',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student71@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.71',
+    '2024-01-20 09:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student72@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.72',
+    '2024-01-20 08:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student72@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.72',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student72@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.72',
+    '2024-01-20 09:01:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student73@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.73',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student73@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.73',
+    '2024-01-20 08:32:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student73@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.73',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student74@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.74',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student74@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.74',
+    '2024-01-20 08:36:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student74@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.74',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student75@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.75',
+    '2024-01-20 08:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student75@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.75',
+    '2024-01-20 08:34:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student75@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.75',
+    '2024-01-20 09:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student76@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.76',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student76@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.76',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student76@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.76',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student77@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.77',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student77@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.77',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student77@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.77',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student78@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.78',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student78@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.78',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student78@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.78',
+    '2024-01-20 09:09:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student79@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.79',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student79@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.79',
+    '2024-01-20 08:38:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student79@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.79',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student80@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.80',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student80@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.80',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student80@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.80',
+    '2024-01-20 09:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student81@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.81',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student81@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.81',
+    '2024-01-20 08:33:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student81@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.81',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student82@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.82',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student82@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.82',
+    '2024-01-20 08:35:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student82@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.82',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student83@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.83',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student83@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.83',
+    '2024-01-20 08:40:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student83@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.83',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student84@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.84',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student84@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.84',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student84@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.84',
+    '2024-01-20 09:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student85@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.85',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student85@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.85',
+    '2024-01-20 08:31:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student85@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.85',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student86@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.86',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student86@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.86',
+    '2024-01-20 08:35:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student86@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.86',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student87@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.87',
+    '2024-01-20 08:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student87@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.87',
+    '2024-01-20 08:35:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student87@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.87',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student88@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.88',
+    '2024-01-20 08:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student88@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.88',
+    '2024-01-20 08:37:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student88@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.88',
+    '2024-01-20 09:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student89@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.89',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student89@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.89',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student89@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.89',
+    '2024-01-20 09:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student90@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.90',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student90@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.90',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student90@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.90',
+    '2024-01-20 09:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student91@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.91',
+    '2024-01-20 08:03:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student91@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.91',
+    '2024-01-20 08:33:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student91@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.91',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student92@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.92',
+    '2024-01-20 08:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student92@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.92',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student92@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.92',
+    '2024-01-20 09:02:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student93@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.93',
+    '2024-01-20 08:06:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student93@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.93',
+    '2024-01-20 08:30:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student93@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.93',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student94@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.94',
+    '2024-01-20 08:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student94@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.94',
+    '2024-01-20 08:33:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student94@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.94',
+    '2024-01-20 09:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student95@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.95',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student95@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.95',
+    '2024-01-20 08:34:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student95@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.95',
+    '2024-01-20 09:08:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student96@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.96',
+    '2024-01-20 08:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student96@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.96',
+    '2024-01-20 08:39:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student96@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.96',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student97@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.97',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student97@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.97',
+    '2024-01-20 08:36:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student97@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.97',
+    '2024-01-20 09:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student98@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.98',
+    '2024-01-20 08:07:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student98@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.98',
+    '2024-01-20 08:36:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student98@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.98',
+    '2024-01-20 09:05:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student99@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.99',
+    '2024-01-20 08:00:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student99@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.99',
+    '2024-01-20 08:32:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student99@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.99',
+    '2024-01-20 09:04:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student100@lms.com'),
+    'course_access',
+    'Truy cập khóa học CS101',
+    '{"course_id": 1, "duration_minutes": 45}',
+    '192.168.1.100',
+    '2024-01-20 08:10:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student100@lms.com'),
+    'module_complete',
+    'Hoàn thành module Python cơ bản',
+    '{"course_id": 1, "module_id": 1, "completion_time": 35}',
+    '192.168.1.100',
+    '2024-01-20 08:31:00'
+),
+(
+    (SELECT id FROM users WHERE email = 'student100@lms.com'),
+    'quiz_complete',
+    'Hoàn thành Quiz Python cơ bản',
+    '{"quiz_id": 1, "score": 85.5, "attempts": 1}',
+    '192.168.1.100',
+    '2024-01-20 09:00:00'
+);
+
+
+-- ===============================================
+-- CẬP NHẬT COMPLETION STATUS
+-- ===============================================
+
+-- Cập nhật trạng thái hoàn thành cho những học sinh đã làm đủ quiz
+UPDATE enrollments SET 
+    completion_status = 'completed',
+    completion_date = '2024-02-01 12:00:00'
+WHERE student_id = 4 AND course_id = 1;
+
+UPDATE enrollments SET 
+    completion_status = 'completed',
+    completion_date = '2024-02-20 15:00:00'
+WHERE student_id = 5 AND course_id = 2;
+
+UPDATE enrollments SET 
+    completion_status = 'completed',
+    completion_date = '2024-02-25 14:30:00'
+WHERE student_id = 6 AND course_id = 1;
+
+UPDATE enrollments SET 
+    completion_status = 'completed',
+    completion_date = '2024-02-28 16:45:00'
+WHERE student_id = 8 AND course_id = 4;
+
+-- ===============================================
+-- THÊM THÔNG TIN ANALYTICS
+-- ===============================================
+
+INSERT INTO course_analytics (course_id, metric_name, metric_value, metric_date) VALUES
+(1, 'avg_quiz_score', 82.50, '2024-01-31'),
+(1, 'completion_rate', 57.14, '2024-01-31'),
+(1, 'engagement_time', 45.30, '2024-01-31'),
+(2, 'avg_quiz_score', 85.67, '2024-02-28'),
+(2, 'completion_rate', 40.00, '2024-02-28'),
+(4, 'avg_quiz_score', 83.75, '2024-02-28'),
+(4, 'completion_rate', 60.00, '2024-02-28');
+
+-- ===============================================
+-- DỮ LIỆU HOẠT ĐỘNG CHI TIẾT
+-- ===============================================
+
+INSERT INTO user_activity_log (user_id, activity_type, activity_description, course_id, quiz_id, created_at) VALUES
+(4, 'quiz_start', 'Bắt đầu làm Quiz Python cơ bản', 1, 1, '2024-01-20 09:00:00'),
+(4, 'quiz_submit', 'Nộp bài Quiz Python cơ bản', 1, 1, '2024-01-20 09:25:00'),
+(4, 'course_progress', 'Cập nhật tiến độ khóa học CS101', 1, NULL, '2024-01-20 09:26:00'),
+
+(5, 'quiz_start', 'Bắt đầu làm Quiz Thống kê mô tả', 2, 4, '2024-02-11 15:00:00'),
+(5, 'quiz_submit', 'Nộp bài Quiz Thống kê mô tả', 2, 4, '2024-02-11 15:12:00'),
+
+(6, 'quiz_start', 'Bắt đầu làm Quiz Python cơ bản', 1, 1, '2024-01-22 16:00:00'),
+(6, 'quiz_submit', 'Nộp bài Quiz Python cơ bản', 1, 1, '2024-01-22 16:28:00'),
+
+(8, 'quiz_start', 'Bắt đầu làm Quiz Giới thiệu ML', 4, 6, '2024-01-30 11:00:00'),
+(8, 'quiz_submit', 'Nộp bài Quiz Giới thiệu ML', 4, 6, '2024-01-30 11:16:00'),
+
+(7, 'quiz_start', 'Bắt đầu làm Quiz Python cơ bản (lần 1)', 1, 1, '2024-01-23 08:00:00'),
+(7, 'quiz_submit', 'Nộp bài Quiz Python cơ bản (thất bại)', 1, 1, '2024-01-23 08:35:00'),
+(7, 'quiz_retry', 'Làm lại Quiz Python cơ bản (lần 2)', 1, 1, '2024-01-24 09:00:00'),
+(7, 'quiz_submit', 'Nộp bài Quiz Python cơ bản (thành công)', 1, 1, '2024-01-24 09:22:00'),
+
+(9, 'quiz_start', 'Bắt đầu làm Quiz Python cơ bản', 1, 1, '2024-01-26 15:00:00'),
+(9, 'quiz_submit', 'Nộp bài Quiz Python cơ bản (không đạt)', 1, 1, '2024-01-26 15:35:00'),
+
+(10, 'quiz_start', 'Bắt đầu làm Quiz Giới thiệu ML', 4, 6, '2024-02-01 16:00:00'),
+(10, 'quiz_submit', 'Nộp bài Quiz Giới thiệu ML (không đạt)', 4, 6, '2024-02-01 16:20:00');
+
+-- ===============================================
+-- THÊM DỮ LIỆU CHO PHÂN TÍCH NÂNG CAO
+-- ===============================================
+
+-- Thêm nhiều quiz attempts với patterns khác nhau để ML có thể học
+INSERT INTO quiz_attempts (quiz_id, student_id, start_time, end_time, score, is_passing) VALUES
+-- Học sinh có xu hướng cải thiện qua các lần thử
+(1, 9, '2024-01-27 10:00:00', '2024-01-27 10:30:00', 68.00, FALSE), -- Lần thử thứ 2
+(1, 9, '2024-01-28 14:00:00', '2024-01-28 14:25:00', 76.00, TRUE),  -- Lần thử thứ 3 - đạt
+
+-- Học sinh giỏi nhưng có lúc kém
+(2, 6, '2024-02-08 09:00:00', '2024-02-08 09:30:00', 65.00, FALSE), -- Lần đầu kém
+(2, 6, '2024-02-09 10:00:00', '2024-02-09 10:18:00', 88.00, TRUE),  -- Lần 2 tốt
+
+-- Học sinh trung bình
+(3, 7, '2024-02-25 11:00:00', '2024-02-25 11:45:00', 82.00, TRUE),  -- Đạt ngay lần đầu
+(4, 7, '2024-02-15 14:00:00', '2024-02-15 14:20:00', 71.00, TRUE),  -- Đạt ngay lần đầu
+
+-- Học sinh yếu, nhiều lần thử
+(1, 10, '2024-01-29 16:00:00', '2024-01-29 16:35:00', 45.00, FALSE), -- Lần 1 - kém
+(1, 10, '2024-01-30 09:00:00', '2024-01-30 09:30:00', 58.00, FALSE), -- Lần 2 - vẫn kém  
+(1, 10, '2024-01-31 15:00:00', '2024-01-31 15:28:00', 72.00, TRUE),  -- Lần 3 - đạt
+
+-- Học sinh xuất sắc
+(5, 6, '2024-02-16 10:00:00', '2024-02-16 10:30:00', 96.00, TRUE),   -- Quiz phân phối xác suất
+(7, 6, '2024-02-20 11:00:00', '2024-02-20 11:25:00', 94.00, TRUE),   -- Quiz Linear Regression
+
+-- Thêm attempts cho các quiz còn lại
+(3, 6, '2024-02-28 14:00:00', '2024-02-28 14:42:00', 90.00, TRUE),   -- Quiz tổng kết CS101
+(8, 5, '2024-02-25 16:00:00', '2024-02-25 16:55:00', 87.00, TRUE),   -- Quiz tổng kết ML
+(8, 6, '2024-02-26 13:00:00', '2024-02-26 13:58:00', 92.00, TRUE),   -- Quiz tổng kết ML
+(8, 8, '2024-02-27 10:00:00', '2024-02-27 10:50:00', 88.00, TRUE);   -- Quiz tổng kết ML
+
+-- ===============================================
+-- THÊM ANSWER RECORDS CHO CÁC ATTEMPTS MỚI
+-- ===============================================
+
+INSERT INTO quiz_answer_records (attempt_id, question_id, selected_option_id, text_answer, is_correct) VALUES
+-- Attempt của student 9 - lần thử thứ 2 (attempt_id = 17)
+(17, 16, 1, NULL, TRUE),      -- Python là ngôn ngữ gì?
+(17, 17, NULL, 'print', TRUE),
+(17, 18, 5, NULL, FALSE),
+(17, 19, NULL, '/', FALSE),
+
+-- Attempt của student 9 - lần thử thứ 3 (attempt_id = 18) 
+(18, 16, 1, NULL, TRUE),      
+(18, 17, NULL, 'print', TRUE),
+(18, 18, 2, NULL, TRUE),
+(18, 19, NULL, '#', TRUE),
+
+-- Attempt của student 6 - Quiz 2 lần đầu kém (attempt_id = 19)
+(19, 20, 2, NULL, FALSE),     -- chọn for thay vì if
+(19, 21, NULL, 'while', FALSE),
+(19, 22, 2, NULL, FALSE),     -- chọn continue thay vì break
+
+-- Attempt của student 6 - Quiz 2 lần 2 tốt (attempt_id = 20)
+(20, 20, 1, NULL, TRUE),      
+(20, 21, NULL, 'for', TRUE),
+(20, 22, 1, NULL, TRUE),
+
+-- Attempt của student 10 - nhiều lần thử Quiz 1
+-- Lần 1 (attempt_id = 23)
+(23, 16, 2, NULL, FALSE),
+(23, 17, NULL, 'echo', FALSE),
+(23, 18, 1, NULL, FALSE),
+(23, 19, NULL, '//', FALSE),
+
+-- Lần 2 (attempt_id = 24)  
+(24, 16, 1, NULL, TRUE),
+(24, 17, NULL, 'print', TRUE),
+(24, 18, 1, NULL, FALSE),
+(24, 19, NULL, '#', TRUE),
+
+-- Lần 3 (attempt_id = 25)
+(25, 16, 1, NULL, TRUE),
+(25, 17, NULL, 'print', TRUE),
+(25, 18, 2, NULL, TRUE),
+(25, 19, NULL, '#', TRUE);
+
+-- ===============================================
+-- THÊM DỮ LIỆU CHO PHÂN TÍCH LEARNING PATTERN
+-- ===============================================
+
+-- Cập nhật thêm user activities để phản ánh learning behavior
+INSERT INTO user_activities (user_id, type, description, metadata, ip_address, created_at) VALUES
+-- Student có progress tốt
+(6, 'course_access', 'Truy cập thường xuyên CS101', '{"course_id": 1, "session_count": 15, "avg_duration": 42}', '192.168.1.102', '2024-02-01 10:00:00'),
+(6, 'module_complete', 'Hoàn thành tất cả modules CS101', '{"course_id": 1, "completion_rate": 100}', '192.168.1.102', '2024-02-15 16:00:00'),
+
+-- Student cần hỗ trợ  
+(9, 'course_access', 'Truy cập ít CS101', '{"course_id": 1, "session_count": 8, "avg_duration": 25}', '192.168.1.105', '2024-02-01 14:00:00'),
+(10, 'course_access', 'Truy cập không đều CS101', '{"course_id": 1, "session_count": 6, "avg_duration": 20}', '192.168.1.106', '2024-02-01 15:00:00'),
+
+-- Student có cải thiện
+(7, 'course_access', 'Tăng thời gian học CS101', '{"course_id": 1, "session_count": 12, "improvement": "gradual"}', '192.168.1.103', '2024-02-10 11:00:00'),
+
+-- Thêm dữ liệu cho ML analysis
+(4, 'quiz_complete', 'Pattern: Đạt cao ngay lần đầu', '{"quiz_id": 6, "first_attempt": true, "score": 85.0}', '192.168.1.100', '2024-01-26 09:15:00'),
+(5, 'quiz_complete', 'Pattern: Luôn đạt điểm cao', '{"quiz_id": 7, "consistency": "high", "score": 82.0}', '192.168.1.101', '2024-02-15 10:25:00'),
+(8, 'quiz_complete', 'Pattern: Xuất sắc ổn định', '{"avg_score": 90.2, "attempts_avg": 1.2}', '192.168.1.104', '2024-02-18 09:28:00'),
+(9, 'quiz_complete', 'Pattern: Cần nhiều lần thử', '{"improvement_rate": 0.15, "attempts_needed": 2.5}', '192.168.1.105', '2024-01-28 14:25:00'),
+(10, 'quiz_complete', 'Pattern: Học chậm nhưng bền bỉ', '{"attempts_needed": 3, "final_success": true}', '192.168.1.106', '2024-01-31 15:28:00');
+
+-- ===============================================
+-- CẬP NHẬT THÊM COMPLETION STATUS
+-- ===============================================
+
+-- Cập nhật completion cho những học sinh đã hoàn thành đủ
+UPDATE enrollments SET 
+    completion_status = 'completed',
+    completion_date = '2024-02-28 17:00:00'
+WHERE student_id = 6 AND course_id = 1;
+
+UPDATE enrollments SET 
+    completion_status = 'in_progress'
+WHERE student_id = 9 AND course_id = 1;
+
+UPDATE enrollments SET 
+    completion_status = 'in_progress'  
+WHERE student_id = 10 AND course_id = 1;
+
+UPDATE enrollments SET 
+    completion_status = 'completed',
+    completion_date = '2024-02-27 11:00:00'
+WHERE student_id = 8 AND course_id = 1;
+
+-- ===============================================
+-- THÊM DỮ LIỆU ANALYTICS CHO ML
+-- ===============================================
+
+-- Cập nhật metrics mới nhất
+INSERT INTO course_analytics (course_id, metric_name, metric_value, metric_date) VALUES
+-- CS101 analytics
+(1, 'avg_attempts_per_quiz', 1.8, '2024-02-28'),
+(1, 'student_retention_rate', 85.71, '2024-02-28'), 
+(1, 'avg_time_per_quiz', 26.5, '2024-02-28'),
+(1, 'improvement_rate', 12.3, '2024-02-28'),
+
+-- MATH201 analytics  
+(2, 'avg_attempts_per_quiz', 1.4, '2024-02-28'),
+(2, 'student_retention_rate', 80.00, '2024-02-28'),
+(2, 'avg_time_per_quiz', 18.2, '2024-02-28'),
+
+-- ML301 analytics
+(4, 'avg_attempts_per_quiz', 1.2, '2024-02-28'),
+(4, 'student_retention_rate', 100.00, '2024-02-28'),
+(4, 'avg_time_per_quiz', 22.1, '2024-02-28'),
+(4, 'high_performer_rate', 75.00, '2024-02-28');
+
+-- ===============================================
+-- THÊM NOTIFICATIONS CHO TRACKING
+-- ===============================================
+
+INSERT INTO notifications (title, message, type, priority, isRead, userId, createdAt) VALUES
+('Quiz sắp hết hạn', 'Quiz Python cơ bản sẽ đóng sau 2 ngày', 'test_due', 'medium', FALSE, 9, '2024-01-25 10:00:00'),
+('Điểm quiz đã có', 'Bạn đã đạt 85 điểm cho Quiz Python cơ bản', 'grade_posted', 'low', TRUE, 4, '2024-01-20 09:30:00'),
+('Chúc mừng hoàn thành', 'Bạn đã hoàn thành khóa học CS101', 'course_update', 'high', TRUE, 6, '2024-02-28 17:00:00'),
+('Cần cải thiện', 'Quiz lần đầu chưa đạt, hãy thử lại', 'grade_posted', 'medium', TRUE, 7, '2024-01-23 08:40:00'),
+('Quiz mới có sẵn', 'Quiz Thống kê mô tả đã được mở', 'test_due', 'medium', FALSE, 11, '2024-02-10 09:00:00');
+
+-- ===============================================
+-- DỮ LIỆU CUỐI CÙNG CHO MACHINE LEARNING
+-- ===============================================
+
+-- Thêm một số assignments để có đa dạng dữ liệu
+INSERT INTO assignments (course_id, lesson_id, title, description, max_points, due_date) VALUES
+(1, 2, 'Bài tập Python variables', 'Viết chương trình quản lý biến', 50, '2024-02-01 23:59:59'),
+(1, 4, 'Bài tập loops', 'Sử dụng vòng lặp để giải bài toán', 75, '2024-02-10 23:59:59'),
+(4, 10, 'Bài tập ML cơ bản', 'Implement linear regression', 100, '2024-02-20 23:59:59');
+
+-- Thêm submissions
+INSERT INTO assignment_submissions (assignment_id, student_id, file_path, file_type, file_size, grade, feedback, graded_by, graded_at, is_late) VALUES
+(1, 4, '/uploads/student4_assignment1.py', 'py', 1024, 85.00, 'Làm tốt, cần chú ý format code', 2, '2024-02-02 10:00:00', FALSE),
+(1, 5, '/uploads/student5_assignment1.py', 'py', 856, 78.00, 'Đúng logic nhưng thiếu comment', 2, '2024-02-02 11:00:00', FALSE),
+(1, 6, '/uploads/student6_assignment1.py', 'py', 1156, 92.00, 'Excellent work!', 2, '2024-02-02 12:00:00', FALSE),
+(2, 4, '/uploads/student4_assignment2.py', 'py', 1524, 88.00, 'Good understanding of loops', 2, '2024-02-11 14:00:00', FALSE),
+(3, 5, '/uploads/student5_ml_assignment.py', 'py', 2048, 95.00, 'Perfect implementation', 2, '2024-02-21 09:00:00', FALSE),
+(3, 8, '/uploads/student8_ml_assignment.py', 'py', 1876, 90.00, 'Very good work', 2, '2024-02-21 10:00:00', FALSE);
+
+-- ===============================================
+-- SUMMARY: DỮ LIỆU ĐÃ TẠO CHO MACHINE LEARNING
+-- ===============================================
+
+/*
+TỔNG QUAN DỮ LIỆU ĐÃ TẠO:
+
+1. USERS: 13 users (1 admin, 2 instructors, 10 students)
+
+2. COURSES: 4 courses across different subjects
+   - CS101: Programming basics (7 enrollments)  
+   - MATH201: Statistics (5 enrollments)
+   - CS201: Data structures (4 enrollments)
+   - ML301: Machine Learning (5 enrollments)
+
+3. QUIZZES: 8 quizzes with varying difficulty and topics
+   - 15 quiz questions (multiple choice + fill-in-blank)
+   - 42+ quiz attempts with diverse patterns
+   - Detailed answer records for analysis
+
+4. LEARNING PATTERNS CAPTURED:
+   - High performers (students 4, 5, 6, 8): Consistent high scores, few attempts
+   - Average performers (student 7): Gradual improvement  
+   - Struggling learners (students 9, 10): Multiple attempts, slow progress
+   - Different time patterns and engagement levels
+
+5. ANALYTICS DATA:
+   - Course completion rates
+   - Average scores and attempts  
+   - Improvement rates
+   - Time spent patterns
+   - User activity logs
+
+6. ADDITIONAL DATA:
+   - Assignment submissions and grades
+   - User activities and engagement metrics
+   - Notifications and system interactions
+   - Course analytics for trend analysis
+
+DỮ LIỆU NÀY PHỤC VỤ CHO:
+- Predictive modeling (dự đoán điểm số, completion)
+- Learning path recommendation  
+- Student risk identification
+- Performance analysis and clustering
+- Personalized learning suggestions
+- Engagement pattern analysis
+*/

@@ -1,10 +1,10 @@
-// CourseRecommendations.js
+// CourseRecommendations.js - Sử dụng endpoint NestJS cho current user
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './CourseRecommendations.css';
 
-const CourseRecommendations = ({ limit = 3 }) => {
+const CourseRecommendations = ({ limit = 3, refresh = false }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,30 +15,53 @@ const CourseRecommendations = ({ limit = 3 }) => {
       setError(null);
 
       try {
-        // Direct call to Flask service
-        const response = await axios.get(`http://localhost:5000/api/recommendations?limit=${limit}`, {
-          timeout: 10000, // 10 second timeout
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        
+        if (!token) {
+          setError('Authentication required. Please log in.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Gọi endpoint GET /recommendations cho current user
+        const response = await axios.get(
+          `http://localhost:5000/api/recommendations?limit=${limit}&refresh=${refresh}`,
+          {
+            timeout: 15000, // Tăng timeout vì ML service có thể chậm
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+          }
+        );
 
         console.log('Recommendations response:', response.data);
 
-        if (response.data.success) {
-          setRecommendations(response.data.recommendations || []);
+        // Xử lý response từ NestJS
+        if (response.data) {
+          // Kiểm tra structure của response
+          const recommendationsData = response.data.recommendations || response.data;
+          setRecommendations(Array.isArray(recommendationsData) ? recommendationsData : []);
         } else {
-          setError(response.data.error || 'Failed to load recommendations');
+          setRecommendations([]);
         }
       } catch (err) {
         console.error('Error fetching recommendations:', err);
         
         if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
-          setError('Unable to connect to recommendation service. Please ensure the Flask server is running on port 5000.');
+          setError('Unable to connect to the server. Please check your connection.');
+        } else if (err.response?.status === 401) {
+          setError('Authentication required. Please log in again.');
+          // Có thể redirect về login page
+          // window.location.href = '/login';
+        } else if (err.response?.status === 404) {
+          setError('User not found or no recommendations available.');
         } else if (err.response?.status === 503) {
-          setError('Recommendation service is temporarily unavailable. Please try again later.');
+          setError('Recommendation service is temporarily unavailable. The system is learning from your interactions.');
+        } else if (err.response?.status >= 500) {
+          setError('Server error. Please try again later.');
         } else {
-          setError(`Failed to load recommendations: ${err.message}`);
+          setError(err.response?.data?.message || `Failed to load recommendations: ${err.message}`);
         }
       } finally {
         setIsLoading(false);
@@ -46,13 +69,13 @@ const CourseRecommendations = ({ limit = 3 }) => {
     };
 
     fetchRecommendations();
-  }, [limit]);
+  }, [limit, refresh]);
 
   if (isLoading) {
     return (
       <div className="recommendations-loading">
         <div className="loading-spinner"></div>
-        <p>Loading recommendations...</p>
+        <p>Loading personalized recommendations...</p>
       </div>
     );
   }
@@ -63,12 +86,17 @@ const CourseRecommendations = ({ limit = 3 }) => {
         <h3>Recommended Courses</h3>
         <div className="error-message">
           <p>{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="retry-btn"
-          >
-            Retry
-          </button>
+          <div className="error-actions">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="retry-btn"
+            >
+              Retry
+            </button>
+            <Link to="/courses" className="browse-courses-btn">
+              Browse All Courses
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -78,8 +106,13 @@ const CourseRecommendations = ({ limit = 3 }) => {
     return (
       <div className="recommendations-empty">
         <h3>Recommended Courses</h3>
-        <p>No recommendations available at the moment. Explore our course catalog to find courses that interest you.</p>
-        <Link to="/courses" className="browse-courses-btn">Browse Courses</Link>
+        <div className="empty-state">
+          <p>No personalized recommendations available yet.</p>
+          <p>Start exploring and enrolling in courses to get better recommendations!</p>
+          <Link to="/courses" className="browse-courses-btn">
+            Explore Course Catalog
+          </Link>
+        </div>
       </div>
     );
   }
@@ -88,41 +121,76 @@ const CourseRecommendations = ({ limit = 3 }) => {
     <div className="recommendations-section">
       <div className="section-header">
         <h2>Recommended For You</h2>
-        <Link to="/courses" className="view-all">View More</Link>
+        <div className="header-actions">
+          <button 
+            onClick={() => window.location.reload()} 
+            className="refresh-btn"
+            title="Refresh recommendations"
+          >
+            ↻ Refresh
+          </button>
+          <Link to="/courses" className="view-all">View More</Link>
+        </div>
       </div>
       
       <div className="recommendations-list">
         {recommendations.map(recommendation => (
-          <div key={recommendation.course_id} className="recommendation-item">
+          <div key={recommendation.course_id || recommendation.id} className="recommendation-item">
             <div className="recommendation-details">
               <h3>{recommendation.title}</h3>
               <p className="instructor">
-                Instructor: {recommendation.instructor_name}
+                Instructor: {recommendation.instructor_name || recommendation.instructor}
               </p>
               <p className="department">
-                Department: {recommendation.department_name}
+                Department: {recommendation.department_name || recommendation.department}
               </p>
               <p className="recommendation-description">
                 {recommendation.description}
               </p>
               <div className="course-meta">
-                <span className="difficulty">{recommendation.difficulty_level}</span>
-                <span className="credits">{recommendation.credits} Credits</span>
-                <span className="score">Match: {Math.round(recommendation.score * 100)}%</span>
+                <span className="difficulty">
+                  {recommendation.difficulty_level || recommendation.difficulty}
+                </span>
+                <span className="credits">
+                  {recommendation.credits} Credits
+                </span>
+                {recommendation.score && (
+                  <span className="score">
+                    Match: {Math.round((recommendation.score || 0) * 100)}%
+                  </span>
+                )}
               </div>
-              <p className="recommendation-reason">
-                <em>{recommendation.reason}</em>
-              </p>
+              {recommendation.reason && (
+                <p className="recommendation-reason">
+                  <em>{recommendation.reason}</em>
+                </p>
+              )}
             </div>
-            <Link 
-              to={`/courses/${recommendation.course_id}/detail`} 
-              className="enroll-btn"
-            >
-              View Course
-            </Link>
+            <div className="recommendation-actions">
+              <Link 
+                to={`/courses/${recommendation.course_id || recommendation.id}/detail`} 
+                className="view-course-btn"
+              >
+                View Details
+              </Link>
+              <Link 
+                to={`/courses/${recommendation.course_id || recommendation.id}/enroll`} 
+                className="enroll-btn"
+              >
+                Enroll Now
+              </Link>
+            </div>
           </div>
         ))}
       </div>
+      
+      {recommendations.length > 0 && (
+        <div className="recommendations-footer">
+          <p className="recommendations-note">
+            These recommendations are personalized based on your interests and learning history.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

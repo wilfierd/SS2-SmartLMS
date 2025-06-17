@@ -29,8 +29,87 @@ export class RecommendationController {
 
   constructor(private readonly recommendationService: RecommendationService) { }
 
+  // Endpoint cho current user - đặt trước :studentId để tránh conflict
+  @Get()
+  @ApiOperation({ summary: 'Get course recommendations for current user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved recommendations',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'User not authenticated',
+  })
+  @ApiResponse({
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    description: 'ML service unavailable',
+  })
+  async getCurrentUserRecommendations(
+    @Query() query: GetRecommendationsDto,
+    @Req() request: any,
+  ) {
+    // Lấy user ID từ JWT token
+    const studentId = request.user?.userId || request.user?.id;
+    
+    if (!studentId) {
+      this.logger.error('Student ID not found in auth context');
+      throw new HttpException('Student ID not found in auth context', HttpStatus.UNAUTHORIZED);
+    }
+
+    this.logger.log(`Getting recommendations for current user ${studentId}`);
+
+    const recommendationRequest: RecommendationRequest = {
+      studentId,
+      limit: query.limit || 3,
+      refresh: query.refresh || false,
+    };
+
+    try {
+      return await this.recommendationService.getRecommendations(recommendationRequest);
+    } catch (error) {
+      this.logger.error(`Failed to get recommendations for user ${studentId}:`, error.message);
+      
+      // Xử lý các loại lỗi khác nhau
+      if (error.message.includes('ML service unavailable')) {
+        throw new HttpException('Recommendation service is temporarily unavailable', HttpStatus.SERVICE_UNAVAILABLE);
+      } else if (error.message.includes('Student not found')) {
+        throw new HttpException('Student profile not found', HttpStatus.NOT_FOUND);
+      } else {
+        throw new HttpException('Failed to retrieve recommendations', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
+  }
+
+  @Get('service/health')
+  @ApiOperation({ summary: 'Check recommendation service health' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Service health status',
+  })
+  async checkServiceHealth() {
+    const isHealthy = await this.recommendationService.checkServiceHealth();
+    return {
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      service: 'ml-recommendation-service',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('service/stats')
+  @ApiOperation({ summary: 'Get recommendation service statistics' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved service statistics',
+  })
+  @Roles(UserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  async getServiceStats() {
+    return await this.recommendationService.getServiceStats();
+  }
+
+  // Endpoint cho specific student (admin/instructor only)
   @Get(':studentId')
-  @ApiOperation({ summary: 'Get course recommendations for a student' })
+  @ApiOperation({ summary: 'Get course recommendations for a specific student' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved recommendations',
@@ -43,19 +122,29 @@ export class RecommendationController {
     status: HttpStatus.SERVICE_UNAVAILABLE,
     description: 'ML service unavailable',
   })
+  @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
+  @UseGuards(RolesGuard)
   async getRecommendations(
     @Param('studentId', ParseIntPipe) studentId: number,
     @Query() query: GetRecommendationsDto,
+    @Req() request: any,
   ) {
-    this.logger.log(`Getting recommendations for student ${studentId}`);
+    const currentUserId = request.user?.userId || request.user?.id;
+    
+    // Nếu không phải admin/instructor, chỉ cho phép xem recommendations của chính mình
+    if (request.user?.role === UserRole.STUDENT && currentUserId !== studentId) {
+      throw new HttpException('You can only view your own recommendations', HttpStatus.FORBIDDEN);
+    }
 
-    const request: RecommendationRequest = {
+    this.logger.log(`Getting recommendations for student ${studentId} (requested by user ${currentUserId})`);
+
+    const recommendationRequest: RecommendationRequest = {
       studentId,
       limit: query.limit || 3,
       refresh: query.refresh || false,
     };
 
-    return await this.recommendationService.getRecommendations(request);
+    return await this.recommendationService.getRecommendations(recommendationRequest);
   }
 
   @Post('batch')
@@ -102,60 +191,4 @@ export class RecommendationController {
     this.logger.log('Admin initiated cache clear');
     return await this.recommendationService.clearCache();
   }
-
-  @Get('service/stats')
-  @ApiOperation({ summary: 'Get recommendation service statistics' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieved service statistics',
-  })
-  @Roles(UserRole.ADMIN)
-  @UseGuards(RolesGuard)
-  async getServiceStats() {
-    return await this.recommendationService.getServiceStats();
-  }
-
-  @Get('service/health')
-  @ApiOperation({ summary: 'Check recommendation service health' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Service health status',
-  })
-  async checkServiceHealth() {
-    const isHealthy = await this.recommendationService.checkServiceHealth();
-    return {
-      status: isHealthy ? 'healthy' : 'unhealthy',
-      service: 'ml-recommendation-service',
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // Thêm vào RecommendationController
-@Get()
-@ApiOperation({ summary: 'Get course recommendations for current user' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Successfully retrieved recommendations',
-})
-async getCurrentUserRecommendations(
-  @Query() query: GetRecommendationsDto,
-  @Req() request: any, // Assumes JWT auth middleware adds user to request
-) {
-  // Get student ID from JWT token/auth context
-  const studentId = request.user?.id;
-  
-  if (!studentId) {
-    throw new HttpException('Student ID not found in auth context', HttpStatus.UNAUTHORIZED);
-  }
-
-  this.logger.log(`Getting recommendations for current user ${studentId}`);
-
-  const recommendationRequest: RecommendationRequest = {
-    studentId,
-    limit: query.limit || 3,
-    refresh: query.refresh || false,
-  };
-
-  return await this.recommendationService.getRecommendations(recommendationRequest);
-}
 }
