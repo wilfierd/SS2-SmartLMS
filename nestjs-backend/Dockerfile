@@ -15,7 +15,7 @@ RUN npm ci
 # Copy source code and build
 COPY nestjs-backend/src ./src
 COPY nestjs-backend/tsconfig*.json nestjs-backend/nest-cli.json ./
-COPY key.json ./
+COPY key.json ./ 
 RUN npm run build
 
 # Production stage

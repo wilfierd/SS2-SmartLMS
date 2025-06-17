@@ -15,12 +15,10 @@ RUN apk add --no-cache --virtual .build-deps \
     make
 
 # Copy requirements and install with optimizations
-COPY requirements.txt .
+COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --user --no-warn-script-location \
-    --compile --no-deps -r requirements.txt && \
-    pip install --no-cache-dir --user --no-warn-script-location \
-    --only-binary=all -r requirements.txt
+    -r requirements.txt
 
 # Clean up build dependencies immediately
 RUN apk del .build-deps
@@ -36,6 +34,7 @@ RUN apk add --no-cache \
     libstdc++ \
     libgomp \
     wget \
+    curl \
     tini && \
     addgroup -g 1001 -S appgroup && \
     adduser -S app -u 1001 -G appgroup && \
@@ -46,6 +45,12 @@ COPY --from=builder /root/.local /home/app/.local
 
 # Copy application files with minimal footprint
 COPY --chown=app:appgroup *.py ./
+COPY --chown=app:appgroup *.pkl ./
+COPY --chown=app:appgroup data/ ./data/
+COPY --chown=app:appgroup ml/ ./ml/
+
+# Create logs directory
+RUN mkdir -p logs && chown -R app:appgroup logs
 
 # Optimize Python environment
 ENV PATH=/home/app/.local/bin:$PATH \
