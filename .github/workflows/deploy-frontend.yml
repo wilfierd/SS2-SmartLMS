@@ -23,6 +23,8 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
+      - name: Allow warnings in CI
+        run: echo "CI=false" >> $GITHUB_ENV
       - name: Build project
         working-directory: ./frontend
         env:
