@@ -34,5 +34,4 @@
         "REACT_APP_GOOGLE_CLIENT_ID": "@react_app_google_client_id",
         "REACT_APP_USE_MOCK": "@react_app_use_mock"
     }
-    
 }
