@@ -1894,117 +1894,138 @@ CREATE TABLE session_recordings (
 );
 -- Stored procedures for automatic processes
 -- Procedure to update session statuses
-DELIMITER // CREATE PROCEDURE update_session_statuses() BEGIN -- Set sessions to active if current time is between start and end times
-UPDATE virtual_sessions
-SET status = 'active',
-  actual_start_time = IFNULL(actual_start_time, NOW())
-WHERE status = 'scheduled'
-  AND (
-    (
-      session_date = CURDATE()
-      AND start_time <= CURTIME()
-      AND (
-        end_time IS NULL
-        OR end_time > CURTIME()
+DELIMITER //
+
+CREATE PROCEDURE update_session_statuses() 
+BEGIN 
+  -- Set sessions to active if current time is between start and end times
+  UPDATE virtual_sessions
+  SET status = 'active',
+    actual_start_time = IFNULL(actual_start_time, NOW())
+  WHERE status = 'scheduled'
+    AND (
+      (
+        session_date = CURDATE()
+        AND start_time <= CURTIME()
+        AND (
+          end_time IS NULL
+          OR end_time > CURTIME()
+        )
       )
-    )
-    OR (
-      session_date < CURDATE()
-      AND actual_end_time IS NULL
-    )
-  );
--- Set sessions to completed if end time has passed
-UPDATE virtual_sessions
-SET status = 'completed',
-  actual_end_time = IFNULL(actual_end_time, NOW())
-WHERE status = 'active'
-  AND (
-    (
-      session_date = CURDATE()
-      AND end_time IS NOT NULL
-      AND end_time <= CURTIME()
-    )
-    OR (session_date < CURDATE())
-  );
--- Mark no-shows in registrations
-UPDATE session_registrations sr
-  JOIN virtual_sessions vs ON sr.session_id = vs.id
-SET sr.status = 'no_show'
-WHERE vs.status = 'completed'
-  AND sr.status = 'registered';
-END // DELIMITER;
+      OR (
+        session_date < CURDATE()
+        AND actual_end_time IS NULL
+      )
+    );
+  -- Set sessions to completed if end time has passed
+  UPDATE virtual_sessions
+  SET status = 'completed',
+    actual_end_time = IFNULL(actual_end_time, NOW())
+  WHERE status = 'active'
+    AND (
+      (
+        session_date = CURDATE()
+        AND end_time IS NOT NULL
+        AND end_time <= CURTIME()
+      )
+      OR (session_date < CURDATE())
+    );
+  -- Mark no-shows in registrations
+  UPDATE session_registrations sr
+    JOIN virtual_sessions vs ON sr.session_id = vs.id
+  SET sr.status = 'no_show'
+  WHERE vs.status = 'completed'
+    AND sr.status = 'registered';
+END //
+
+DELIMITER ;
 -- Function to generate a unique room ID
-DELIMITER // CREATE FUNCTION generate_room_id() RETURNS VARCHAR(255) DETERMINISTIC BEGIN
-DECLARE room_id VARCHAR(255);
-DECLARE is_unique BOOLEAN DEFAULT FALSE;
-WHILE NOT is_unique DO -- Generate a random room ID (using alphanumeric characters)
-SET room_id = CONCAT(
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    '-',
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    '-',
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    ),
-    SUBSTRING(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      RAND() * 62 + 1,
-      1
-    )
-  );
--- Check if the room ID already exists
-IF NOT EXISTS (
-  SELECT 1
-  FROM virtual_sessions
-  WHERE room_id = room_id
-) THEN
-SET is_unique = TRUE;
-END IF;
-END WHILE;
-RETURN room_id;
-END // DELIMITER;
+DELIMITER //
+
+CREATE FUNCTION generate_room_id() RETURNS VARCHAR(255) 
+DETERMINISTIC 
+BEGIN
+  DECLARE room_id VARCHAR(255);
+  DECLARE is_unique BOOLEAN DEFAULT FALSE;
+  
+  WHILE NOT is_unique DO 
+    -- Generate a random room ID (using alphanumeric characters)
+    SET room_id = CONCAT(
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        '-',
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        '-',
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        ),
+        SUBSTRING(
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+          FLOOR(RAND() * 62) + 1,
+          1
+        )
+      );
+    -- Check if the room ID already exists
+    IF NOT EXISTS (
+      SELECT 1
+      FROM virtual_sessions
+      WHERE room_id = room_id
+    ) THEN
+      SET is_unique = TRUE;
+    END IF;
+  END WHILE;
+  
+  RETURN room_id;
+END //
+
+DELIMITER ;
 -- Trigger to automatically set room_id when creating a new session
-DELIMITER // CREATE TRIGGER before_session_insert BEFORE
-INSERT ON virtual_sessions FOR EACH ROW BEGIN IF NEW.room_id IS NULL
-  OR NEW.room_id = '' THEN
-SET NEW.room_id = generate_room_id();
-END IF;
-END // DELIMITER;
+DELIMITER //
+
+CREATE TRIGGER before_session_insert 
+BEFORE INSERT ON virtual_sessions 
+FOR EACH ROW 
+BEGIN 
+  IF NEW.room_id IS NULL OR NEW.room_id = '' THEN
+    SET NEW.room_id = generate_room_id();
+  END IF;
+END //
+
+DELIMITER ;
 -- Event to automatically update session statuses every minute
 CREATE EVENT update_session_statuses_event ON SCHEDULE EVERY 1 MINUTE DO CALL update_session_statuses();
 -- =============== ASSESSMENT TABLES ===============

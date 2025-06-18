@@ -62,6 +62,9 @@ export class SearchService implements OnModuleInit {
       // Create main content index
       this.contentIndex = this.meilisearch.index('lms_content');
 
+      // Set primary key explicitly to avoid conflicts with multiple *Id fields
+      await this.contentIndex.update({ primaryKey: 'id' });
+
       // Configure searchable attributes
       await this.contentIndex.updateSearchableAttributes([
         'title',
