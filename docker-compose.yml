@@ -46,7 +46,7 @@ services:
     image: getmeili/meilisearch:v1.5
     container_name: lms-meilisearch
     environment:
-      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:-your_meilisearch_master_key}
+      MEILI_MASTER_KEY: lms_search_master_key_2024_secure
       MEILI_ENV: ${MEILISEARCH_ENV:-production}
     ports:
       - "7700:7700"
@@ -132,7 +132,7 @@ services:
       REDIS_PORT: 6379
       ML_SERVICE_URL: http://ml-service:8000
       MEILISEARCH_HOST: http://meilisearch:7700
-      MEILISEARCH_API_KEY: ${MEILISEARCH_MASTER_KEY:-your_meilisearch_master_key}
+      MEILISEARCH_API_KEY: lms_search_master_key_2024_secure
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
