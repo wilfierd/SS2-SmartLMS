@@ -4,7 +4,10 @@
     "outputDirectory": "build",
     "framework": "create-react-app",
     "rewrites": [
-        { "source": "/(.*)", "destination": "/index.html" }
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
     ],
     "headers": [
         {
@@ -16,11 +19,5 @@
                 }
             ]
         }
-    ],
-    "env": {
-        "REACT_APP_API_URL": "@react_app_api_url",
-        "REACT_APP_PROJECT_NAME": "@react_app_project_name",
-        "REACT_APP_GOOGLE_CLIENT_ID": "@react_app_google_client_id",
-        "REACT_APP_USE_MOCK": "@react_app_use_mock"
-    }
+    ]
 }
