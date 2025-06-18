@@ -1,0 +1,37 @@
+{
+    "version": 2,
+    "name": "smartlms-frontend",
+    "buildCommand": "npm run build",
+    "outputDirectory": "build",
+    "installCommand": "npm install",
+    "framework": "create-react-app",
+    "routes": [
+        {
+            "src": "/static/(.*)",
+            "headers": {
+                "Cache-Control": "public, max-age=31536000, immutable"
+            }
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/index.html"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/static/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
+        }
+    ],
+    "env": {
+        "REACT_APP_API_URL": "@react_app_api_url",
+        "REACT_APP_PROJECT_NAME": "@react_app_project_name",
+        "REACT_APP_GOOGLE_CLIENT_ID": "@react_app_google_client_id",
+        "REACT_APP_USE_MOCK": "@react_app_use_mock"
+    }
+}
