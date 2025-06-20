@@ -2,8 +2,6 @@
 node_modules/
 /node_modules
 
-# Package lock
-package-lock.json
 
 # Credentials/Secrets
 key.json

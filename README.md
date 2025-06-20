@@ -17,6 +17,7 @@
 [![Flask](https://img.shields.io/badge/Flask-000000.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![JWT](https://img.shields.io/badge/JWT-000000.svg?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Google OAuth](https://img.shields.io/badge/Google%20OAuth-4285F4.svg?logo=google&logoColor=white)](https://developers.google.com/identity/protocols/oauth2)
+[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-4285F4.svg?logo=google-cloud&logoColor=white)](https://cloud.google.com/)
 
 A comprehensive, intelligent Learning Management System built with modern microservices architecture. Features advanced lesson building, AI-powered recommendations, real-time virtual classrooms, and comprehensive analytics.
 
@@ -332,4 +333,71 @@ SS2-SmartLMS/
 ├── key.json                    # Google OAuth credentials
 └── README.md                   # This file
 ```
+
+## Updated Deployment Tech Stack
+
+### Frontend Deployment
+The frontend is deployed on **Vercel**, a modern platform for frontend hosting with built-in CI/CD. Follow these steps:
+
+1. Push your frontend code to a GitHub repository.
+2. Connect the repository to Vercel.
+3. Configure environment variables in the Vercel dashboard.
+4. Vercel will automatically build and deploy your frontend.
+
+### Backend Deployment
+The backend is deployed on **Google Cloud Run**, a fully managed serverless platform. Steps to deploy:
+
+1. Containerize the backend using Docker.
+2. Push the Docker image to Google Container Registry.
+3. Deploy the image to Google Cloud Run.
+4. Configure environment variables and set up a public endpoint.
+
+### Database
+The database is hosted on **Railway** or **Google Cloud SQL** (MySQL). Choose one of the following options:
+
+#### Railway
+1. Create a new MySQL database on Railway.
+2. Import your schema and data using the Railway dashboard or CLI.
+3. Update the backend `.env` file with the Railway connection string.
+
+#### Google Cloud SQL
+1. Create a MySQL instance in Google Cloud SQL.
+2. Set up a public IP or use the Cloud SQL Proxy for secure connections.
+3. Import your schema and data using the Google Cloud Console or `mysql` CLI.
+4. Update the backend `.env` file with the connection details.
+
+### Environment Variables
+Ensure the following environment variables are set:
+
+#### Frontend
+- `REACT_APP_API_URL`: Backend API URL
+- `REACT_APP_ML_SERVICE_URL`: ML Service URL
+- `REACT_APP_GOOGLE_CLIENT_ID`: Google OAuth Client ID
+
+#### Backend
+- `DB_HOST`: Database host
+- `DB_PORT`: Database port
+- `DB_USER`: Database username
+- `DB_PASSWORD`: Database password
+- `DB_NAME`: Database name
+- `JWT_SECRET`: Secret key for JWT
+- `GOOGLE_CLIENT_ID`: Google OAuth Client ID
+- `GOOGLE_CLIENT_SECRET`: Google OAuth Client Secret
+
+#### ML Service
+- `FLASK_ENV`: Flask environment (e.g., development)
+- `DATABASE_URL`: Database connection string
+
+### CI/CD
+- **Frontend**: GitHub Actions is configured to deploy to Vercel on every push to the `main` branch.
+- **Backend**: Use Google Cloud Build or GitHub Actions to build and deploy Docker images to Google Cloud Run.
+
+### Documentation
+- API Documentation: Available at `/api/docs` on the backend.
+- Frontend: Hosted on Vercel at your configured domain.
+- Backend: Hosted on Google Cloud Run with a public endpoint.
+
+---
+
+This updated deployment stack ensures scalability, reliability, and ease of management for the SmartLMS system.
 
