@@ -17,13 +17,26 @@ for (const p of possibleKeyPaths) {
 const googleWeb = keyJsonData.oauth_credentials?.web || {};
 
 export default () => ({
-  port: parseInt(process.env.PORT ?? '5000', 10),
-  database: {
+  port: parseInt(process.env.PORT ?? '5000', 10), database: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT ?? '3306', 10),
-    username: process.env.DB_USER || 'root',
+    username: process.env.DB_USERNAME || 'root',
     password: process.env.DB_PASSWORD || '',
-    name: process.env.DB_NAME || 'lms_db',
+    name: process.env.DB_NAME || 'lms_db', ssl: process.env.DB_SSL_MODE === 'REQUIRED' ? {
+      ca: process.env.DB_SSL_CA ? fs.readFileSync(path.resolve(process.env.DB_SSL_CA)) : undefined,
+      cert: process.env.DB_SSL_CERT ? fs.readFileSync(path.resolve(process.env.DB_SSL_CERT)) : undefined,
+      key: process.env.DB_SSL_KEY ? fs.readFileSync(path.resolve(process.env.DB_SSL_KEY)) : undefined,
+      rejectUnauthorized: false,
+    } : false,
+    // Cloud SQL connection settings
+    connectTimeout: 60000,
+    acquireTimeout: 60000,
+    timeout: 60000,
+    extra: {
+      connectionLimit: 10,
+      idleTimeout: 900000,
+      acquireTimeout: 60000,
+    }
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'your_default_jwt_secret_for_development',
