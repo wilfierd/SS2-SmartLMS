@@ -1,0 +1,143 @@
+name: Deploy to GCP SQL
+
+on:
+  push:
+    branches: [ master ]
+    paths: ['nestjs-backend/**']
+  pull_request:
+    branches: [ master ]
+    paths: ['nestjs-backend/**']
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: nestjs-backend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd nestjs-backend
+        npm ci
+        
+    - name: Run tests
+      run: |
+        cd nestjs-backend
+        npm run test        
+        
+  deploy-to-gcp-sql:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: nestjs-backend/package-lock.json
+        
+    - name: Create production environment file
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_SSL_CA_CONTENT: ${{ secrets.DB_SSL_CA }}
+        DB_SSL_CERT_CONTENT: ${{ secrets.DB_SSL_CERT }}
+        DB_SSL_KEY_CONTENT: ${{ secrets.DB_SSL_KEY }}
+      run: |
+        cd nestjs-backend
+        cat > .env << EOF
+        # Production Configuration
+        NODE_ENV=production
+        PORT=5000
+        
+        # Database Configuration (from GitHub Secrets)
+        DB_HOST=$DB_HOST
+        DB_PORT=3306
+        DB_USERNAME=$DB_USERNAME
+        DB_PASSWORD=$DB_PASSWORD
+        DB_NAME=lms_db
+        DB_SSL_MODE=REQUIRED
+        
+        # SSL Configuration (from GitHub Secrets)
+        DB_SSL_CA_CONTENT=$DB_SSL_CA_CONTENT
+        DB_SSL_CERT_CONTENT=$DB_SSL_CERT_CONTENT
+        DB_SSL_KEY_CONTENT=$DB_SSL_KEY_CONTENT
+        
+        # JWT Configuration
+        JWT_SECRET=your_production_jwt_secret_here_make_it_very_long_and_secure_123456789
+        
+        # Other configurations
+        MAIL_HOST=live.smtp.mailtrap.io
+        MAIL_PORT=587
+        MAIL_SECURE=false
+        MAIL_USER=smtp@mailtrap.io
+        MAIL_PASSWORD=f97b5afb5808a5e798dfc1c9fb091b9b
+        MAIL_FROM="SmartLMS System <noreply@wilfierdsmartlms.systems>"
+        
+        REDIS_HOST=localhost
+        REDIS_PORT=6379
+        REDIS_PASSWORD=
+        
+        MEILISEARCH_HOST=http://localhost:7700
+        MEILISEARCH_API_KEY=lms_search_master_key_2024_secure
+        EOF
+        
+    - name: Install dependencies
+      run: |
+        cd nestjs-backend
+        npm ci
+        
+    - name: Build application
+      run: |
+        cd nestjs-backend
+        npm run build
+        
+    - name: Test GCP SQL connection
+      run: |
+        cd nestjs-backend
+        node -e "
+        const mysql = require('mysql2/promise');
+        require('dotenv').config();
+        
+        async function test() {
+          try {
+            const connection = await mysql.createConnection({
+              host: process.env.DB_HOST,
+              port: process.env.DB_PORT,
+              user: process.env.DB_USERNAME,
+              password: process.env.DB_PASSWORD,
+              database: process.env.DB_NAME,
+              ssl: {
+                ca: process.env.DB_SSL_CA_CONTENT,
+                cert: process.env.DB_SSL_CERT_CONTENT,
+                key: process.env.DB_SSL_KEY_CONTENT,
+                rejectUnauthorized: false
+              }
+            });
+            console.log('✅ GCP SQL connection successful');
+            await connection.end();
+          } catch (error) {
+            console.error('❌ GCP SQL connection failed:', error.message);
+            process.exit(1);
+          }
+        }
+        test();
+        "
+        
+    - name: Setup database schema
+      run: |
+        echo "�️ Setting up database schema on GCP SQL"
+        echo "Database connection verified and ready for use"

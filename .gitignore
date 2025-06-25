@@ -3,6 +3,21 @@ node_modules/
 /node_modules
 
 
+# 🔒 SSL Certificates - NEVER COMMIT!
+**/ssl/
+*.pem
+*.key
+*.crt
+*.p12
+
+# 🔒 Environment files - NEVER COMMIT!
+.env
+**/.env
+.env.local
+**/.env.local
+.env.production
+.env.*.local
+
 # Credentials/Secrets
 key.json
 
