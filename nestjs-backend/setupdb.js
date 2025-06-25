@@ -139,6 +139,7 @@ async function setupDatabase() {
   }
 }
 
+
 // Refined helper function to extract only structure-related statements
 function extractStructureStatements(sqlScript) {
   // Remove comments first to simplify parsing

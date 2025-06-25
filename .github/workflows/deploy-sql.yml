@@ -1,52 +1,31 @@
-name: Deploy to GCP SQL
+name: Deploy SQL Database Only
 
 on:
   push:
     branches: [ master ]
-    paths: ['nestjs-backend/**']
+    paths: ['nestjs-backend/schema.sql', 'nestjs-backend/setupdb.js']
   pull_request:
     branches: [ master ]
-    paths: ['nestjs-backend/**']
+    paths: ['nestjs-backend/schema.sql', 'nestjs-backend/setupdb.js']
   workflow_dispatch:
 
 jobs:
-  test:
+  deploy-sql-database:
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Node.js
+    - name: Setup Node.js (for database setup only)
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: nestjs-backend/package-lock.json
         
-    - name: Install dependencies
+    - name: Install minimal dependencies for database setup
       run: |
         cd nestjs-backend
-        npm ci
-        
-    - name: Run tests
-      run: |
-        cd nestjs-backend
-        npm run test        
-        
-  deploy-to-gcp-sql:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: nestjs-backend/package-lock.json
+        npm init -y
+        npm install mysql2 bcrypt dotenv
         
     - name: Create production environment file
       env:
@@ -59,10 +38,6 @@ jobs:
       run: |
         cd nestjs-backend
         cat > .env << EOF
-        # Production Configuration
-        NODE_ENV=production
-        PORT=5000
-        
         # Database Configuration (from GitHub Secrets)
         DB_HOST=$DB_HOST
         DB_PORT=3306
@@ -75,35 +50,7 @@ jobs:
         DB_SSL_CA_CONTENT=$DB_SSL_CA_CONTENT
         DB_SSL_CERT_CONTENT=$DB_SSL_CERT_CONTENT
         DB_SSL_KEY_CONTENT=$DB_SSL_KEY_CONTENT
-        
-        # JWT Configuration
-        JWT_SECRET=your_production_jwt_secret_here_make_it_very_long_and_secure_123456789
-        
-        # Other configurations
-        MAIL_HOST=live.smtp.mailtrap.io
-        MAIL_PORT=587
-        MAIL_SECURE=false
-        MAIL_USER=smtp@mailtrap.io
-        MAIL_PASSWORD=f97b5afb5808a5e798dfc1c9fb091b9b
-        MAIL_FROM="SmartLMS System <noreply@wilfierdsmartlms.systems>"
-        
-        REDIS_HOST=localhost
-        REDIS_PORT=6379
-        REDIS_PASSWORD=
-        
-        MEILISEARCH_HOST=http://localhost:7700
-        MEILISEARCH_API_KEY=lms_search_master_key_2024_secure
         EOF
-        
-    - name: Install dependencies
-      run: |
-        cd nestjs-backend
-        npm ci
-        
-    - name: Build application
-      run: |
-        cd nestjs-backend
-        npm run build
         
     - name: Test GCP SQL connection
       run: |
@@ -137,7 +84,88 @@ jobs:
         test();
         "
         
-    - name: Setup database schema
+    - name: Setup database schema and data
       run: |
-        echo "�️ Setting up database schema on GCP SQL"
-        echo "Database connection verified and ready for use"
+        cd nestjs-backend
+        echo "🗄️ Running database setup..."
+        node setupdb.js
+        
+    - name: Verify data upload - User count by role
+      run: |
+        cd nestjs-backend
+        node -e "
+        const mysql = require('mysql2/promise');
+        require('dotenv').config();
+        
+        async function verifyData() {
+          let connection;
+          try {
+            connection = await mysql.createConnection({
+              host: process.env.DB_HOST,
+              port: process.env.DB_PORT,
+              user: process.env.DB_USERNAME,
+              password: process.env.DB_PASSWORD,
+              database: process.env.DB_NAME,
+              ssl: {
+                ca: process.env.DB_SSL_CA_CONTENT,
+                cert: process.env.DB_SSL_CERT_CONTENT,
+                key: process.env.DB_SSL_KEY_CONTENT,
+                rejectUnauthorized: false
+              }
+            });
+            
+            console.log('\\n📊 DATABASE DATA VERIFICATION REPORT:');
+            console.log('=====================================');
+            
+            // Count users by role
+            const [userCounts] = await connection.query(
+              'SELECT role, COUNT(*) as count FROM users GROUP BY role ORDER BY role'
+            );
+            
+            console.log('\\n👥 USER COUNTS BY ROLE:');
+            let totalUsers = 0;
+            userCounts.forEach(row => {
+              console.log(\`   📋 \${row.role.toUpperCase()}: \${row.count} users\`);
+              totalUsers += row.count;
+            });
+            console.log(\`   📊 TOTAL USERS: \${totalUsers}\`);
+            
+            // Count other data
+            const [coursesCount] = await connection.query('SELECT COUNT(*) as count FROM courses');
+            const [departmentsCount] = await connection.query('SELECT COUNT(*) as count FROM departments');
+            const [enrollmentsCount] = await connection.query('SELECT COUNT(*) as count FROM enrollments');
+            
+            console.log('\\n📚 OTHER DATA:');
+            console.log(\`   📖 COURSES: \${coursesCount[0].count}\`);
+            console.log(\`   🏢 DEPARTMENTS: \${departmentsCount[0].count}\`);
+            console.log(\`   📝 ENROLLMENTS: \${enrollmentsCount[0].count}\`);
+            
+            // Sample users from each role
+            console.log('\\n👤 SAMPLE USERS:');
+            const [adminSample] = await connection.query('SELECT email, first_name, last_name FROM users WHERE role = \"admin\" LIMIT 2');
+            const [instructorSample] = await connection.query('SELECT email, first_name, last_name FROM users WHERE role = \"instructor\" LIMIT 2');
+            const [studentSample] = await connection.query('SELECT email, first_name, last_name FROM users WHERE role = \"student\" LIMIT 2');
+            
+            console.log('   👑 ADMIN USERS:');
+            adminSample.forEach(user => console.log(\`      - \${user.first_name} \${user.last_name} (\${user.email})\`));
+            
+            console.log('   👨‍🏫 INSTRUCTOR USERS:');
+            instructorSample.forEach(user => console.log(\`      - \${user.first_name} \${user.last_name} (\${user.email})\`));
+            
+            console.log('   👨‍🎓 STUDENT USERS:');
+            studentSample.forEach(user => console.log(\`      - \${user.first_name} \${user.last_name} (\${user.email})\`));
+            
+            console.log('\\n✅ Data verification completed successfully!');
+            console.log('🚀 Database is ready for use!');
+            
+          } catch (error) {
+            console.error('❌ Error verifying data:', error.message);
+            process.exit(1);
+          } finally {
+            if (connection) {
+              await connection.end();
+            }
+          }
+        }
+        verifyData();
+        "
