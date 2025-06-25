@@ -27,7 +27,7 @@ jobs:
         npm init -y
         npm install mysql2 bcrypt dotenv
         
-    - name: Create production environment file
+    - name: Test GCP SQL connection
       env:
         DB_HOST: ${{ secrets.DB_HOST }}
         DB_USERNAME: ${{ secrets.DB_USERNAME }}
@@ -35,38 +35,31 @@ jobs:
         DB_SSL_CA_CONTENT: ${{ secrets.DB_SSL_CA }}
         DB_SSL_CERT_CONTENT: ${{ secrets.DB_SSL_CERT }}
         DB_SSL_KEY_CONTENT: ${{ secrets.DB_SSL_KEY }}
-      run: |
-        cd nestjs-backend
-        cat > .env << EOF
-        # Database Configuration (from GitHub Secrets)
-        DB_HOST=$DB_HOST
-        DB_PORT=3306
-        DB_USERNAME=$DB_USERNAME
-        DB_PASSWORD=$DB_PASSWORD
-        DB_NAME=lms_db
-        DB_SSL_MODE=REQUIRED
-        
-        # SSL Configuration (from GitHub Secrets)
-        DB_SSL_CA_CONTENT=$DB_SSL_CA_CONTENT
-        DB_SSL_CERT_CONTENT=$DB_SSL_CERT_CONTENT
-        DB_SSL_KEY_CONTENT=$DB_SSL_KEY_CONTENT
-        EOF
-        
-    - name: Test GCP SQL connection
+        DB_PORT: 3306
+        DB_NAME: lms_db
+        DB_SSL_MODE: REQUIRED
       run: |
         cd nestjs-backend
         node -e "
         const mysql = require('mysql2/promise');
-        require('dotenv').config();
         
         async function test() {
           try {
+            console.log('🔍 Testing GCP SQL Connection...');
+            console.log('DB_HOST:', process.env.DB_HOST ? 'SET' : 'NOT SET');
+            console.log('DB_USERNAME:', process.env.DB_USERNAME ? 'SET' : 'NOT SET');  
+            console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? 'SET' : 'NOT SET');
+            console.log('SSL Certificates:', process.env.DB_SSL_CA_CONTENT ? 'SET' : 'NOT SET');
+            
             const connection = await mysql.createConnection({
               host: process.env.DB_HOST,
-              port: process.env.DB_PORT,
+              port: process.env.DB_PORT || 3306,
               user: process.env.DB_USERNAME,
               password: process.env.DB_PASSWORD,
               database: process.env.DB_NAME,
+              connectTimeout: 60000,
+              acquireTimeout: 60000,
+              timeout: 60000,
               ssl: {
                 ca: process.env.DB_SSL_CA_CONTENT,
                 cert: process.env.DB_SSL_CERT_CONTENT,
@@ -78,6 +71,11 @@ jobs:
             await connection.end();
           } catch (error) {
             console.error('❌ GCP SQL connection failed:', error.message);
+            console.error('Error code:', error.code);
+            if (error.code === 'ETIMEDOUT') {
+              console.log('💡 This is likely a network/firewall issue with GCP SQL');
+              console.log('   Check authorized networks in your GCP SQL instance');
+            }
             process.exit(1);
           }
         }
@@ -85,17 +83,36 @@ jobs:
         "
         
     - name: Setup database schema and data
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_SSL_CA_CONTENT: ${{ secrets.DB_SSL_CA }}
+        DB_SSL_CERT_CONTENT: ${{ secrets.DB_SSL_CERT }}
+        DB_SSL_KEY_CONTENT: ${{ secrets.DB_SSL_KEY }}
+        DB_PORT: 3306
+        DB_NAME: lms_db
+        DB_SSL_MODE: REQUIRED
       run: |
         cd nestjs-backend
         echo "🗄️ Running database setup..."
         node setupdb.js
         
     - name: Verify data upload - User count by role
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_SSL_CA_CONTENT: ${{ secrets.DB_SSL_CA }}
+        DB_SSL_CERT_CONTENT: ${{ secrets.DB_SSL_CERT }}
+        DB_SSL_KEY_CONTENT: ${{ secrets.DB_SSL_KEY }}
+        DB_PORT: 3306
+        DB_NAME: lms_db
+        DB_SSL_MODE: REQUIRED
       run: |
         cd nestjs-backend
         node -e "
         const mysql = require('mysql2/promise');
-        require('dotenv').config();
         
         async function verifyData() {
           let connection;

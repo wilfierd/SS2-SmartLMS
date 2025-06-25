@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 -- Create index for token
 -- DROP INDEX IF EXISTS idx_password_reset_tokens_token ON password_reset_tokens;
 CREATE INDEX idx_password_reset_tokens_token ON password_reset_tokens(token);
