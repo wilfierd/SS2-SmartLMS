@@ -158,24 +158,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # React Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: lms-frontend
-    environment:
-      NODE_ENV: production
-      REACT_APP_API_URL: /api
-    ports:
-      - "3000:3000"
-    depends_on:
-      - nestjs-backend
-    networks:
-      - lms-network
-    restart: unless-stopped
-
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy (Backend API Gateway)
   nginx:
     image: nginx:alpine
     container_name: lms-nginx
@@ -189,7 +172,6 @@ services:
     depends_on:
       - nestjs-backend
       - ml-service
-      - frontend
     networks:
       - lms-network
     restart: unless-stopped
