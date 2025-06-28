@@ -55,7 +55,17 @@ npm run build
 # Deploy to Vercel (configure REACT_APP_API_URL)
 ```
 
-#### Backend (Docker + Cloud SQL)
+#### Backend (Cloud Run - Recommended)
+```bash
+# Automatic deployment via GitHub Actions
+# See CLOUD_RUN_SETUP.md for detailed setup instructions
+
+# Manual deployment (requires gcloud CLI)
+gcloud run deploy smartlms-backend --source ./nestjs-backend
+gcloud run deploy smartlms-ml-service --source ./ml-service
+```
+
+#### Backend (Docker Alternative)
 ```bash
 # Deploy backend services with Docker
 docker-compose up -d
@@ -95,9 +105,13 @@ npm run start:dev
 
 The application will be available at:
 - **Frontend**: https://your-app.vercel.app (Vercel deployment)
-- **Backend API**: http://localhost:5000 (Docker) or your-backend.cloud.run (Cloud Run)
-- **ML Service**: http://localhost:8000 (Docker)
-- **API Documentation**: http://localhost:5000/api/docs
+- **Backend API**: 
+  - https://smartlms-backend-xxx.a.run.app (Cloud Run - Recommended)
+  - http://localhost:5000 (Docker alternative)
+- **ML Service**: 
+  - https://smartlms-ml-service-xxx.a.run.app (Cloud Run - Recommended)
+  - http://localhost:8000 (Docker alternative)
+- **API Documentation**: https://your-backend-url/api/docs
 
 ### 🛠️ Manual Installation (Full Local Development)
 
@@ -194,9 +208,9 @@ npm start
 ### Production Setup
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Vercel        │    │   Docker/Cloud   │    │   Cloud SQL     │
-│   (Frontend)    │───▶│   (Backend API)  │───▶│   (Database)    │
-│                 │    │   + ML Service   │    │                 │
+│     Vercel      │    │   Cloud Run      │    │   Cloud SQL     │
+│   (Frontend)    │───▶│   (Backend API   │───▶│   (Database)    │
+│                 │    │    + ML Service) │    │                 │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
@@ -209,6 +223,13 @@ npm start
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
+### Cloud Run Services (Production)
+- **smartlms-backend**: Main API server (NestJS)
+- **smartlms-ml-service**: AI recommendations (Python Flask)
+- **Cloud SQL**: Managed MySQL database
+- **Automatic scaling**: 0 to 10 instances based on traffic
+- **HTTPS**: Automatic SSL certificates
+
 ### Docker Services (Backend Only)
 - **nginx**: API Gateway and reverse proxy
 - **nestjs-backend**: Main API server (port 5000)
@@ -216,6 +237,11 @@ npm start
 - **mysql-db**: Database (port 3307)
 - **redis-cache**: Caching layer
 - **meilisearch**: Search engine
+
+## 📚 Deployment Guides
+
+- **[Cloud Run Setup](CLOUD_RUN_SETUP.md)**: Complete guide for deploying to Google Cloud Run (Recommended)
+- **Docker Setup**: Use `docker-compose up -d` for local development or VPS deployment
 
 ```json
 {
