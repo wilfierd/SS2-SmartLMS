@@ -17,6 +17,7 @@
 [![Flask](https://img.shields.io/badge/Flask-000000.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![JWT](https://img.shields.io/badge/JWT-000000.svg?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Google OAuth](https://img.shields.io/badge/Google%20OAuth-4285F4.svg?logo=google&logoColor=white)](https://developers.google.com/identity/protocols/oauth2)
+[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-4285F4.svg?logo=google-cloud&logoColor=white)](https://cloud.google.com/)
 
 A comprehensive, intelligent Learning Management System built with modern microservices architecture. Features advanced lesson building, AI-powered recommendations, real-time virtual classrooms, and comprehensive analytics.
 
@@ -24,12 +25,13 @@ A comprehensive, intelligent Learning Management System built with modern micros
 
 ### Microservices Architecture
 - **Backend API**: NestJS (TypeScript) with MySQL
-- **Frontend**: React.js with modern UI components  
+- **Frontend**: React.js deployed on Vercel  
 - **ML Service**: Python Flask for AI recommendations
 - **Authentication**: JWT + Google OAuth2.0
 - **Database**: MySQL with optimized schema
 - **File Storage**: Local/Cloud storage support
 - **API Documentation**: Swagger/OpenAPI
+- **Reverse Proxy**: Nginx (for Docker deployment)
 
 ## ![](https://img.shields.io/badge/-FF6B6B.svg?logo=checkmarx&logoColor=white) System Requirements
 
@@ -42,7 +44,34 @@ A comprehensive, intelligent Learning Management System built with modern micros
 
 ## <img src="https://cdn-icons-png.flaticon.com/512/3159/3159310.png" width="22" height="22" alt="Setup"> Installation Instructions
 
-### Quick Start with Docker (Recommended)
+### 🚀 Production Deployment (Recommended)
+
+#### Frontend (Vercel)
+```bash
+# Deploy frontend to Vercel
+cd frontend
+npm install
+npm run build
+# Deploy to Vercel (configure REACT_APP_API_URL)
+```
+
+#### Backend (Cloud Run - Recommended)
+```bash
+# Automatic deployment via GitHub Actions
+# See CLOUD_RUN_SETUP.md for detailed setup instructions
+
+# Manual deployment (requires gcloud CLI)
+gcloud run deploy smartlms-backend --source ./nestjs-backend
+gcloud run deploy smartlms-ml-service --source ./ml-service
+```
+
+#### Backend (Docker Alternative)
+```bash
+# Deploy backend services with Docker
+docker-compose up -d
+```
+
+### 📦 Quick Start with Docker (Backend Services Only)
 
 ```bash
 git clone https://github.com/yourusername/SS2-SmartLMS.git
@@ -50,31 +79,41 @@ cd SS2-SmartLMS
 docker-compose up -d
 ```
 
-### Quick Start Manual Setup
+**Note**: This starts backend services only (API + ML + Database). Frontend should be deployed separately on Vercel.
 
+### 🔧 Development Setup
+
+#### 1. Frontend Development (Local)
 ```bash
-git clone https://github.com/yourusername/SS2-SmartLMS.git
-cd SS2-SmartLMS
+cd frontend
+npm install
+# Configure environment variables
+echo "REACT_APP_API_URL=http://localhost:5000/api" > .env.local
+npm start
+```
 
-# Set up database with automated script
+#### 2. Backend Development (Docker)
+```bash
+# Start backend services
+docker-compose up -d
+
+# Or run backend locally:
 cd nestjs-backend
 npm install
-# Configure your .env file with database credentials
-node setupdb.js
-
-# Start all services
-npm run start:dev &
-cd ../ml-service && python app.py &
-cd ../frontend && npm install && npm start
+npm run start:dev
 ```
 
 The application will be available at:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-- ML Service: http://localhost:8000
-- API Documentation: http://localhost:5000/api/docs
+- **Frontend**: https://your-app.vercel.app (Vercel deployment)
+- **Backend API**: 
+  - https://smartlms-backend-xxx.a.run.app (Cloud Run - Recommended)
+  - http://localhost:5000 (Docker alternative)
+- **ML Service**: 
+  - https://smartlms-ml-service-xxx.a.run.app (Cloud Run - Recommended)
+  - http://localhost:8000 (Docker alternative)
+- **API Documentation**: https://your-backend-url/api/docs
 
-### Manual Installation
+### 🛠️ Manual Installation (Full Local Development)
 
 #### 1. Clone the Repository
 
@@ -133,20 +172,17 @@ FLASK_ENV=development
 DATABASE_URL=mysql://username:password@localhost/lms_db
 ```
 
-#### 5. Set Up Frontend
+#### 5. Set Up Frontend (Local Development)
 
 ```bash
 cd frontend
 npm install
 ```
 
-Update `src/config.js`:
-```javascript
-const config = {
-  apiUrl: 'http://localhost:5000/api',
-  mlServiceUrl: 'http://localhost:8000',
-  googleClientId: 'your_google_client_id'
-};
+Create `.env.local` file:
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_ML_SERVICE_URL=http://localhost:8000
 ```
 
 #### 6. Start All Services
@@ -160,10 +196,52 @@ npm run start:dev
 cd ml-service
 python app.py
 
-# Terminal 3: Frontend
+# Terminal 3: Frontend (Local Development)
 cd frontend
 npm start
 ```
+
+**For Production**: Deploy frontend to Vercel and backend via Docker/Cloud Run.
+
+## 🏗️ Deployment Architecture
+
+### Production Setup
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│     Vercel      │    │   Cloud Run      │    │   Cloud SQL     │
+│   (Frontend)    │───▶│   (Backend API   │───▶│   (Database)    │
+│                 │    │    + ML Service) │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+### Development Setup
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   localhost:3000│    │   localhost:5000 │    │   localhost:3307│
+│   (React Dev)   │───▶│   (NestJS)       │───▶│   (MySQL)       │
+│                 │    │   + ML:8000      │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+### Cloud Run Services (Production)
+- **smartlms-backend**: Main API server (NestJS)
+- **smartlms-ml-service**: AI recommendations (Python Flask)
+- **Cloud SQL**: Managed MySQL database
+- **Automatic scaling**: 0 to 10 instances based on traffic
+- **HTTPS**: Automatic SSL certificates
+
+### Docker Services (Backend Only)
+- **nginx**: API Gateway and reverse proxy
+- **nestjs-backend**: Main API server (port 5000)
+- **ml-service**: AI recommendations (port 8000)  
+- **mysql-db**: Database (port 3307)
+- **redis-cache**: Caching layer
+- **meilisearch**: Search engine
+
+## 📚 Deployment Guides
+
+- **[Cloud Run Setup](CLOUD_RUN_SETUP.md)**: Complete guide for deploying to Google Cloud Run (Recommended)
+- **Docker Setup**: Use `docker-compose up -d` for local development or VPS deployment
 
 ```json
 {
@@ -195,16 +273,21 @@ The backend will start at http://localhost:5000 with:
 - API endpoints at `http://localhost:5000/api/`
 - Swagger documentation at `http://localhost:5000/api/docs`
 
-### 8. Start the Frontend Server
+### 8. Frontend Deployment
 
-In a new terminal:
-
+**Production (Vercel)**:
 ```bash
 cd frontend
-npm start
+# Deploy to Vercel with environment variables:
+# REACT_APP_API_URL=https://your-backend.com/api
+vercel deploy --prod
 ```
 
-The application will open automatically at http://localhost:3000
+**Local Development**:
+```bash
+cd frontend
+npm start  # Opens at http://localhost:3000
+```
 
 ## <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" width="22" height="22" alt="Credentials"> Default Login Credentials
 
@@ -288,7 +371,7 @@ SS2-SmartLMS/
 │   ├── schema.sql              # Database schema
 │   ├── Dockerfile              # Container configuration
 │   └── package.json
-├── frontend/                    # React.js Frontend Application
+├── frontend/                    # React.js Frontend (Deploy to Vercel)
 │   ├── src/
 │   │   ├── components/         # React components
 │   │   │   ├── 1.admin/        # Admin dashboard
@@ -314,7 +397,7 @@ SS2-SmartLMS/
 │   │   └── config.js           # Frontend configuration
 │   ├── build/                  # Production build
 │   ├── public/                 # Static assets
-│   ├── Dockerfile              # Container configuration
+│   ├── vercel.json             # Vercel deployment config
 │   └── package.json
 ├── ml-service/                  # Python Flask ML Service
 │   ├── app.py                  # Flask application
@@ -327,8 +410,8 @@ SS2-SmartLMS/
 │   ├── ml/                     # ML model components
 │   ├── Dockerfile              # Container configuration
 │   └── requirements.txt        # Python dependencies
-├── docker-compose.yml          # Multi-service orchestration
-├── nginx.conf                  # Nginx configuration (optional)
+├── docker-compose.yml          # Backend services orchestration
+├── nginx.conf                  # API Gateway configuration
 ├── key.json                    # Google OAuth credentials
 └── README.md                   # This file
 ```

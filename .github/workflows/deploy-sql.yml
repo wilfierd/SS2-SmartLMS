@@ -1,0 +1,188 @@
+name: Deploy SQL Database Only
+
+on:
+  push:
+    branches: [ master ]
+    paths: ['nestjs-backend/schema.sql', 'nestjs-backend/setupdb.js']
+  pull_request:
+    branches: [ master ]
+    paths: ['nestjs-backend/schema.sql', 'nestjs-backend/setupdb.js']
+  workflow_dispatch:
+
+jobs:
+  deploy-sql-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js (for database setup only)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install minimal dependencies for database setup
+      run: |
+        cd nestjs-backend
+        npm init -y
+        npm install mysql2 bcrypt dotenv
+        
+    - name: Test GCP SQL connection
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_SSL_CA_CONTENT: ${{ secrets.DB_SSL_CA }}
+        DB_SSL_CERT_CONTENT: ${{ secrets.DB_SSL_CERT }}
+        DB_SSL_KEY_CONTENT: ${{ secrets.DB_SSL_KEY }}
+        DB_PORT: 3306
+        DB_NAME: lms_db
+        DB_SSL_MODE: REQUIRED
+      run: |
+        cd nestjs-backend
+        node -e "
+        const mysql = require('mysql2/promise');
+        
+        async function test() {
+          try {
+            console.log('🔍 Testing GCP SQL Connection...');
+            console.log('DB_HOST:', process.env.DB_HOST ? 'SET' : 'NOT SET');
+            console.log('DB_USERNAME:', process.env.DB_USERNAME ? 'SET' : 'NOT SET');  
+            console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? 'SET' : 'NOT SET');
+            console.log('SSL Certificates:', process.env.DB_SSL_CA_CONTENT ? 'SET' : 'NOT SET');
+            
+            const connection = await mysql.createConnection({
+              host: process.env.DB_HOST,
+              port: process.env.DB_PORT || 3306,
+              user: process.env.DB_USERNAME,
+              password: process.env.DB_PASSWORD,
+              database: process.env.DB_NAME,
+              connectTimeout: 60000,
+              acquireTimeout: 60000,
+              timeout: 60000,
+              ssl: {
+                ca: process.env.DB_SSL_CA_CONTENT,
+                cert: process.env.DB_SSL_CERT_CONTENT,
+                key: process.env.DB_SSL_KEY_CONTENT,
+                rejectUnauthorized: false
+              }
+            });
+            console.log('✅ GCP SQL connection successful');
+            await connection.end();
+          } catch (error) {
+            console.error('❌ GCP SQL connection failed:', error.message);
+            console.error('Error code:', error.code);
+            if (error.code === 'ETIMEDOUT') {
+              console.log('💡 This is likely a network/firewall issue with GCP SQL');
+              console.log('   Check authorized networks in your GCP SQL instance');
+            }
+            process.exit(1);
+          }
+        }
+        test();
+        "
+        
+    - name: Setup database schema and data
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_SSL_CA_CONTENT: ${{ secrets.DB_SSL_CA }}
+        DB_SSL_CERT_CONTENT: ${{ secrets.DB_SSL_CERT }}
+        DB_SSL_KEY_CONTENT: ${{ secrets.DB_SSL_KEY }}
+        DB_PORT: 3306
+        DB_NAME: lms_db
+        DB_SSL_MODE: REQUIRED
+      run: |
+        cd nestjs-backend
+        echo "🗄️ Running database setup..."
+        node setupdb.js
+        
+    - name: Verify data upload - User count by role
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_SSL_CA_CONTENT: ${{ secrets.DB_SSL_CA }}
+        DB_SSL_CERT_CONTENT: ${{ secrets.DB_SSL_CERT }}
+        DB_SSL_KEY_CONTENT: ${{ secrets.DB_SSL_KEY }}
+        DB_PORT: 3306
+        DB_NAME: lms_db
+        DB_SSL_MODE: REQUIRED
+      run: |
+        cd nestjs-backend
+        node -e "
+        const mysql = require('mysql2/promise');
+        
+        async function verifyData() {
+          let connection;
+          try {
+            connection = await mysql.createConnection({
+              host: process.env.DB_HOST,
+              port: process.env.DB_PORT,
+              user: process.env.DB_USERNAME,
+              password: process.env.DB_PASSWORD,
+              database: process.env.DB_NAME,
+              ssl: {
+                ca: process.env.DB_SSL_CA_CONTENT,
+                cert: process.env.DB_SSL_CERT_CONTENT,
+                key: process.env.DB_SSL_KEY_CONTENT,
+                rejectUnauthorized: false
+              }
+            });
+            
+            console.log('\\n📊 DATABASE DATA VERIFICATION REPORT:');
+            console.log('=====================================');
+            
+            // Count users by role
+            const [userCounts] = await connection.query(
+              'SELECT role, COUNT(*) as count FROM users GROUP BY role ORDER BY role'
+            );
+            
+            console.log('\\n👥 USER COUNTS BY ROLE:');
+            let totalUsers = 0;
+            userCounts.forEach(row => {
+              console.log(\`   📋 \${row.role.toUpperCase()}: \${row.count} users\`);
+              totalUsers += row.count;
+            });
+            console.log(\`   📊 TOTAL USERS: \${totalUsers}\`);
+            
+            // Count other data
+            const [coursesCount] = await connection.query('SELECT COUNT(*) as count FROM courses');
+            const [departmentsCount] = await connection.query('SELECT COUNT(*) as count FROM departments');
+            const [enrollmentsCount] = await connection.query('SELECT COUNT(*) as count FROM enrollments');
+            
+            console.log('\\n📚 OTHER DATA:');
+            console.log(\`   📖 COURSES: \${coursesCount[0].count}\`);
+            console.log(\`   🏢 DEPARTMENTS: \${departmentsCount[0].count}\`);
+            console.log(\`   📝 ENROLLMENTS: \${enrollmentsCount[0].count}\`);
+            
+            // Sample users from each role
+            console.log('\\n👤 SAMPLE USERS:');
+            const [adminSample] = await connection.query('SELECT email, first_name, last_name FROM users WHERE role = \"admin\" LIMIT 2');
+            const [instructorSample] = await connection.query('SELECT email, first_name, last_name FROM users WHERE role = \"instructor\" LIMIT 2');
+            const [studentSample] = await connection.query('SELECT email, first_name, last_name FROM users WHERE role = \"student\" LIMIT 2');
+            
+            console.log('   👑 ADMIN USERS:');
+            adminSample.forEach(user => console.log(\`      - \${user.first_name} \${user.last_name} (\${user.email})\`));
+            
+            console.log('   👨‍🏫 INSTRUCTOR USERS:');
+            instructorSample.forEach(user => console.log(\`      - \${user.first_name} \${user.last_name} (\${user.email})\`));
+            
+            console.log('   👨‍🎓 STUDENT USERS:');
+            studentSample.forEach(user => console.log(\`      - \${user.first_name} \${user.last_name} (\${user.email})\`));
+            
+            console.log('\\n✅ Data verification completed successfully!');
+            console.log('🚀 Database is ready for use!');
+            
+          } catch (error) {
+            console.error('❌ Error verifying data:', error.message);
+            process.exit(1);
+          } finally {
+            if (connection) {
+              await connection.end();
+            }
+          }
+        }
+        verifyData();
+        "

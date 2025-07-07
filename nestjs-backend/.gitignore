@@ -42,6 +42,13 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# SSL Certificates 
+nestjs-backend/ssl/
+*.pem
+*.key
+*.crt
+*.p12
+
 # temp directory
 .temp
 .tmp

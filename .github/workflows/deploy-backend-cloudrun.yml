@@ -1,0 +1,234 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches: [ master ]
+    paths: 
+      - 'nestjs-backend/**'
+      - 'ml-service/**'
+      - '.github/workflows/deploy-backend-cloudrun.yml'
+  pull_request:
+    branches: [ master ]
+    paths: 
+      - 'nestjs-backend/**'
+      - 'ml-service/**'
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  SERVICE_NAME_BACKEND: smartlms-backend
+  SERVICE_NAME_ML: smartlms-ml-service
+
+jobs:
+  deploy-backend:
+    name: Deploy NestJS Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker for Artifact Registry
+      run: |
+        gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+    - name: Build and Push Backend Docker Image
+      run: |
+        cd nestjs-backend
+        
+        # Build the image
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_BACKEND }}:${{ github.sha }} .
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_BACKEND }}:latest .
+        
+        # Push the images
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_BACKEND }}:${{ github.sha }}
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_BACKEND }}:latest
+
+    - name: Deploy Backend to Cloud Run
+      run: |
+        gcloud run deploy ${{ env.SERVICE_NAME_BACKEND }} \
+          --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_BACKEND }}:${{ github.sha }} \
+          --platform managed \
+          --region ${{ env.REGION }} \
+          --allow-unauthenticated \
+          --port 5000 \
+          --memory 1Gi \
+          --cpu 1 \
+          --min-instances 0 \
+          --max-instances 10 \
+          --concurrency 80 \
+          --timeout 300 \
+          --set-env-vars="NODE_ENV=production" \
+          --set-env-vars="PORT=5000" \
+          --set-env-vars="DB_HOST=${{ secrets.DB_HOST }}" \
+          --set-env-vars="DB_PORT=3306" \
+          --set-env-vars="DB_USERNAME=${{ secrets.DB_USERNAME }}" \
+          --set-env-vars="DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
+          --set-env-vars="DB_NAME=lms_db" \
+          --set-env-vars="DB_SSL_MODE=REQUIRED" \
+          --set-env-vars="DB_SSL_CA_CONTENT=${{ secrets.DB_SSL_CA }}" \
+          --set-env-vars="DB_SSL_CERT_CONTENT=${{ secrets.DB_SSL_CERT }}" \
+          --set-env-vars="DB_SSL_KEY_CONTENT=${{ secrets.DB_SSL_KEY }}" \
+          --set-env-vars="JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+          --set-env-vars="GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" \
+          --set-env-vars="GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+          --set-env-vars="MAIL_HOST=${{ secrets.MAIL_HOST }}" \
+          --set-env-vars="MAIL_PORT=${{ secrets.MAIL_PORT }}" \
+          --set-env-vars="MAIL_USER=${{ secrets.MAIL_USER }}" \
+          --set-env-vars="MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" \
+          --set-env-vars="MAIL_FROM=${{ secrets.MAIL_FROM }}" \
+          --set-env-vars="FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
+          --set-env-vars="ML_SERVICE_URL=https://${{ env.SERVICE_NAME_ML }}-${{ secrets.GCP_PROJECT_HASH }}-${{ env.REGION }}.a.run.app"
+
+    - name: Get Backend Service URL
+      id: backend-url
+      run: |
+        URL=$(gcloud run services describe ${{ env.SERVICE_NAME_BACKEND }} --region=${{ env.REGION }} --format='value(status.url)')
+        echo "url=$URL" >> $GITHUB_OUTPUT
+        echo "🚀 Backend deployed to: $URL"
+
+  deploy-ml-service:
+    name: Deploy ML Service
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker for Artifact Registry
+      run: |
+        gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+    - name: Build and Push ML Service Docker Image
+      run: |
+        cd ml-service
+        
+        # Build the image
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_ML }}:${{ github.sha }} .
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_ML }}:latest .
+        
+        # Push the images
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_ML }}:${{ github.sha }}
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_ML }}:latest
+
+    - name: Deploy ML Service to Cloud Run
+      run: |
+        gcloud run deploy ${{ env.SERVICE_NAME_ML }} \
+          --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/smartlms/${{ env.SERVICE_NAME_ML }}:${{ github.sha }} \
+          --platform managed \
+          --region ${{ env.REGION }} \
+          --allow-unauthenticated \
+          --port 8000 \
+          --memory 2Gi \
+          --cpu 2 \
+          --min-instances 0 \
+          --max-instances 5 \
+          --concurrency 40 \
+          --timeout 600 \
+          --set-env-vars="FLASK_ENV=production" \
+          --set-env-vars="PORT=8000" \
+          --set-env-vars="DB_HOST=${{ secrets.DB_HOST }}" \
+          --set-env-vars="DB_USER=${{ secrets.DB_USERNAME }}" \
+          --set-env-vars="DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
+          --set-env-vars="DB_NAME=lms_db" \
+          --set-env-vars="PYTHONPATH=/app"
+
+    - name: Get ML Service URL
+      id: ml-url
+      run: |
+        URL=$(gcloud run services describe ${{ env.SERVICE_NAME_ML }} --region=${{ env.REGION }} --format='value(status.url)')
+        echo "url=$URL" >> $GITHUB_OUTPUT
+        echo "🤖 ML Service deployed to: $URL"
+
+  update-backend-ml-url:
+    name: Update Backend with ML Service URL
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-ml-service]
+    
+    steps:
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Update Backend with ML Service URL
+      run: |
+        ML_URL=$(gcloud run services describe ${{ env.SERVICE_NAME_ML }} --region=${{ env.REGION }} --format='value(status.url)')
+        
+        gcloud run services update ${{ env.SERVICE_NAME_BACKEND }} \
+          --region ${{ env.REGION }} \
+          --update-env-vars ML_SERVICE_URL=$ML_URL
+
+        echo "✅ Backend updated with ML Service URL: $ML_URL"
+
+  health-check:
+    name: Health Check Deployed Services
+    runs-on: ubuntu-latest
+    needs: [update-backend-ml-url]
+    
+    steps:
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Health Check Services
+      run: |
+        # Get service URLs
+        BACKEND_URL=$(gcloud run services describe ${{ env.SERVICE_NAME_BACKEND }} --region=${{ env.REGION }} --format='value(status.url)')
+        ML_URL=$(gcloud run services describe ${{ env.SERVICE_NAME_ML }} --region=${{ env.REGION }} --format='value(status.url)')
+        
+        echo "🔍 Testing deployed services..."
+        
+        # Test Backend Health
+        echo "Testing Backend: $BACKEND_URL"
+        if curl -f -s "$BACKEND_URL/health" > /dev/null; then
+          echo "✅ Backend is healthy"
+        else
+          echo "❌ Backend health check failed"
+          exit 1
+        fi
+        
+        # Test ML Service Health
+        echo "Testing ML Service: $ML_URL"
+        if curl -f -s "$ML_URL/health" > /dev/null; then
+          echo "✅ ML Service is healthy"
+        else
+          echo "❌ ML Service health check failed"
+          exit 1
+        fi
+        
+        echo ""
+        echo "🎉 All services deployed successfully!"
+        echo "📋 Service URLs:"
+        echo "   Backend API: $BACKEND_URL"
+        echo "   ML Service: $ML_URL"
+        echo "   API Docs: $BACKEND_URL/api/docs"
+        echo ""
+        echo "🔧 Next steps:"
+        echo "1. Update your frontend REACT_APP_API_URL to: $BACKEND_URL/api"
+        echo "2. Configure CORS in your backend for your frontend domain"
+        echo "3. Test the integration between frontend and backend"
